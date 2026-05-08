@@ -364,6 +364,9 @@ const Sidebar = () => {
                                         <li>
                                             <NavLink to="/demomap/delivery">Delivery Tracking</NavLink>
                                         </li>
+                                        <li>
+                                            <NavLink to="/demomap/available-driver">Available Driver</NavLink>
+                                        </li>
                                     </ul>
                                 </AnimateHeight>
                             </li>

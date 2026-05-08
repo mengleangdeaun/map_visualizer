@@ -630,6 +630,8 @@ function PopupCloseButton({ onClick }: { onClick: () => void }) {
 type MarkerPopupProps = {
   /** Popup content */
   children: ReactNode;
+  /** Callback when popup is closed */
+  onClose?: () => void;
   /** Additional CSS classes for the popup container */
   className?: string;
   /** Show a close button in the popup (default: false) */
@@ -640,6 +642,7 @@ function MarkerPopup({
   children,
   className,
   closeButton = false,
+  onClose,
   ...popupOptions
 }: MarkerPopupProps) {
   const { marker, map } = useMarkerContext();
@@ -663,14 +666,18 @@ function MarkerPopup({
   useEffect(() => {
     if (!map) return;
 
+    const handleCloseEvent = () => onClose?.();
+    popup.on("close", handleCloseEvent);
+
     popup.setDOMContent(container);
     marker.setPopup(popup);
 
     return () => {
+      popup.off("close", handleCloseEvent);
       marker.setPopup(null);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map]);
+  }, [map, onClose]);
 
   if (popup.isOpen()) {
     const prev = prevPopupOptions.current;
@@ -1268,6 +1275,136 @@ function MapRoute({
 
   return null;
 }
+
+/**
+ * Generates a GeoJSON polygon representing a circle on a map.
+ */
+function getCirclePolygon(center: [number, number], radiusKm: number, points: number = 64): GeoJSON.Feature<GeoJSON.Polygon> {
+    const coords: [number, number][] = [];
+    const kmPerDegreeLat = 111.32;
+    const kmPerDegreeLng = 111.32 * Math.cos(center[1] * Math.PI / 180);
+
+    for (let i = 0; i < points; i++) {
+        const angle = (i * 360) / points;
+        const lat = center[1] + (radiusKm / kmPerDegreeLat) * Math.sin(angle * Math.PI / 180);
+        const lng = center[0] + (radiusKm / kmPerDegreeLng) * Math.cos(angle * Math.PI / 180);
+        coords.push([lng, lat]);
+    }
+    // Close the polygon
+    coords.push(coords[0]);
+
+    return {
+        type: "Feature",
+        geometry: {
+            type: "Polygon",
+            coordinates: [coords],
+        },
+        properties: {},
+    };
+}
+
+type MapCircleProps = {
+    /** Unique identifier for the circle */
+    id?: string;
+    /** Center of the circle [longitude, latitude] */
+    center: [number, number];
+    /** Radius in kilometers */
+    radius: number;
+    /** Fill color (default: "#4285F4") */
+    color?: string;
+    /** Fill opacity (default: 0.2) */
+    opacity?: string | number;
+    /** Stroke color (default: same as color) */
+    strokeColor?: string;
+    /** Stroke width in pixels (default: 2) */
+    strokeWidth?: number;
+    /** Stroke opacity (default: 0.8) */
+    strokeOpacity?: number;
+};
+
+function MapCircle({
+    id: propId,
+    center,
+    radius,
+    color = "#4285F4",
+    opacity = 0.2,
+    strokeColor,
+    strokeWidth = 2,
+    strokeOpacity = 0.8,
+}: MapCircleProps) {
+    const { map, isLoaded } = useMap();
+    const autoId = useId();
+    const id = propId ?? autoId;
+    const sourceId = `circle-source-${id}`;
+    const fillLayerId = `circle-fill-${id}`;
+    const strokeLayerId = `circle-stroke-${id}`;
+
+    useEffect(() => {
+        if (!isLoaded || !map) return;
+
+        const geojson = getCirclePolygon(center, radius);
+
+        map.addSource(sourceId, {
+            type: "geojson",
+            data: geojson,
+        });
+
+        map.addLayer({
+            id: fillLayerId,
+            type: "fill",
+            source: sourceId,
+            paint: {
+                "fill-color": color,
+                "fill-opacity": opacity as any,
+            },
+        });
+
+        map.addLayer({
+            id: strokeLayerId,
+            type: "line",
+            source: sourceId,
+            paint: {
+                "line-color": strokeColor ?? color,
+                "line-width": strokeWidth,
+                "line-opacity": strokeOpacity,
+            },
+        });
+
+        return () => {
+            try {
+                if (map.getLayer(fillLayerId)) map.removeLayer(fillLayerId);
+                if (map.getLayer(strokeLayerId)) map.removeLayer(strokeLayerId);
+                if (map.getSource(sourceId)) map.removeSource(sourceId);
+            } catch {
+                // ignore
+            }
+        };
+    }, [isLoaded, map]);
+
+    useEffect(() => {
+        if (!isLoaded || !map) return;
+        const source = map.getSource(sourceId) as MapLibreGL.GeoJSONSource;
+        if (source) {
+            source.setData(getCirclePolygon(center, radius));
+        }
+    }, [isLoaded, map, center, radius, sourceId]);
+
+    useEffect(() => {
+        if (!isLoaded || !map) return;
+        if (map.getLayer(fillLayerId)) {
+            map.setPaintProperty(fillLayerId, "fill-color", color);
+            map.setPaintProperty(fillLayerId, "fill-opacity", opacity);
+        }
+        if (map.getLayer(strokeLayerId)) {
+            map.setPaintProperty(strokeLayerId, "line-color", strokeColor ?? color);
+            map.setPaintProperty(strokeLayerId, "line-width", strokeWidth);
+            map.setPaintProperty(strokeLayerId, "line-opacity", strokeOpacity);
+        }
+    }, [isLoaded, map, fillLayerId, strokeLayerId, color, opacity, strokeColor, strokeWidth, strokeOpacity]);
+
+    return null;
+}
+
 
 /** A single arc to render inside <MapArc data={...}>. */
 type MapArcDatum = {
@@ -1940,7 +2077,9 @@ export {
   MapControls,
   MapRoute,
   MapArc,
+  MapCircle,
   MapClusterLayer,
 };
+
 
 export type { MapRef, MapViewport, MapArcDatum, MapArcEvent };
