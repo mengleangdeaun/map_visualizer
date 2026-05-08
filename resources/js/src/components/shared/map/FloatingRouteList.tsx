@@ -35,10 +35,10 @@ export const FloatingRouteList = ({
                         size="sm"
                         onClick={() => onSelect(index)}
                         className={cn(
-                            "group justify-start gap-3 h-auto py-3.5 px-4 border shadow-sm transition-all duration-200",
+                            "group justify-start  gap-3 h-auto py-3.5 px-4 border shadow-sm transition-all duration-200",
                             isActive 
-                                ? "bg-card shadow-sm" 
-                                : "bg-accent hover:bg-card"
+                                ? "bg-background/50 backdrop-blur-lg shadow-sm hover:bg-background/60" 
+                                : "bg-background/50 backdrop-blur-lg hover:bg-background/95"
                         )}
                     >
                         <div className="flex flex-col items-start gap-1">

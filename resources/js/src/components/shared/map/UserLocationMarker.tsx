@@ -16,7 +16,7 @@ export const UserLocationMarker = ({ coordinates, label = 'YOU', className }: Us
 
     return (
         <MapMarker longitude={coordinates[0]} latitude={coordinates[1]}>
-            <MarkerContent className={className}>
+            <MarkerContent className={cn("z-50", className)}>
                 <div className="relative group">
                     {/* Multi-layered sonar pulse effect */}
                     <div className="absolute inset-0 bg-emerald-500/20 rounded-full animate-ping scale-[2.5] duration-3000" />
@@ -26,15 +26,15 @@ export const UserLocationMarker = ({ coordinates, label = 'YOU', className }: Us
                     <div className="absolute -inset-1 bg-emerald-500/20 blur-sm rounded-full" />
                     
                     {/* Main dot */}
-                    <div className="relative size-5 rounded-full bg-emerald-500 border-2 border-white shadow-[0_0_10px_rgba(16,185,129,0.5)] flex items-center justify-center transition-transform group-hover:scale-110">
+                    <div className="relative size-5 rounded-full bg-emerald-500 border-2 border-white shadow-[0_0_15px_rgba(16,185,129,0.8)] flex items-center justify-center transition-transform group-hover:scale-110">
                         <div className="size-2 rounded-full bg-white shadow-inner animate-pulse" />
                     </div>
                 </div>
                 
                 {label && (
                     <MarkerLabel 
-                        position="bottom" 
-                        className="mt-1 bg-emerald-600 text-white px-2 py-0.5 rounded-full text-[9px] font-black tracking-widest border border-white/20 shadow-lg backdrop-blur-sm"
+                        position="top" 
+                        className="mb-2 bg-emerald-600 text-white px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-widest border border-white/40 shadow-xl backdrop-blur-md animate-bounce"
                     >
                         {label}
                     </MarkerLabel>

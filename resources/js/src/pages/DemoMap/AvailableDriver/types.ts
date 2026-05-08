@@ -5,6 +5,7 @@ export interface Driver {
     rating: number;
     distance: number;
     coordinates: [number, number];
-    status: 'online' | 'busy';
-    velocity?: [number, number]; // Optional as it's mainly for simulation
+    status: 'online' | 'busy' | 'offline';
+    lastSeen?: string;
+    velocity?: [number, number];
 }

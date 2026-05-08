@@ -16,8 +16,13 @@ import { MapSearch } from '@/components/shared/map/MapSearch';
 import { AvailableDriverHeader } from './components/AvailableDriverHeader';
 import { DriverList } from './components/DriverList';
 import { RadiusControl } from './components/RadiusControl';
+import { UserLocationMarker } from '@/components/shared/map/UserLocationMarker';
 
 import { Driver } from './types';
+import { Badge } from '@/components/ui/badge';
+
+import { useQuery } from '@tanstack/react-query';
+import { MapLoading } from '@/components/shared/map/MapLoading';
 
 const PHNOM_PENH_CENTER: [number, number] = [104.9282, 11.5621];
 
@@ -26,34 +31,57 @@ const names = ['Sok Sombo', 'Vuthy Vong', 'Dara Kim', 'Bona Chea', 'Nary Seng', 
 function getRandomPointInCircle(center: [number, number], radiusKm: number): [number, number] {
     const kmPerDegreeLat = 111.32;
     const kmPerDegreeLng = 111.32 * Math.cos(center[1] * Math.PI / 180);
-
-    const r = radiusKm * Math.sqrt(Math.random());
+    const r = Math.sqrt(Math.random()) * radiusKm;
     const theta = Math.random() * 2 * Math.PI;
-
-    const lat = center[1] + (r / kmPerDegreeLat) * Math.sin(theta);
-    const lng = center[0] + (r / kmPerDegreeLng) * Math.cos(theta);
-
-    return [lng, lat];
+    return [
+        center[0] + (r * Math.cos(theta)) / kmPerDegreeLng,
+        center[1] + (r * Math.sin(theta)) / kmPerDegreeLat
+    ];
 }
 
-function calculateDistance(p1: [number, number], p2: [number, number]) {
-    const R = 6371; // Earth's radius in km
-    const dLat = (p2[1] - p1[1]) * Math.PI / 180;
-    const dLon = (p2[0] - p1[0]) * Math.PI / 180;
-    const a = 
-        Math.sin(dLat/2) * Math.sin(dLat/2) +
-        Math.cos(p1[1] * Math.PI / 180) * Math.cos(p2[1] * Math.PI / 180) * 
-        Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
+function calculateDistance(point1: [number, number], point2: [number, number]): number {
+    const R = 6371;
+    const dLat = (point2[1] - point1[1]) * Math.PI / 180;
+    const dLng = (point2[0] - point1[0]) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(point1[1] * Math.PI / 180) * Math.cos(point2[1] * Math.PI / 180) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
+
+// Mock API function
+const fetchDrivers = async (center: [number, number], radius: number): Promise<Driver[]> => {
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    return Array.from({ length: 15 + Math.floor(Math.random() * 10) }).map((_, i) => {
+        const coords = getRandomPointInCircle(center, radius);
+        const dist = calculateDistance(center, coords);
+        const rand = Math.random();
+        let status: 'online' | 'busy' | 'offline' = 'online';
+        if (rand > 0.85) status = 'offline';
+        else if (rand > 0.6) status = 'busy';
+        return {
+            id: `driver-${i}-${Date.now()}`,
+            name: names[Math.floor(Math.random() * names.length)],
+            vehicleType: Math.random() > 0.4 ? 'car' : 'bike',
+            rating: Number((4.0 + Math.random() * 1.0).toFixed(1)),
+            distance: dist,
+            coordinates: coords,
+            status,
+            lastSeen: status === 'offline' ? `${Math.floor(Math.random() * 60) + 1}m ago` : undefined,
+            velocity: [(Math.random() - 0.5) * 0.00003, (Math.random() - 0.5) * 0.00003]
+        };
+    });
+};
+
 
 const AvailableDriver = () => {
     const [center, setCenter] = useState<[number, number]>(PHNOM_PENH_CENTER);
     const [radius, setRadius] = useState(5);
-    const [drivers, setDrivers] = useState<Driver[]>([]);
     const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
-    const [isRefreshing, setIsRefreshing] = useState(false);
+    const [statusFilter, setStatusFilter] = useState<'all' | 'online' | 'busy' | 'offline'>('all');
+    const [sortType, setSortType] = useState<'distance' | 'rating'>('distance');
+    const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+    
     const [viewport, setViewport] = useState({
         center: PHNOM_PENH_CENTER,
         zoom: 13,
@@ -64,47 +92,52 @@ const AvailableDriver = () => {
     const animationRef = useRef<number>(0);
     const driversRef = useRef<Driver[]>([]);
 
-    const generateDrivers = useCallback((centerPos: [number, number], searchRadius: number) => {
-        const newDrivers: Driver[] = Array.from({ length: 15 + Math.floor(Math.random() * 10) }).map((_, i) => {
-            const coords = getRandomPointInCircle(centerPos, searchRadius);
-            const dist = calculateDistance(centerPos, coords);
-            return {
-                id: `driver-${i}-${Date.now()}`,
-                name: names[Math.floor(Math.random() * names.length)],
-                vehicleType: Math.random() > 0.4 ? 'car' : 'bike',
-                rating: 4.5 + Math.random() * 0.5,
-                distance: dist,
-                coordinates: coords,
-                status: Math.random() > 0.2 ? 'online' : 'busy',
-                velocity: [(Math.random() - 0.5) * 0.0001, (Math.random() - 0.5) * 0.0001]
-            };
-        });
-        
-        // Sort by distance
-        newDrivers.sort((a, b) => a.distance - b.distance);
-        
-        setDrivers(newDrivers);
-        driversRef.current = newDrivers;
+    // TanStack Query for driver data
+    const { data: driversData = [], isLoading, isFetching, refetch } = useQuery({
+        queryKey: ['drivers', center, radius],
+        queryFn: () => fetchDrivers(center, radius),
+        refetchInterval: 5000, // Auto-poll every 5 seconds
+        staleTime: 4000,
+    });
+
+    // Drivers state for animation
+    const [drivers, setDrivers] = useState<Driver[]>([]);
+    const isMounted = useRef(true);
+
+    // Update state and ref when fresh data arrives
+    useEffect(() => {
+        if (driversData.length > 0) {
+            setDrivers(driversData);
+            driversRef.current = driversData;
+        }
+    }, [driversData]);
+
+    // Auto-locate on mount
+    useEffect(() => {
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition((position) => {
+                const coords: [number, number] = [position.coords.longitude, position.coords.latitude];
+                setUserLocation(coords);
+                setCenter(coords);
+                setViewport(prev => ({
+                    ...prev,
+                    center: coords,
+                    zoom: 14,
+                    transitionDuration: 2000
+                }));
+            }, (error) => {
+                console.log("Auto-locate skipped or denied:", error.message);
+            });
+        }
     }, []);
 
     const refreshDrivers = () => {
-        setIsRefreshing(true);
-        setTimeout(() => {
-            generateDrivers(center, radius);
-            setIsRefreshing(false);
-        }, 800);
+        refetch();
     };
 
-    useEffect(() => {
-        generateDrivers(center, radius);
-    }, [center, radius, generateDrivers]);
-
     const animate = useCallback(() => {
-        const kmPerDegreeLat = 111.32;
-        const kmPerDegreeLng = 111.32 * Math.cos(center[1] * Math.PI / 180);
-
         const updatedDrivers = driversRef.current.map(driver => {
-            if (driver.status === 'busy') return driver;
+            if (driver.status !== 'online') return driver;
 
             // Move slightly
             if (!driver.velocity) return driver;
@@ -119,8 +152,8 @@ const AvailableDriver = () => {
             if (dist > radius) {
                 // Point towards center
                 newVel = [
-                    (center[0] - newLng) * 0.00001 + (Math.random() - 0.5) * 0.0001,
-                    (center[1] - newLat) * 0.00001 + (Math.random() - 0.5) * 0.0001
+                    (center[0] - newLng) * 0.000005 + (Math.random() - 0.5) * 0.00003,
+                    (center[1] - newLat) * 0.000005 + (Math.random() - 0.5) * 0.00003
                 ];
             }
 
@@ -133,14 +166,36 @@ const AvailableDriver = () => {
         });
 
         driversRef.current = updatedDrivers;
-        setDrivers(updatedDrivers);
-        animationRef.current = requestAnimationFrame(animate);
+        if (isMounted.current) {
+            setDrivers(updatedDrivers);
+            animationRef.current = requestAnimationFrame(animate);
+        }
     }, [center, radius]);
 
     useEffect(() => {
+        isMounted.current = true;
         animationRef.current = requestAnimationFrame(animate);
-        return () => cancelAnimationFrame(animationRef.current);
+        return () => {
+            isMounted.current = false;
+            cancelAnimationFrame(animationRef.current);
+        };
     }, [animate]);
+
+    const filteredDrivers = useMemo(() => {
+        let result = [...drivers];
+        
+        if (statusFilter !== 'all') {
+            result = result.filter(d => d.status === statusFilter);
+        }
+        
+        if (sortType === 'distance') {
+            result.sort((a, b) => a.distance - b.distance);
+        } else {
+            result.sort((a, b) => b.rating - a.rating);
+        }
+        
+        return result;
+    }, [drivers, statusFilter, sortType]);
 
     const handleSearchSelect = (result: any) => {
         const coords: [number, number] = result.coordinates;
@@ -161,7 +216,7 @@ const AvailableDriver = () => {
     return (
         <div className="flex flex-col h-[calc(100vh-100px)] gap-4">
             <AvailableDriverHeader 
-                driverCount={drivers.length} 
+                driverCount={filteredDrivers.length} 
                 status={`Searching within ${radius}km of current location`} 
             />
 
@@ -189,8 +244,11 @@ const AvailableDriver = () => {
                             onLocate={(pos) => {
                                 const coords: [number, number] = [pos.longitude, pos.latitude];
                                 setCenter(coords);
+                                setUserLocation(coords);
                             }}
                         />
+
+                        <UserLocationMarker coordinates={userLocation} />
 
                         {/* Search Range Circle */}
                         <MapCircle 
@@ -211,13 +269,13 @@ const AvailableDriver = () => {
                                     <div className="size-8 rounded-full bg-primary border-4 border-white shadow-xl flex items-center justify-center text-white">
                                         <MapPin className="size-4" />
                                     </div>
-                                    <MarkerLabel position="top" className="bg-primary text-white text-[10px] px-2 py-0.5 rounded-full font-bold shadow-lg">SEARCH CENTER</MarkerLabel>
+                                    <MarkerLabel position="top" className="bg-primary text-white text-[10px] px-2 py-0.5 rounded-full ring-1 ring-primary ring-offset-2 ring-offset-background font-bold shadow-lg">SEARCH CENTER</MarkerLabel>
                                 </div>
                             </MarkerContent>
                         </MapMarker>
 
                         {/* Driver Markers */}
-                        {drivers.map((driver) => (
+                        {filteredDrivers.map((driver) => (
                             <MapMarker 
                                 key={driver.id} 
                                 longitude={driver.coordinates[0]} 
@@ -231,7 +289,9 @@ const AvailableDriver = () => {
                                     )}>
                                         <div className={cn(
                                             "size-8 rounded-full bg-white border-2 shadow-md flex items-center justify-center transition-colors",
-                                            driver.status === 'online' ? "border-emerald-500 text-emerald-600" : "border-amber-500 text-amber-600",
+                                            driver.status === 'online' ? "border-emerald-500 text-emerald-600" : 
+                                            driver.status === 'busy' ? "border-amber-500 text-amber-600" :
+                                            "border-slate-400 text-slate-500",
                                             selectedDriver?.id === driver.id && "bg-primary border-primary text-white"
                                         )}>
                                             {driver.vehicleType === 'car' ? <Car className="size-4" /> : <Bike className="size-4" />}
@@ -260,6 +320,23 @@ const AvailableDriver = () => {
                                                 <span className="text-muted-foreground">Distance:</span>
                                                 <span className="font-bold">{driver.distance.toFixed(2)} km</span>
                                             </div>
+                                            {driver.status === 'offline' && driver.lastSeen && (
+                                                <div className="flex justify-between items-center text-[10px]">
+                                                    <span className="text-muted-foreground">Last Seen:</span>
+                                                    <span className="font-bold text-amber-600">{driver.lastSeen}</span>
+                                                </div>
+                                            )}
+                                            <div className="flex justify-between items-center text-[10px]">
+                                                <span className="text-muted-foreground">Status:</span>
+                                                <Badge variant="outline" className={cn(
+                                                    "text-[8px] h-4 uppercase",
+                                                    driver.status === 'online' ? "text-emerald-600 border-emerald-200 bg-emerald-50" : 
+                                                    driver.status === 'busy' ? "text-amber-600 border-amber-200 bg-amber-50" :
+                                                    "text-slate-600 border-slate-200 bg-slate-50"
+                                                )}>
+                                                    {driver.status}
+                                                </Badge>
+                                            </div>
                                             <Button size="xs" className="w-full h-7 text-[10px]">Request Ride</Button>
                                         </div>
                                     </MarkerPopup>
@@ -273,23 +350,35 @@ const AvailableDriver = () => {
                         <RadiusControl radius={radius} onRadiusChange={setRadius} />
                     </div>
 
-                    {/* Refresh Button */}
-                    <div className="absolute top-6 right-16 z-10">
-                        <Button 
-                            variant="secondary" 
-                            size="icon" 
-                            className={cn("bg-background/90 backdrop-blur-md shadow-lg border", isRefreshing && "animate-spin")}
-                            onClick={refreshDrivers}
-                            disabled={isRefreshing}
-                        >
-                            <RefreshCw className="size-4" />
-                        </Button>
+                    {/* Refresh Button - Positioned to match MapControls */}
+                    <div className="absolute top-2 right-12 z-10">
+                        <div className="flex flex-col overflow-hidden rounded-md border border-border bg-background shadow-sm">
+                            <button 
+                                onClick={refreshDrivers}
+                                disabled={isFetching}
+                                className={cn(
+                                    "flex size-8 items-center justify-center transition-all",
+                                    "hover:bg-accent dark:hover:bg-accent/40",
+                                    "disabled:opacity-50"
+                                )}
+                                title="Refresh drivers"
+                            >
+                                <RefreshCw className={cn("size-4 text-foreground/80", isFetching && "animate-spin")} />
+                            </button>
+                        </div>
                     </div>
+
+                    {/* Only show the full-page overlay on the VERY first load */}
+                    {isLoading && <MapLoading message="Locating drivers..." />}
                 </div>
 
                 <div className="lg:col-span-1 flex flex-col gap-4 overflow-hidden h-full">
                     <DriverList 
-                        drivers={drivers} 
+                        drivers={filteredDrivers} 
+                        statusFilter={statusFilter}
+                        onStatusFilterChange={setStatusFilter}
+                        sortType={sortType}
+                        onSortChange={setSortType}
                         onSelect={(d) => {
                             setSelectedDriver(d);
                             setViewport(v => ({

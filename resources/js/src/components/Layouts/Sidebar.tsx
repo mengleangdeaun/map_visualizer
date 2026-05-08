@@ -22,21 +22,34 @@ const Sidebar = () => {
     };
 
     useEffect(() => {
-        const selector = document.querySelector('.sidebar ul a[href="' + window.location.pathname + '"]');
+        const menuMapping: { [key: string]: string } = {
+            '/demomap': 'map',
+            '/apps': 'dashboard',
+            '/components': 'component',
+            '/elements': 'element',
+            '/forms': 'forms',
+            '/users': 'users',
+            '/pages': 'page',
+            '/auth': 'auth',
+            '/datatables': 'datatables',
+            '/apps/invoice': 'invoice',
+        };
+
+        const activePath = window.location.pathname;
+        
+        // Find the matching menu key
+        const matchingKey = Object.keys(menuMapping).find(key => activePath.startsWith(key));
+        
+        if (matchingKey) {
+            setCurrentMenu(menuMapping[matchingKey]);
+        }
+
+        // Handle active class for the link itself
+        const selector = document.querySelector('.sidebar ul a[href="' + activePath + '"]');
         if (selector) {
             selector.classList.add('active');
-            const ul: any = selector.closest('ul.sub-menu');
-            if (ul) {
-                let ele: any = ul.closest('li.menu').querySelectorAll('.nav-link') || [];
-                if (ele.length) {
-                    ele = ele[0];
-                    setTimeout(() => {
-                        ele.click();
-                    });
-                }
-            }
         }
-    }, []);
+    }, [location]);
 
     useEffect(() => {
         if (window.innerWidth < 1024 && themeConfig.sidebar) {

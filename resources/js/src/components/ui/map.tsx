@@ -36,12 +36,16 @@ const defaultStyles = {
 
 type Theme = "light" | "dark";
 
-// Check document class for theme (works with next-themes, etc.)
+// Check document class for theme (works with next-themes, Vristo, etc.)
 function getDocumentTheme(): Theme | null {
   if (typeof document === "undefined") return null;
+  // If 'dark' is present, it's dark. Otherwise, if 'light' is present OR if we are in a system 
+  // where the absence of 'dark' means light (like this app), return light.
   if (document.documentElement.classList.contains("dark")) return "dark";
-  if (document.documentElement.classList.contains("light")) return "light";
-  return null;
+  
+  // Most templates (including this one) only toggle the 'dark' class.
+  // If we find the document but no dark class, it's light mode.
+  return "light";
 }
 
 // Get system preference
@@ -244,21 +248,22 @@ const Map = forwardRef<MapRef, MapProps>(function Map(
       // Force high-quality Khmer-compatible glyphs
       transformRequest: (url, resourceType) => {
         if (resourceType === 'Glyphs') {
-          // If the fontstack includes Khmer, we use a specialized source or local fallback
-          if (url.toLowerCase().includes('khmer')) {
-            const parts = url.split('/');
-            const range = parts[parts.length - 1];
-            return {
-              url: `https://protomaps.github.io/basemaps-assets/fonts/Noto%20Sans%20Khmer%20Regular/${range}`
-            };
+          // Force all glyph requests to a reliable server
+          let newUrl = url;
+          
+          if (url.includes('protomaps.github.io') || url.includes('khmer')) {
+             const parts = url.split('/');
+             const range = parts[parts.length - 1];
+             let fontstack = parts[parts.length - 2] || 'Noto Sans Regular';
+             
+             if (fontstack.toLowerCase().includes('khmer')) {
+                fontstack = 'Noto Sans Regular';
+             }
+             
+             newUrl = `https://fonts.openmaptiles.org/${fontstack}/${range}`;
           }
 
-          const parts = url.split('/');
-          const range = parts[parts.length - 1];
-          const fontstack = parts[parts.length - 2];
-          return {
-            url: `https://fonts.openmaptiles.org/${fontstack}/${range}`
-          };
+          return { url: newUrl };
         }
         return { url };
       },
@@ -506,7 +511,10 @@ function MapMarker({
       draggable,
     }).setLngLat([longitude, latitude]);
 
-    const handleClick = (e: MouseEvent) => callbacksRef.current.onClick?.(e);
+    const handleClick = (e: MouseEvent) => {
+      e.stopPropagation();
+      callbacksRef.current.onClick?.(e);
+    };
     const handleMouseEnter = (e: MouseEvent) =>
       callbacksRef.current.onMouseEnter?.(e);
     const handleMouseLeave = (e: MouseEvent) =>
@@ -844,7 +852,7 @@ const positionClasses = {
 
 function ControlGroup({ children }: { children: React.ReactNode }) {
   return (
-    <div className="border-border bg-background [&>button:not(:last-child)]:border-border flex flex-col overflow-hidden rounded-md border shadow-sm [&>button:not(:last-child)]:border-b">
+    <div className="border-border bg-background/50 backdrop-blur-lg dark:bg-background/90 [&>button:not(:last-child)]:border-border flex flex-col overflow-hidden rounded-md border shadow-sm [&>button:not(:last-child)]:border-b">
       {children}
     </div>
   );

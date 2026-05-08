@@ -8,6 +8,7 @@ import Header from './Header';
 import Setting from './Setting';
 import Sidebar from './Sidebar';
 import Portals from '../../components/Portals';
+import { MapLoading } from '../shared/map/MapLoading';
 
 const DefaultLayout = ({ children }: PropsWithChildren) => {
     const themeConfig = useSelector((state: IRootState) => state.themeConfig);
@@ -89,7 +90,7 @@ const DefaultLayout = ({ children }: PropsWithChildren) => {
                         {/* END TOP NAVBAR */}
 
                         {/* BEGIN CONTENT AREA */}
-                        <Suspense>
+                        <Suspense fallback={<MapLoading message="Loading module..." />}>
                             <div className={`${themeConfig.animation} p-6 animate__animated`}>{children}</div>
                         </Suspense>
                         {/* END CONTENT AREA */}
