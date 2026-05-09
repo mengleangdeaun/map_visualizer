@@ -5,6 +5,7 @@ const InteractiveMap = lazy(() => import('../pages/DemoMap/InteractiveMap/Intera
 const MapMarker = lazy(() => import('../pages/DemoMap/MapMarker/MapMarker'));
 const DeliveryTracking = lazy(() => import('../pages/DemoMap/DeliveryTracking/DeliveryTracking'));
 const AvailableDriver = lazy(() => import('../pages/DemoMap/AvailableDriver/AvailableDriver'));
+const RealtimeTracking = lazy(() => import('../pages/DemoMap/RealtimeTracking/RealtimeTracking'));
 
 const routes = [
     // dashboard
@@ -36,6 +37,11 @@ const routes = [
     {
         path: '/demomap/available-driver',
         element: <AvailableDriver />,
+        layout: 'default',
+    },
+    {
+        path: '/demomap/realtime',
+        element: <RealtimeTracking />,
         layout: 'default',
     },
 ];

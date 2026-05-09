@@ -31,4 +31,10 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'damoov' => [
+        'instance_id' => env('DAMOOV_INSTANCE_ID'),
+        'instance_key' => env('DAMOOV_INSTANCE_KEY'),
+        'device_token' => env('DAMOOV_DEVICE_TOKEN'),
+    ],
+
 ];
