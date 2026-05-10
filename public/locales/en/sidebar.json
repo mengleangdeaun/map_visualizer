@@ -1,0 +1,14 @@
+{
+    "admin_domain": "Admin Domain",
+    "dashboard": "Dashboard",
+    "sales": "Sales",
+    "system_domain": "System Domain",
+    "system_management": "System Management",
+    "demo_maps": "Demo Maps",
+    "static_route": "Static Route",
+    "interactive_map": "Interactive Map",
+    "map_marker": "Map Marker",
+    "delivery_tracking": "Delivery Tracking",
+    "available_driver": "Available Driver",
+    "realtime_tracking": "Realtime Tracking"
+}

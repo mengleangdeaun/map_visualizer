@@ -1,0 +1,14 @@
+{
+    "admin_domain": "ដែនអ្នកគ្រប់គ្រង",
+    "dashboard": "ផ្ទាំងគ្រប់គ្រង",
+    "sales": "ការលក់",
+    "system_domain": "ដែនប្រព័ន្ធ",
+    "system_management": "ការគ្រប់គ្រងប្រព័ន្ធ",
+    "demo_maps": "ផែនទីសាកល្បង",
+    "static_route": "ផ្លូវថេរ",
+    "interactive_map": "ផែនទីអន្តរកម្ម",
+    "map_marker": "សញ្ញាសម្គាល់ផែនទី",
+    "delivery_tracking": "ការតាមដានការដឹកជញ្ជូន",
+    "available_driver": "អ្នកបើកបរដែលមាន",
+    "realtime_tracking": "ការតាមដានពេលវេលាជាក់ស្តែង"
+}

@@ -3,6 +3,7 @@ import { Search, MapPin, X, Loader2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export interface SearchResult {
     name: string;
@@ -115,28 +116,30 @@ export const MapSearch = ({ onSelect, className, placeholder = "Search places in
             </div>
 
             {isOpen && results.length > 0 && (
-                <div className="absolute top-full mt-2 w-full bg-background/70 dark:bg-card backdrop-blur-xl border rounded-lg shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 ring-1 ring-slate-200 dark:ring-slate-800">
-                    <div>
-                        {results.map((result: SearchResult, index: number) => (
-                            <button
-                                key={index}
-                                onClick={() => handleSelect(result)}
-                                className="w-full px-4 py-3 flex items-start gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-left group border-b border-slate-50 dark:border-slate-800 last:border-0"
-                            >
-                                <div className="mt-0.5 size-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center shrink-0 group-hover:bg-emerald-500 group-hover:text-white transition-all duration-200">
-                                    <MapPin className="size-4" />
-                                </div>
-                                <div className="flex flex-col">
-                                    <span className="text-sm font-semibold text-foreground group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
-                                        {result.name}
-                                    </span>
-                                    <span className="text-[11px] text-muted-foreground line-clamp-1">
-                                        {[result.city, result.state, result.country].filter(Boolean).join(', ')}
-                                    </span>
-                                </div>
-                            </button>
-                        ))}
-                    </div>
+                <div className="absolute top-full mt-2 w-full bg-background/80 dark:bg-card/95 backdrop-blur-xl border rounded-lg shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 ring-1 ring-slate-200 dark:ring-slate-800 z-[1100]">
+                    <ScrollArea className="h-[350px] w-full" type="always">
+                        <div className="flex flex-col">
+                            {results.map((result: SearchResult, index: number) => (
+                                <button
+                                    key={`${index}-${result.name}`}
+                                    onClick={() => handleSelect(result)}
+                                    className="w-full px-4 py-3 flex items-start gap-3 hover:bg-primary/5 dark:hover:bg-primary/10 transition-colors text-left group/item border-b border-border/50 last:border-0"
+                                >
+                                    <div className="mt-0.5 size-8 rounded-full bg-muted text-muted-foreground flex items-center justify-center shrink-0 group-hover/item:bg-primary group-hover/item:text-primary-foreground transition-all duration-200">
+                                        <MapPin className="size-4" />
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-semibold text-foreground group-hover/item:text-primary transition-colors">
+                                            {result.name}
+                                        </span>
+                                        <span className="text-[11px] text-muted-foreground line-clamp-1">
+                                            {[result.city, result.state, result.country].filter(Boolean).join(', ')}
+                                        </span>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    </ScrollArea>
                 </div>
             )}
         </div>

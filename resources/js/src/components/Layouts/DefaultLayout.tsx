@@ -1,18 +1,14 @@
 import { PropsWithChildren, Suspense, useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import useThemeConfig from '../../store/useThemeConfig';
 import App from '../../App';
-import { IRootState } from '../../store';
-import { toggleSidebar } from '../../store/themeConfigSlice';
 import Footer from './Footer';
 import Header from './Header';
-import Setting from './Setting';
 import Sidebar from './Sidebar';
 import Portals from '../../components/Portals';
 import { MapLoading } from '../shared/map/MapLoading';
 
 const DefaultLayout = ({ children }: PropsWithChildren) => {
-    const themeConfig = useSelector((state: IRootState) => state.themeConfig);
-    const dispatch = useDispatch();
+    const themeConfig = useThemeConfig();
 
     const [showLoader, setShowLoader] = useState(true);
     const [showTopButton, setShowTopButton] = useState(false);
@@ -51,7 +47,7 @@ const DefaultLayout = ({ children }: PropsWithChildren) => {
             {/* BEGIN MAIN CONTAINER */}
             <div className="relative bg-muted dark:bg-background">
                 {/* sidebar menu overlay */}
-                <div className={`${(!themeConfig.sidebar && 'hidden') || ''} fixed inset-0 bg-[black]/60 z-50 lg:hidden`} onClick={() => dispatch(toggleSidebar())}></div>
+                <div className={`${(!themeConfig.sidebar && 'hidden') || ''} fixed inset-0 bg-[black]/60 z-50 lg:hidden`} onClick={() => themeConfig.toggleSidebar()}></div>
                 {/* screen loader */}
                 {showLoader && (
                     <div className="screen_loader fixed inset-0 bg-[#fafafa] dark:bg-[#060818] z-[60] grid place-content-center animate__animated">
@@ -75,9 +71,6 @@ const DefaultLayout = ({ children }: PropsWithChildren) => {
                     )}
                 </div>
 
-                {/* BEGIN APP SETTING LAUNCHER */}
-                <Setting />
-                {/* END APP SETTING LAUNCHER */}
 
                 <div className={`${themeConfig.navbar} main-container text-foreground min-h-screen`}>
                     {/* BEGIN SIDEBAR */}

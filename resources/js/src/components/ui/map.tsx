@@ -15,6 +15,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { MapContext, useMap, type MapViewport } from "./map-context";
 import { createPortal } from "react-dom";
 import { X, Minus, Plus, Locate, Maximize, Loader2 } from "lucide-react";
 
@@ -92,32 +93,6 @@ function useResolvedTheme(themeProp?: "light" | "dark"): Theme {
   return themeProp ?? detectedTheme;
 }
 
-type MapContextValue = {
-  map: MapLibreGL.Map | null;
-  isLoaded: boolean;
-};
-
-const MapContext = createContext<MapContextValue | null>(null);
-
-function useMap() {
-  const context = useContext(MapContext);
-  if (!context) {
-    throw new Error("useMap must be used within a Map component");
-  }
-  return context;
-}
-
-/** Map viewport state */
-type MapViewport = {
-  /** Center coordinates [longitude, latitude] */
-  center: [number, number];
-  /** Zoom level */
-  zoom: number;
-  /** Bearing (rotation) in degrees */
-  bearing: number;
-  /** Pitch (tilt) in degrees */
-  pitch: number;
-};
 
 type MapStyleOption = string | MapLibreGL.StyleSpecification;
 
@@ -1161,6 +1136,8 @@ type MapRouteProps = {
   onMouseLeave?: () => void;
   /** Whether the route is interactive - shows pointer cursor on hover (default: true) */
   interactive?: boolean;
+  /** Whether to animate the route (e.g., flowing dash array) */
+  animate?: boolean;
 };
 
 function MapRoute({
@@ -1175,6 +1152,7 @@ function MapRoute({
   onMouseEnter,
   onMouseLeave,
   interactive = true,
+  animate = false,
 }: MapRouteProps) {
   const { map, isLoaded } = useMap();
   const autoId = useId();
@@ -1205,7 +1183,7 @@ function MapRoute({
         "line-width": width,
         "line-opacity": opacity,
         "line-blur": blur,
-        "line-dasharray": dashArray || [1, 0],
+        "line-dasharray": animate ? [2, 2] : (dashArray || [1, 0]),
       },
     });
 
@@ -1245,6 +1223,32 @@ function MapRoute({
       map.setPaintProperty(layerId, "line-dasharray", dashArray);
     }
   }, [isLoaded, map, layerId, color, width, opacity, blur, dashArray]);
+
+  // Handle animation
+  useEffect(() => {
+    if (!isLoaded || !map || !animate || !map.getLayer(layerId)) return;
+
+    let step = 0;
+    let requestRef: number;
+
+    const animateDash = () => {
+      if (!map || !map.getStyle() || !map.getLayer(layerId)) {
+        return;
+      }
+
+      try {
+        step = (step + 1) % 100;
+        map.setPaintProperty(layerId, "line-dashoffset", step / 20);
+        requestRef = requestAnimationFrame(animateDash);
+      } catch (e) {
+        // Map might have been removed or style changed during animation frame
+        console.debug("MapRoute animation suppressed:", e);
+      }
+    };
+
+    requestRef = requestAnimationFrame(animateDash);
+    return () => cancelAnimationFrame(requestRef);
+  }, [isLoaded, map, layerId, animate]);
 
   // Handle click and hover events
   useEffect(() => {

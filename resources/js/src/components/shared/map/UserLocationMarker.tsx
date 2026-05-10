@@ -19,22 +19,22 @@ export const UserLocationMarker = ({ coordinates, label = 'YOU', className }: Us
             <MarkerContent className={cn("z-50", className)}>
                 <div className="relative group">
                     {/* Multi-layered sonar pulse effect */}
-                    <div className="absolute inset-0 bg-emerald-500/20 rounded-full animate-ping scale-[2.5] duration-3000" />
-                    <div className="absolute inset-0 bg-emerald-400/30 rounded-full animate-ping scale-150 duration-2000 delay-500" />
+                    <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping scale-[2.5] duration-3000" />
+                    <div className="absolute inset-0 bg-primary/30 rounded-full animate-ping scale-150 duration-2000 delay-500" />
                     
                     {/* Glowing aura */}
-                    <div className="absolute -inset-1 bg-emerald-500/20 blur-sm rounded-full" />
+                    <div className="absolute -inset-1 bg-primary/20 blur-sm rounded-full" />
                     
                     {/* Main dot */}
-                    <div className="relative size-5 rounded-full bg-emerald-500 border-2 border-white shadow-[0_0_15px_rgba(16,185,129,0.8)] flex items-center justify-center transition-transform group-hover:scale-110">
-                        <div className="size-2 rounded-full bg-white shadow-inner animate-pulse" />
+                    <div className="relative size-5 rounded-full bg-primary border-2 border-background shadow-xl flex items-center justify-center transition-transform group-hover:scale-110">
+                        <div className="size-2 rounded-full bg-primary-foreground shadow-inner animate-pulse" />
                     </div>
                 </div>
                 
                 {label && (
                     <MarkerLabel 
                         position="top" 
-                        className="mb-2 bg-emerald-600 text-white px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-widest border border-white/40 shadow-xl backdrop-blur-md animate-bounce"
+                        className="mb-2 bg-primary text-primary-foreground px-2.5 py-1 rounded-full text-[10px] font-bold tracking-widest border shadow-xl backdrop-blur-md"
                     >
                         {label}
                     </MarkerLabel>

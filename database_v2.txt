@@ -1,0 +1,370 @@
+# Delivery Management System - Master Database Schema V2
+
+This schema is optimized for **PostgreSQL** and **Laravel Eloquent**, utilizing PostGIS for spatial data, strict decimal typing for financial accuracy, and **ULID** for secure, sortable primary keys across all tables.
+
+## 🏢 Domain 0: Multi-Tenancy & Financial Config
+
+### 1. `companies`
+The root tenant. All operational data strictly isolates by this ID using Laravel Global Scopes.
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | ULID | Primary Key |
+| `name` | String | |
+| `telegram_user_id`| String | Nullable, Unique within company (For Telegram Bot alerts/auth) |
+| `tax_id` | String | Nullable |
+| `base_currency` | String | Default: 'USD' |
+| `timestamps` | Timestamp | `created_at`, `updated_at` |
+
+### 2. `exchange_rates`
+Master table for daily/hourly rate tracking.
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | ULID | Primary Key |
+| `company_id` | ULID | Foreign Key (`companies.id`), Indexed |
+| `from_currency` | String | e.g., 'USD' |
+| `to_currency` | String | e.g., 'KHR' |
+| `rate` | Decimal(15,6) | High precision for accurate conversion |
+| `effective_date` | Timestamp | |
+
+---
+
+## 👥 Domain 1: Users, Roles & Fleet Management
+
+### 3. `users`
+Core identity table for all actors (Admins, Dispatchers, Drivers).
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | ULID | Primary Key |
+| `company_id` | ULID | Foreign Key (`companies.id`), Indexed |
+| `role` | Enum | 'admin', 'dispatcher', 'hub_operator', 'driver' |
+| `name` | String | |
+| `phone` | String | Unique within company |
+| `email` | String | Nullable |
+| `telegram_user_id`| String | Nullable, Unique within company (For Telegram Bot alerts/auth) |
+| `password` | String | Hashed |
+| `base_hub_id` | ULID | Foreign Key (`locations.id`), Nullable |
+| `status` | Enum | 'active', 'suspended', 'inactive' |
+
+### 4. `customers`
+Repeat customers, senders, or receivers.
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | ULID | Primary Key |
+| `company_id` | ULID | Foreign Key (`companies.id`), Indexed |
+| `name` | String | |
+| `phone` | String | Indexed |
+| `telegram_user_id`| String | Nullable, Indexed (For automated tracking updates via Telegram) |
+| `default_address`| Text | |
+| `default_location`| Geometry(Point) | PostGIS |
+| `total_orders` | Integer | Lifetime counter |
+
+### 5. `vehicles`
+Physical assets assigned to drivers.
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | ULID | Primary Key |
+| `company_id` | ULID | Foreign Key (`companies.id`), Indexed |
+| `driver_id` | ULID | Foreign Key (`users.id`), Unique |
+| `type` | Enum | 'motorcycle', 'tuktuk', 'minivan', 'box_truck' |
+| `plate_number` | String | Unique |
+| `max_weight_kg` | Decimal(8,2) | |
+| `max_volume_cbm`| Decimal(8,2) | |
+
+---
+
+## 📍 Domain 2: The Physical Network
+
+### 6. `locations` (Hubs)
+Hubs, sorting centers, and local nodes.
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | ULID | Primary Key |
+| `company_id` | ULID | Foreign Key (`companies.id`), Indexed |
+| `code` | String | e.g., 'HUB-PNH-01' |
+| `name` | String | |
+| `type` | Enum | 'main_sort', 'regional_hub', 'local_node' |
+| `location` | Geometry(Point) | PostGIS |
+| `geofence` | Geometry(Polygon)| PostGIS |
+
+---
+
+## 📦 Domain 3: Orders & Financials (The Source of Truth)
+
+### 7. `orders`
+The financial agreement and parent container.
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | ULID | Primary Key |
+| `company_id` | ULID | Foreign Key (`companies.id`), Indexed |
+| `customer_id` | ULID | Foreign Key (`customers.id`) |
+| `order_number` | String | Human readable (e.g., ORD-2026-991) |
+| `status` | Enum | 'pending', 'paid', 'completed', 'cancelled' |
+| `currency_code` | String | |
+| `exchange_rate_snap`| Decimal(15,6)| Locked at creation to prevent historical financial shifts |
+| `total_amount` | Decimal(12,2) | In order currency |
+| `amount_due_cod`| Decimal(12,2) | Cash to collect |
+| `payment_method`| Enum | 'cash', 'khqr', 'postpaid' |
+
+### 8. `order_items`
+Details of what is being shipped.
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | ULID | Primary Key |
+| `order_id` | ULID | Foreign Key (`orders.id`) |
+| `product_name` | String | |
+| `quantity` | Integer | |
+| `unit_price` | Decimal(10,2) | |
+| `total_price` | Decimal(10,2) | |
+| `snapshot_data` | JSONB | Product details at time of purchase |
+
+---
+
+## 🚚 Domain 4: Operations & Movement (The Execution)
+
+### 9. `deliveries`
+The logistical execution of an order (Separated from orders so 1 order can have multiple deliveries).
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | ULID | Primary Key |
+| `company_id` | ULID | Foreign Key (`companies.id`), Indexed |
+| `order_id` | ULID | Foreign Key (`orders.id`) |
+| `tracking_number` | ULID / String | Unique, Unguessable for public tracking portal |
+| `weight_kg` | Decimal(6,2) | |
+| `dropoff_address` | Text | Snapshotted from customer profile to freeze history |
+| `dropoff_location`| Geometry(Point) | PostGIS Lat/Lng snapshot |
+| `status` | Enum | 'pending', 'at_hub', 'linehaul', 'out_for_delivery', 'delivered', 'failed' |
+| `origin_hub_id` | ULID | Foreign Key (`locations.id`) |
+| `current_hub_id`| ULID | Foreign Key (`locations.id`), Nullable |
+| `route_id` | ULID | Foreign Key (`routes.id`), Nullable |
+| `driver_id` | ULID | Foreign Key (`users.id`), Nullable |
+
+### 10. `routes`
+Last-mile daily assignment for drivers.
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | ULID | Primary Key |
+| `company_id` | ULID | Foreign Key (`companies.id`) |
+| `driver_id` | ULID | Foreign Key (`users.id`) |
+| `hub_id` | ULID | Foreign Key (`locations.id`) |
+| `date` | Date | |
+| `status` | Enum | 'draft', 'optimized', 'in_progress', 'completed' |
+| `cash_to_remit` | Decimal(10,2) | Expected COD total for the driver to hand over |
+
+### 11. `route_stops`
+Sequenced stops within a Route.
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | ULID | Primary Key |
+| `route_id` | ULID | Foreign Key (`routes.id`) |
+| `delivery_id` | ULID | Foreign Key (`deliveries.id`) |
+| `sequence_number` | Integer | Order of stops (1, 2, 3...) |
+| `eta` | Timestamp | |
+| `status` | Enum | 'pending', 'arrived', 'completed', 'skipped' |
+
+---
+
+## 📡 Domain 5: Tracking & Telemetry
+
+### 12. `tracking_logs`
+Chronological history for the Customer Portal timeline.
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | ULID | Primary Key |
+| `delivery_id` | ULID | Foreign Key (`deliveries.id`) |
+| `status_code` | String | e.g., 'OUT_FOR_DELIVERY' |
+| `description` | String | |
+| `location_id` | ULID | Foreign Key (`locations.id`), Nullable |
+| `created_at` | Timestamp | |
+
+### 13. `driver_telemetry`
+High-frequency GPS stream (Database partitioning by month strongly recommended).
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | ULID | Primary Key |
+| `driver_id` | ULID | Foreign Key (`users.id`) |
+| `location` | Geometry(Point) | PostGIS |
+| `speed_kmh` | Integer | |
+| `recorded_at` | Timestamp | Time captured by the PWA offline, NOT server insert time |
+
+### 14. `proof_of_deliveries`
+Geofenced validation of successful drops.
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | ULID | Primary Key |
+| `delivery_id` | ULID | Foreign Key (`deliveries.id`) |
+| `driver_id` | ULID | Foreign Key (`users.id`) |
+| `receiver_name` | String | |
+| `signature_url` | String | S3 Link |
+| `photo_url` | String | S3 Link |
+| `captured_location`| Geometry(Point) | PostGIS (Anti-fraud verification) |
+
+---
+
+## 📦 Domain 6: Middle-Mile Consolidation
+
+### 15. `sacks`
+Bags/Totes used to securely group packages between Hubs.
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | ULID | Primary Key |
+| `company_id` | ULID | Foreign Key (`companies.id`) |
+| `barcode` | String | Unique |
+| `origin_hub_id` | ULID | Foreign Key (`locations.id`) |
+| `dest_hub_id` | ULID | Foreign Key (`locations.id`) |
+| `status` | Enum | 'open', 'sealed', 'in_transit', 'received' |
+
+### 16. `sack_items`
+Pivot table linking deliveries to sacks.
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | ULID | Primary Key |
+| `sack_id` | ULID | Foreign Key (`sacks.id`) |
+| `delivery_id` | ULID | Foreign Key (`deliveries.id`) |
+
+### 17. `manifests`
+Middle-mile transit between Hubs.
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | ULID | Primary Key |
+| `company_id` | ULID | Foreign Key (`companies.id`) |
+| `manifest_code` | String | Unique |
+| `departure_hub_id`| ULID | Foreign Key (`locations.id`) |
+| `arrival_hub_id` | ULID | Foreign Key (`locations.id`) |
+| `driver_id` | ULID | Foreign Key (`users.id`) |
+| `status` | Enum | 'loading', 'in_transit', 'arrived', 'unloaded' |
+
+---
+
+## 🛑 Domain 7: Exceptions, SLAs & Reverse Logistics
+
+### 18. `delivery_issues`
+Roadblocks and exceptions reported by drivers while on route.
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | ULID | Primary Key |
+| `company_id` | ULID | Foreign Key (`companies.id`) |
+| `delivery_id` | ULID | Foreign Key (`deliveries.id`) |
+| `driver_id` | ULID | Foreign Key (`users.id`) |
+| `issue_type` | Enum | 'severe_weather', 'vehicle_breakdown', 'customer_unreachable', 'package_damaged' |
+| `photo_url` | String | S3 Link, Nullable |
+| `status` | Enum | 'open', 'investigating', 'resolved' |
+
+### 19. `delivery_time_windows`
+Strict SLAs for routing algorithms.
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | ULID | Primary Key |
+| `delivery_id` | ULID | Foreign Key (`deliveries.id`) |
+| `requested_date` | Date | |
+| `start_time` | Time | |
+| `end_time` | Time | |
+
+### 20. `return_requests` (RTS)
+Handling failed deliveries returning to the merchant/hub.
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | ULID | Primary Key |
+| `company_id` | ULID | Foreign Key (`companies.id`) |
+| `original_delivery_id`| ULID | Foreign Key (`deliveries.id`) |
+| `new_tracking_num`| ULID | Unique |
+| `reason` | Enum | 'refused', 'address_invalid', 'max_attempts_reached' |
+| `status` | Enum | 'pending_pickup', 'returning', 'returned' |
+| `return_fee` | Decimal(10,2) | |
+
+---
+
+## ⭐ Domain 8: Fleet Ops, Analytics & Zones
+
+### 21. `zones`
+Service areas mapped to specific hubs.
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | ULID | Primary Key |
+| `company_id` | ULID | Foreign Key (`companies.id`) |
+| `location_id` | ULID | Foreign Key (`locations.id`) |
+| `name` | String | e.g., 'Daun Penh North' |
+| `boundaries` | Geometry(Polygon)| PostGIS |
+
+### 22. `vehicle_inspections`
+Pre-trip and post-trip safety checks.
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | ULID | Primary Key |
+| `company_id` | ULID | Foreign Key (`companies.id`) |
+| `vehicle_id` | ULID | Foreign Key (`vehicles.id`) |
+| `driver_id` | ULID | Foreign Key (`users.id`) |
+| `is_safe_to_drive`| Boolean | Suspends vehicle routing if false |
+| `reported_issues` | JSONB | e.g., {"tires": "low"} |
+
+### 23. `driver_metrics` & `reviews`
+Consolidated performance data.
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | ULID | Primary Key |
+| `company_id` | ULID | Foreign Key (`companies.id`) |
+| `driver_id` | ULID | Foreign Key (`users.id`) |
+| `delivery_id` | ULID | Foreign Key (`deliveries.id`), Nullable |
+| `rating` | Integer | 1 to 5 |
+| `comment` | Text | Nullable |
+
+---
+
+## 💬 Domain 9: Notifications, Telegram & Broadcasting
+
+### 24. `telegram_configs`
+Multi-tenant Telegram integration. Each company can link their own bot and dispatch group.
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | ULID | Primary Key |
+| `company_id` | ULID | Foreign Key (`companies.id`), Unique |
+| `bot_token` | String | Encrypted in DB |
+| `dispatch_group_id`| String | The Chat ID for the Admin/Dispatcher group |
+| `default_topic_id` | String | Forum topic ID (if using Telegram Supergroups) |
+| `is_active` | Boolean | |
+
+### 25. `push_subscriptions`
+Web Push API (VAPID) or FCM tokens for the Driver PWA Service Worker.
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | ULID | Primary Key |
+| `user_id` | ULID | Foreign Key (`users.id`) |
+| `endpoint` | Text | The browser/device push endpoint |
+| `public_key` | String | p256dh key |
+| `auth_token` | String | auth key |
+| `device_type` | Enum | 'android', 'ios', 'desktop' |
+
+### 26. `broadcasts`
+Admin broadcasting management to push messages to groups or specific users.
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | ULID | Primary Key |
+| `company_id` | ULID | Foreign Key (`companies.id`) |
+| `author_id` | ULID | Foreign Key (`users.id`) |
+| `message` | Text | The broadcast content |
+| `channel` | Enum | 'telegram', 'pwa_push', 'both' |
+| `target_audience`| Enum | 'all_drivers', 'active_drivers', 'specific_hub', 'specific_users' |
+| `target_hub_id` | ULID | Foreign Key (`locations.id`), Nullable |
+| `status` | Enum | 'draft', 'sending', 'completed', 'failed' |
+| `success_count` | Integer | Number of successful deliveries |
+
+### 27. `broadcast_recipients`
+Pivot table to track exact delivery status when targeting specific users.
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | ULID | Primary Key |
+| `broadcast_id` | ULID | Foreign Key (`broadcasts.id`) |
+| `user_id` | ULID | Foreign Key (`users.id`) |
+| `status` | Enum | 'pending', 'delivered', 'failed', 'read' |
+| `error_message` | String | Nullable |
+
+### 28. `notifications` (Laravel Default)
+Polymorphic table storing in-app notification history.
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | UUID | Primary Key (Laravel default is UUID for this table) |
+| `type` | String | The Notification Class Name |
+| `notifiable_type`| String | e.g., 'App\Models\User' |
+| `notifiable_id` | ULID | Foreign Key (Polymorphic) |
+| `data` | JSONB | Payload (title, message, action_url) |
+| `read_at` | Timestamp | Nullable |
+| `created_at` | Timestamp | |

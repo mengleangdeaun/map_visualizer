@@ -1,0 +1,287 @@
+# Delivery Management System - Master Database Schema
+
+This schema is optimized for **PostgreSQL** and **Laravel Eloquent**, utilizing PostGIS for spatial data and strict decimal typing for financial accuracy.
+
+---
+
+## Domain 1: Users, Roles & Fleet Management
+
+### 1. `users`
+Core identity table for all actors in the system.
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | BigInt | Primary Key, Auto-increment |
+| `role` | Enum | 'admin', 'dispatcher', 'hub_operator', 'driver' (Indexed) |
+| `name` | String | |
+| `phone` | String | Unique, Indexed (Primary login for drivers) |
+| `email` | String | Nullable |
+| `password` | String | Hashed |
+| `base_location_id` | BigInt | Foreign Key (`locations.id`), Nullable |
+| `status` | Enum | 'active', 'suspended', 'inactive' |
+| `timestamps` | Timestamp | `created_at`, `updated_at`, `deleted_at` |
+
+### 2. `vehicles`
+Physical assets assigned to drivers.
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | BigInt | Primary Key |
+| `driver_id` | BigInt | Foreign Key (`users.id`), Unique (One-to-One) |
+| `type` | Enum | 'motorcycle', 'tuktuk', 'minivan', 'box_truck' |
+| `plate_number` | String | Unique |
+| `max_weight_kg` | Decimal(8,2) | Limits routing assignments |
+| `max_volume_cbm`| Decimal(8,2) | Limits routing assignments |
+| `status` | Enum | 'active', 'maintenance', 'retired' |
+
+### 3. `driver_metrics`
+Rolling performance data for dispatching logic.
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `driver_id` | BigInt | Primary/Foreign Key (`users.id`) |
+| `current_rating`| Decimal(3,2) | Rolling average (last 100 deliveries) |
+| `total_deliveries`| Integer | Lifetime count |
+| `completion_rate`| Decimal(5,2) | Percentage |
+| `on_time_percent`| Decimal(5,2) | Percentage |
+| `total_cod_lifetime`| Decimal(15,2) | Lifetime COD collected |
+
+---
+
+## Domain 2: The Physical Network
+
+### 4. `locations`
+Hubs, sorting centers, and local nodes.
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | BigInt | Primary Key |
+| `code` | String | Unique (e.g., 'HUB-PNH-01') |
+| `name` | String | |
+| `type` | Enum | 'main_sort', 'regional_hub', 'local_node' |
+| `address` | Text | |
+| `lat` | Decimal(10,8) | |
+| `lng` | Decimal(11,8) | |
+| `geofence` | Geometry(Polygon)| PostGIS |
+
+### 5. `zones`
+Service areas mapped to specific hubs.
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | BigInt | Primary Key |
+| `location_id` | BigInt | Foreign Key (`locations.id`) |
+| `name` | String | e.g., 'Daun Penh North' |
+| `boundaries` | Geometry(Polygon)| PostGIS |
+
+---
+
+## Domain 3: The Core Payload
+
+### 6. `orders`
+The central financial and logistical source of truth.
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | BigInt | Primary Key |
+| `tracking_number` | UUID | Unique, Indexed (Public link) |
+| `merchant_id` | BigInt | Foreign Key, Nullable |
+| `base_currency` | String | Default: 'USD' |
+| `exchange_rate` | Decimal(8,2) | Locked at creation |
+| `total_amount_usd`| Decimal(10,2) | |
+| `total_amount_khr`| Decimal(12,2) | |
+| `amount_due_usd` | Decimal(10,2) | COD amount to collect |
+| `payment_method` | Enum | 'cash', 'khqr', 'postpaid' |
+| `payment_status` | Enum | 'unpaid', 'paid' |
+| `weight_kg` | Decimal(6,2) | |
+| `volume_cbm` | Decimal(6,2) | |
+| `recipient_name` | String | |
+| `recipient_phone` | String | Indexed |
+| `dropoff_address` | Text | |
+| `dropoff_location`| Geometry(Point) | PostGIS Lat/Lng |
+| `status` | Enum | 'pending', 'at_hub', 'linehaul', 'out_for_delivery', 'delivered', 'failed' |
+| `origin_hub_id` | BigInt | Foreign Key (`locations.id`) |
+| `dest_hub_id` | BigInt | Foreign Key (`locations.id`) |
+| `current_hub_id` | BigInt | Foreign Key (`locations.id`), Nullable |
+| `route_id` | BigInt | Foreign Key (`routes.id`), Nullable |
+| `driver_id` | BigInt | Foreign Key (`users.id`), Nullable |
+| `est_delivery_time`| Timestamp | |
+| `actual_delivery` | Timestamp | Nullable |
+
+---
+
+## Domain 4: Operations & Movement
+
+### 7. `manifests`
+Middle-mile transit between Hubs.
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | BigInt | Primary Key |
+| `manifest_code` | String | Unique |
+| `departure_hub_id`| BigInt | Foreign Key (`locations.id`) |
+| `arrival_hub_id` | BigInt | Foreign Key (`locations.id`) |
+| `driver_id` | BigInt | Foreign Key (`users.id`) |
+| `status` | Enum | 'loading', 'in_transit', 'arrived', 'unloaded' |
+| `timestamps` | Timestamp | `dispatched_at`, `arrived_at` |
+
+### 8. `routes`
+Last-mile daily assignment for drivers.
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | BigInt | Primary Key |
+| `date` | Date | |
+| `driver_id` | BigInt | Foreign Key (`users.id`) |
+| `hub_id` | BigInt | Foreign Key (`locations.id`) |
+| `status` | Enum | 'draft', 'optimized', 'in_progress', 'completed' |
+| `total_distance_km`| Decimal(6,2) | |
+| `cash_to_remit_usd`| Decimal(10,2) | Expected COD |
+| `remittance_status`| Enum | 'pending', 'settled' |
+
+### 9. `route_stops`
+Sequenced stops within a Route.
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | BigInt | Primary Key |
+| `route_id` | BigInt | Foreign Key (`routes.id`) |
+| `order_id` | BigInt | Foreign Key (`orders.id`) |
+| `sequence_number` | Integer | Order of stops (1, 2, 3...) |
+| `eta` | Timestamp | |
+| `status` | Enum | 'pending', 'arrived', 'completed', 'skipped' |
+
+---
+
+## Domain 5: Tracking, Telemetry & Exceptions
+
+### 10. `tracking_logs`
+Chronological history of an order.
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | BigInt | Primary Key |
+| `order_id` | BigInt | Foreign Key (`orders.id`) |
+| `status_update` | String | e.g., 'Arrived at Destination Hub' |
+| `scanned_by_user` | BigInt | Foreign Key (`users.id`) |
+| `location_id` | BigInt | Foreign Key (`locations.id`), Nullable |
+| `lat`, `lng` | Decimal | Nullable (If scanned outside hub) |
+| `note` | String | Nullable |
+| `created_at` | Timestamp | |
+
+### 11. `driver_telemetry`
+High-frequency GPS stream (Partition by month recommended).
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | BigInt | Primary Key |
+| `driver_id` | BigInt | Foreign Key (`users.id`) |
+| `route_id` | BigInt | Foreign Key (`routes.id`) |
+| `location` | Geometry(Point) | PostGIS |
+| `speed_kmh` | Integer | |
+| `heading` | Integer | 0-360 degrees (for Mapcn rotation) |
+| `created_at` | Timestamp | |
+
+### 12. `delivery_issues`
+Roadblocks and exceptions reported by drivers while on route.
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | BigInt | Primary Key |
+| `order_id` | BigInt | Foreign Key (`orders.id`) |
+| `driver_id` | BigInt | Foreign Key (`users.id`) |
+| `issue_type` | Enum | 'severe_weather', 'road_closed', 'vehicle_breakdown', 'traffic_accident', 'system_app_failure', 'customer_unreachable', 'customer_requested_reschedule', 'access_denied', 'safety_hazard', 'package_missing', 'package_damaged' |
+| `photo_url` | String | S3 Link, Nullable |
+| `status` | Enum | 'open', 'investigating', 'resolved' |
+| `timestamps` | Timestamp | `created_at`, `updated_at` |
+
+### 13. `reviews`
+Post-delivery customer ratings.
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | BigInt | Primary Key |
+| `order_id` | BigInt | Foreign Key (`orders.id`) |
+| `driver_id` | BigInt | Foreign Key (`users.id`) |
+| `rating` | Integer | 1 to 5 |
+| `comment` | Text | Nullable |
+| `is_exempt` | Boolean | Default: False (Admin override) |
+| `created_at` | Timestamp | |
+
+---
+
+## Domain 6: Middle-Mile Consolidation
+
+### 14. `sacks`
+Bags/Totes used to group packages between Hubs.
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | BigInt | Primary Key |
+| `barcode` | String | Unique |
+| `origin_hub_id` | BigInt | Foreign Key (`locations.id`) |
+| `dest_hub_id` | BigInt | Foreign Key (`locations.id`) |
+| `manifest_id` | BigInt | Foreign Key (`manifests.id`), Nullable |
+| `seal_number` | String | Security tie number |
+| `total_weight_kg` | Decimal(8,2) | |
+| `status` | Enum | 'open', 'sealed', 'in_transit', 'received', 'unpacked' |
+
+### 15. `sack_items`
+Pivot table linking orders to sacks.
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | BigInt | Primary Key |
+| `sack_id` | BigInt | Foreign Key (`sacks.id`) |
+| `order_id` | BigInt | Foreign Key (`orders.id`) |
+| `added_by_user_id`| BigInt | Foreign Key (`users.id`) |
+| `scanned_at` | Timestamp | |
+
+---
+
+## Domain 7: Advanced Last-Mile & Verification
+
+### 16. `delivery_time_windows`
+Strict SLAs for routing algorithms.
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | BigInt | Primary Key |
+| `order_id` | BigInt | Foreign Key (`orders.id`) |
+| `requested_date` | Date | |
+| `start_time` | Time | |
+| `end_time` | Time | |
+| `is_strict` | Boolean | Forces routing priority if true |
+
+### 17. `proof_of_deliveries`
+Geofenced validation of successful drops.
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | BigInt | Primary Key |
+| `order_id` | BigInt | Foreign Key (`orders.id`) |
+| `driver_id` | BigInt | Foreign Key (`users.id`) |
+| `attempt_number` | Integer | |
+| `status` | Enum | 'success', 'failed_attempt' |
+| `receiver_name` | String | e.g., 'Security Guard Sok' |
+| `signature_url` | String | S3 Link |
+| `photo_url` | String | S3 Link |
+| `captured_location`| Geometry(Point) | PostGIS (Anti-fraud verification) |
+| `created_at` | Timestamp | |
+
+---
+
+## Domain 8: Reverse Logistics
+
+### 18. `return_requests`
+Handling failed deliveries and RTS (Return to Sender).
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | BigInt | Primary Key |
+| `original_order_id`| BigInt | Foreign Key (`orders.id`) |
+| `new_tracking_num` | UUID | Unique |
+| `reason` | Enum | 'refused_change_of_mind', 'refused_cannot_pay_cod', 'refused_wrong_item', 'max_attempts_reached', 'address_invalid', 'recipient_unknown', 'damaged_in_transit', 'lost_and_found', 'prohibited_goods', 'merchant_recall' |
+| `status` | Enum | 'pending_pickup', 'returning', 'at_hub', 'returned' |
+| `merchant_id` | BigInt | Foreign Key, Nullable |
+| `return_fee_usd` | Decimal(8,2) | |
+
+---
+
+## Domain 9: Fleet Operations
+
+### 19. `vehicle_inspections`
+Pre-trip and post-trip safety checks.
+| Column | Type | Constraints / Notes |
+| :--- | :--- | :--- |
+| `id` | BigInt | Primary Key |
+| `vehicle_id` | BigInt | Foreign Key (`vehicles.id`) |
+| `driver_id` | BigInt | Foreign Key (`users.id`) |
+| `hub_id` | BigInt | Foreign Key (`locations.id`) |
+| `odometer_reading`| Integer | |
+| `fuel_level` | Integer | Percentage |
+| `is_safe_to_drive` | Boolean | Suspends vehicle routing if false |
+| `reported_issues` | JSONB | e.g., {"tires": "low"} |
+| `created_at` | Timestamp | |

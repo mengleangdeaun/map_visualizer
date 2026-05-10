@@ -1,0 +1,14 @@
+{
+    "admin_domain": "管理域",
+    "dashboard": "仪表盘",
+    "sales": "销售",
+    "system_domain": "系统域",
+    "system_management": "系统管理",
+    "demo_maps": "演示地图",
+    "static_route": "静态路由",
+    "interactive_map": "交互式地图",
+    "map_marker": "地图标记",
+    "delivery_tracking": "送货追踪",
+    "available_driver": "可用司机",
+    "realtime_tracking": "实时追踪"
+}
