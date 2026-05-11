@@ -15,6 +15,9 @@ import router from './router/index';
 // TanStack Query
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
+// Components
+import { Toaster } from '@/components/ui/sonner';
+
 const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
@@ -29,6 +32,7 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
         <Suspense>
             <QueryClientProvider client={queryClient}>
                 <RouterProvider router={router} />
+                <Toaster position="top-right" richColors />
             </QueryClientProvider>
         </Suspense>
     </React.StrictMode>

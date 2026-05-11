@@ -1,1 +1,27 @@
-{}
+{
+    "company_management": "Company Management",
+    "manage_tenants_and_organizations": "Manage tenants and organizations",
+    "add_company": "Add Company",
+    "all_companies": "All Companies",
+    "company_name": "Company Name",
+    "tax_id": "Tax ID",
+    "currency": "Currency",
+    "created_at": "Created At",
+    "actions": "Actions",
+    "loading": "Loading",
+    "no_companies_found": "No companies found",
+    "edit": "Edit",
+    "delete": "Delete",
+    "add_new_company": "Add New Company",
+    "enter_the_details_of_the_new_organization": "Enter the details of the new organization to register them in the system.",
+    "enter_company_name": "Enter company name",
+    "enter_tax_id": "Enter tax ID",
+    "base_currency": "Base Currency",
+    "telegram_id": "Telegram ID",
+    "cancel": "Cancel",
+    "save_company": "Save Company",
+    "saving": "Saving",
+    "field_required": "This field is required",
+    "company_created_successfully": "Company created successfully",
+    "error_creating_company": "Error creating company"
+}

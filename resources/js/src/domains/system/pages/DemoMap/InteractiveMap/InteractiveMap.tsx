@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 import { UserLocationMarker } from '@/components/shared/map/UserLocationMarker';
 
 const StartMarkerIcon = () => (
-    <div className="size-5 rounded-full bg-green-500 border-2 border-white shadow-md flex items-center justify-center">
+    <div className="size-5 rounded-full bg-emerald-500 border-2 border-white shadow-md flex items-center justify-center">
         <MapPin className="size-3 text-white" />
     </div>
 );
@@ -115,12 +115,13 @@ const DemoMap = () => {
     };
 
     return (
-        <div className="flex flex-col h-[calc(100vh-100px)] gap-4">
+        <div className="flex flex-col h-[calc(100vh-100px)]">
             <PageHeader title="Interactive Route Planner" subtitle="Set your start and end points by clicking on the map." />
 
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6  flex-1 min-h-0">
-                <div className="lg:col-span-3 h-full relative rounded-xl border bg-card shadow-sm overflow-hidden">
-                    <Map viewport={viewport} onViewportChange={setViewport} onClick={handleMapClick} className="h-full w-full" language="km">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 flex-1 min-h-0">
+                <div className="lg:col-span-3 py-1">
+                    <div className="h-full relative rounded-xl border bg-card shadow-sm overflow-hidden">
+                        <Map viewport={viewport} onViewportChange={setViewport} onClick={handleMapClick} className="h-full w-full" language="km">
                         <MapControls position="top-right" showLocate onLocate={(pos) => setUserLocation([pos.longitude, pos.latitude])} />
 
                         {/* Start Marker */}
@@ -151,9 +152,9 @@ const DemoMap = () => {
                                 <MarkerContent>
                                     <EndMarkerIcon />
                                     <MarkerLabel position="top" className="mb-3">
-                                        <div className="flex items-center gap-1.5 bg-background/90 backdrop-blur-md px-2.5 py-1 rounded-full border border-rose-500/20 shadow-[0_8px_30px_rgb(0,0,0,0.12)] animate-in fade-in slide-in-from-bottom-2 duration-300">
-                                            <span className="text-[10px] font-semibold text-rose-700 dark:text-rose-400">DESTINATION</span>
-                                        </div>
+                                    <div className="flex items-center gap-1.5 bg-background/90 backdrop-blur-md px-2.5 py-1 rounded-full border border-red-500/20 shadow-[0_8px_30px_rgb(0,0,0,0.12)] animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                        <span className="text-[10px] font-semibold text-red-700 dark:text-red-400">DESTINATION</span>
+                                    </div>
                                     </MarkerLabel>
                                 </MarkerContent>
                                 <MarkerPopup>
@@ -201,7 +202,8 @@ const DemoMap = () => {
                     {isLoading && <MapLoading message="Calculating best route..." />}
                 </div>
 
-                <div className="lg:col-span-1 space-y-4 overflow-y-auto p-1 pt-0">
+                </div>
+                <div className="lg:col-span-1 space-y-4 overflow-y-auto p-1 -mx-1">
                     <Card>
                         <CardHeader>
                             <div className="flex items-center justify-between">
@@ -221,11 +223,11 @@ const DemoMap = () => {
                             </div>
 
                             <Tabs value={selectionMode} onValueChange={(v) => setSelectionMode(v as any)} className="w-full">
-                                <TabsList className="grid w-full grid-cols-2 h-10 p-1 bg-background/50">
-                                    <TabsTrigger value="start" className="gap-2 text-xs font-bold data-[state=active]:bg-emerald-500 data-[state=active]:text-white transition-all">
+                                <TabsList className="grid w-full grid-cols-2 h-10 p-1 bg-muted">
+                                    <TabsTrigger value="start" className="gap-2 text-xs font-bold data-[state=active]:!bg-emerald-500 data-[state=active]:!text-white data-[state=active]:!border-transparent data-[state=active]:shadow-sm transition-all">
                                         <div className="size-1.5 rounded-full bg-current" /> Pickup
                                     </TabsTrigger>
-                                    <TabsTrigger value="end" className="gap-2 text-xs font-bold data-[state=active]:bg-rose-500 data-[state=active]:text-white transition-all">
+                                    <TabsTrigger value="end" className="gap-2 text-xs font-bold data-[state=active]:!bg-red-500 data-[state=active]:!text-white data-[state=active]:!border-transparent data-[state=active]:shadow-sm transition-all">
                                         <Flag className="size-3" /> Dropoff
                                     </TabsTrigger>
                                 </TabsList>
@@ -234,7 +236,7 @@ const DemoMap = () => {
                         <CardContent className="space-y-0 pt-0">
                             <div className="space-y-8 relative">
                                 {/* Vertical Path Line */}
-                                <div className="absolute left-[11px] top-3 bottom-3 w-0.5 bg-gradient-to-b from-emerald-500 via-slate-200 dark:via-slate-800 to-rose-500" />
+                                <div className="absolute left-[11px] top-3 bottom-3 w-0.5 bg-gradient-to-b from-emerald-500 via-slate-200 dark:via-slate-800 to-red-500" />
 
                                 <div className="relative !m-0 pl-9">
                                     <div
@@ -279,15 +281,15 @@ const DemoMap = () => {
                                     <div
                                         className={cn(
                                             'absolute left-0 top-1 size-6 rounded-full bg-white border-4 flex items-center justify-center shadow-lg z-10 transition-colors duration-300',
-                                            end ? 'border-rose-500' : 'border-slate-200 dark:border-slate-800',
+                                            end ? 'border-red-500' : 'border-slate-200 dark:border-slate-800',
                                         )}
                                     >
-                                        <Flag className={cn('size-3', end ? 'text-rose-500 fill-rose-500' : 'text-slate-300')} />
+                                        <Flag className={cn('size-3', end ? 'text-red-500 fill-red-500' : 'text-slate-300')} />
                                     </div>
                                     <div className="space-y-2">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
-                                                <Flag className={cn('size-2.5', end ? 'text-rose-500 fill-rose-500' : 'text-slate-300')} />
+                                                <Flag className={cn('size-2.5', end ? 'text-red-500 fill-red-500' : 'text-slate-300')} />
                                                 <span className="text-[10px] font-black uppercase tracking-[0.15em] text-foreground/40">Destination</span>
                                             </div>
                                             {end && (
@@ -295,7 +297,7 @@ const DemoMap = () => {
                                                     variant="ghost"
                                                     size="icon-xs"
                                                     onClick={() => navigator.clipboard.writeText(`${end.lng}, ${end.lat}`)}
-                                                    className="size-6 text-muted-foreground hover:text-rose-500 hover:bg-rose-50 transition-all"
+                                                    className="size-6 text-muted-foreground hover:text-red-500 hover:bg-red-50 transition-all"
                                                 >
                                                     <Copy className="size-3" />
                                                 </Button>
@@ -304,7 +306,7 @@ const DemoMap = () => {
                                         <div
                                             className={cn(
                                                 'group relative flex flex-col gap-1 p-3.5 rounded-xl border-2 transition-all duration-300',
-                                                end ? 'bg-rose-50/50 dark:bg-rose-500/5 border-rose-500/20 ' : 'bg-muted/50 border-dashed border-slate-200 dark:border-slate-800 opacity-60',
+                                                end ? 'bg-red-50/50 dark:bg-red-500/5 border-red-500/20 ' : 'bg-muted/50 border-dashed border-slate-200 dark:border-slate-800 opacity-60',
                                             )}
                                         >
                                             <span className="text-[11px] font-mono font-bold tracking-tighter text-foreground/80">

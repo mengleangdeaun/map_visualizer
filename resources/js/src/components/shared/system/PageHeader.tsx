@@ -10,7 +10,7 @@ interface PageHeaderProps {
 
 export const PageHeader = ({ title, subtitle, children, className }: PageHeaderProps) => {
     return (
-        <div className={cn("flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4", className)}>
+        <div className={cn("flex flex-col mb-4 sm:flex-row justify-between items-start sm:items-center gap-4", className)}>
             <div>
                 <h1 className="text-2xl font-bold text-primary tracking-tight">{title}</h1>
                 {subtitle && <p className="text-muted-foreground">{subtitle}</p>}

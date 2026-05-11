@@ -23,6 +23,7 @@ import { Badge } from '@/components/ui/badge';
 
 import { useQuery } from '@tanstack/react-query';
 import { MapLoading } from '@/components/shared/map/MapLoading';
+import { Card } from '@/components/ui/card';
 
 const PHNOM_PENH_CENTER: [number, number] = [104.9282, 11.5621];
 
@@ -214,152 +215,152 @@ const AvailableDriver = () => {
     };
 
     return (
-        <div className="flex flex-col h-[calc(100vh-100px)] gap-4">
+        <div className="flex flex-col h-[calc(100vh-100px)]">
             <AvailableDriverHeader 
                 driverCount={filteredDrivers.length} 
                 status={`Searching within ${radius}km of current location`} 
             />
 
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 flex-1 min-h-0">
-                <div className="lg:col-span-3 h-full relative rounded-xl border bg-card shadow-sm overflow-hidden">
-                    <Map
-                        viewport={viewport}
-                        onViewportChange={setViewport}
-                        onClick={handleMapClick}
-                        className="h-full w-full"
-                        language="km"
-                    >
-                        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[100] w-full max-w-md px-4">
-                            <MapSearch 
-                                onSelect={handleSearchSelect} 
-                                className="w-full"
+                <div className="lg:col-span-3 py-1">
+                    <Card className="h-full p-0 relative overflow-hidden">
+                        <Map
+                            viewport={viewport}
+                            onViewportChange={setViewport}
+                            onClick={handleMapClick}
+                            className="h-full w-full"
+                            language="km"
+                        >
+                            <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[100] w-full max-w-md px-4">
+                                <MapSearch
+                                    onSelect={handleSearchSelect}
+                                    className="w-full"
+                                />
+                            </div>
+
+                            <MapControls
+                                position="top-right"
+                                showZoom
+                                showCompass
+                                showLocate
+                                showRefresh
+                                onRefresh={refreshDrivers}
+                                isRefreshing={isFetching}
+                                onLocate={(pos) => {
+                                    const coords: [number, number] = [pos.longitude, pos.latitude];
+                                    setCenter(coords);
+                                    setUserLocation(coords);
+                                }}
                             />
-                        </div>
 
-                        <MapControls 
-                            position="top-right" 
-                            showZoom
-                            showCompass
-                            showLocate 
-                            showRefresh
-                            onRefresh={refreshDrivers}
-                            isRefreshing={isFetching}
-                            onLocate={(pos) => {
-                                const coords: [number, number] = [pos.longitude, pos.latitude];
-                                setCenter(coords);
-                                setUserLocation(coords);
-                            }}
-                        />
+                            <UserLocationMarker coordinates={userLocation} />
 
-                        <UserLocationMarker coordinates={userLocation} />
+                            {/* Search Range Circle */}
+                            <MapCircle
+                                center={center}
+                                radius={radius}
+                                color="#10b981"
+                                opacity={0.1}
+                                strokeColor="#10b981"
+                                strokeWidth={2}
+                                strokeOpacity={0.3}
+                            />
 
-                        {/* Search Range Circle */}
-                        <MapCircle 
-                            center={center} 
-                            radius={radius} 
-                            color="#3b82f6" 
-                            opacity={0.1}
-                            strokeColor="#3b82f6"
-                            strokeWidth={2}
-                            strokeOpacity={0.3}
-                        />
-
-                        {/* Center Marker */}
-                        <MapMarker longitude={center[0]} latitude={center[1]} draggable onDragEnd={(pos) => setCenter([pos.lng, pos.lat])}>
-                            <MarkerContent>
-                                <div className="relative">
-                                    <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping scale-150" />
-                                    <div className="size-8 rounded-full bg-primary border-4 border-white shadow-xl flex items-center justify-center text-white">
-                                        <MapPin className="size-4" />
-                                    </div>
-                                    <MarkerLabel position="top" className="bg-primary text-white text-[10px] px-2 py-0.5 rounded-full ring-1 ring-primary ring-offset-2 ring-offset-background font-bold shadow-lg">SEARCH CENTER</MarkerLabel>
-                                </div>
-                            </MarkerContent>
-                        </MapMarker>
-
-                        {/* Driver Markers */}
-                        {filteredDrivers.map((driver) => (
-                            <MapMarker 
-                                key={driver.id} 
-                                longitude={driver.coordinates[0]} 
-                                latitude={driver.coordinates[1]}
-                                onClick={() => setSelectedDriver(driver)}
-                            >
+                            {/* Center Marker */}
+                            <MapMarker longitude={center[0]} latitude={center[1]} draggable onDragEnd={(pos) => setCenter([pos.lng, pos.lat])}>
                                 <MarkerContent>
-                                    <div className={cn(
-                                        "relative group cursor-pointer transition-transform hover:scale-110",
-                                        selectedDriver?.id === driver.id && "scale-110 z-10"
-                                    )}>
-                                        <div className={cn(
-                                            "size-8 rounded-full bg-white border-2 shadow-md flex items-center justify-center transition-colors",
-                                            driver.status === 'online' ? "border-emerald-500 text-emerald-600" : 
-                                            driver.status === 'busy' ? "border-amber-500 text-amber-600" :
-                                            "border-slate-400 text-slate-500",
-                                            selectedDriver?.id === driver.id && "bg-primary border-primary text-white"
-                                        )}>
-                                            {driver.vehicleType === 'car' ? <Car className="size-4" /> : <Bike className="size-4" />}
+                                    <div className="relative">
+                                        <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping scale-150" />
+                                        <div className="size-8 rounded-full bg-primary border-4 border-white shadow-xl flex items-center justify-center text-white">
+                                            <MapPin className="size-4" />
                                         </div>
-                                        {selectedDriver?.id === driver.id && (
-                                            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 whitespace-nowrap bg-background border rounded px-1.5 py-0.5 text-[8px] font-bold shadow-sm">
-                                                {driver.name}
-                                            </div>
-                                        )}
+                                        <MarkerLabel position="top" className="bg-primary text-white text-[10px] px-2 py-0.5 rounded-full ring-1 ring-primary ring-offset-2 ring-offset-background font-bold shadow-lg">SEARCH CENTER</MarkerLabel>
                                     </div>
                                 </MarkerContent>
-                                {selectedDriver?.id === driver.id && (
-                                    <MarkerPopup closeButton onClose={() => setSelectedDriver(null)}>
-                                        <div className="space-y-2 min-w-[150px]">
-                                            <div className="flex items-center gap-2">
-                                                <div className="size-8 rounded-full bg-muted border overflow-hidden">
-                                                    <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${driver.name}`} alt={driver.name} />
-                                                </div>
-                                                <div>
-                                                    <h4 className="text-xs font-bold">{driver.name}</h4>
-                                                    <p className="text-[10px] text-muted-foreground">{driver.vehicleType.toUpperCase()} • {driver.rating} ★</p>
-                                                </div>
+                            </MapMarker>
+
+                            {/* Driver Markers */}
+                            {filteredDrivers.map((driver) => (
+                                <MapMarker
+                                    key={driver.id}
+                                    longitude={driver.coordinates[0]}
+                                    latitude={driver.coordinates[1]}
+                                    onClick={() => setSelectedDriver(driver)}
+                                >
+                                    <MarkerContent>
+                                        <div className={cn(
+                                            "relative group cursor-pointer transition-transform hover:scale-110",
+                                            selectedDriver?.id === driver.id && "scale-110 z-10"
+                                        )}>
+                                            <div className={cn(
+                                                "size-8 rounded-full bg-white border-2 shadow-md flex items-center justify-center transition-colors",
+                                                driver.status === 'online' ? "border-emerald-500 text-emerald-600" :
+                                                driver.status === 'busy' ? "border-amber-500 text-amber-600" :
+                                                "border-slate-400 text-slate-500",
+                                                selectedDriver?.id === driver.id && "bg-primary border-primary text-white"
+                                            )}>
+                                                {driver.vehicleType === 'car' ? <Car className="size-4" /> : <Bike className="size-4" />}
                                             </div>
-                                            <div className="h-px bg-muted" />
-                                            <div className="flex justify-between items-center text-[10px]">
-                                                <span className="text-muted-foreground">Distance:</span>
-                                                <span className="font-bold">{driver.distance.toFixed(2)} km</span>
-                                            </div>
-                                            {driver.status === 'offline' && driver.lastSeen && (
-                                                <div className="flex justify-between items-center text-[10px]">
-                                                    <span className="text-muted-foreground">Last Seen:</span>
-                                                    <span className="font-bold text-amber-600">{driver.lastSeen}</span>
+                                            {selectedDriver?.id === driver.id && (
+                                                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 whitespace-nowrap bg-background border rounded px-1.5 py-0.5 text-[8px] font-bold shadow-sm">
+                                                    {driver.name}
                                                 </div>
                                             )}
-                                            <div className="flex justify-between items-center text-[10px]">
-                                                <span className="text-muted-foreground">Status:</span>
-                                                <Badge variant="outline" className={cn(
-                                                    "text-[8px] h-4 uppercase",
-                                                    driver.status === 'online' ? "text-emerald-600 border-emerald-200 bg-emerald-50" : 
-                                                    driver.status === 'busy' ? "text-amber-600 border-amber-200 bg-amber-50" :
-                                                    "text-slate-600 border-slate-200 bg-slate-50"
-                                                )}>
-                                                    {driver.status}
-                                                </Badge>
-                                            </div>
-                                            <Button size="xs" className="w-full h-7 text-[10px]">Request Ride</Button>
                                         </div>
-                                    </MarkerPopup>
-                                )}
-                            </MapMarker>
-                        ))}
-                    </Map>
+                                    </MarkerContent>
+                                    {selectedDriver?.id === driver.id && (
+                                        <MarkerPopup closeButton onClose={() => setSelectedDriver(null)}>
+                                            <div className="space-y-2 min-w-[150px]">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="size-8 rounded-full bg-muted border overflow-hidden">
+                                                        <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${driver.name}`} alt={driver.name} />
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="text-xs font-bold">{driver.name}</h4>
+                                                        <p className="text-[10px] text-muted-foreground">{driver.vehicleType.toUpperCase()} • {driver.rating} ★</p>
+                                                    </div>
+                                                </div>
+                                                <div className="h-px bg-muted" />
+                                                <div className="flex justify-between items-center text-[10px]">
+                                                    <span className="text-muted-foreground">Distance:</span>
+                                                    <span className="font-bold">{driver.distance.toFixed(2)} km</span>
+                                                </div>
+                                                {driver.status === 'offline' && driver.lastSeen && (
+                                                    <div className="flex justify-between items-center text-[10px]">
+                                                        <span className="text-muted-foreground">Last Seen:</span>
+                                                        <span className="font-bold text-amber-600">{driver.lastSeen}</span>
+                                                    </div>
+                                                )}
+                                                <div className="flex justify-between items-center text-[10px]">
+                                                    <span className="text-muted-foreground">Status:</span>
+                                                    <Badge variant="outline" className={cn(
+                                                        "text-[8px] h-4 uppercase",
+                                                        driver.status === 'online' ? "text-emerald-600 border-emerald-200 bg-emerald-50" :
+                                                        driver.status === 'busy' ? "text-amber-600 border-amber-200 bg-amber-50" :
+                                                        "text-slate-600 border-slate-200 bg-slate-50"
+                                                    )}>
+                                                        {driver.status}
+                                                    </Badge>
+                                                </div>
+                                                <Button size="xs" className="w-full h-7 text-[10px]">Request Ride</Button>
+                                            </div>
+                                        </MarkerPopup>
+                                    )}
+                                </MapMarker>
+                            ))}
+                        </Map>
 
-                    {/* Radius Control Overlay */}
-                    <div className="absolute bottom-6 left-6 z-10 w-64">
-                        <RadiusControl radius={radius} onRadiusChange={setRadius} />
-                    </div>
+                        {/* Radius Control Overlay */}
+                        <div className="absolute bottom-6 left-6 z-10 w-64">
+                            <RadiusControl radius={radius} onRadiusChange={setRadius} />
+                        </div>
 
-
-
-                    {/* Only show the full-page overlay on the VERY first load */}
-                    {isLoading && <MapLoading message="Locating drivers..." />}
+                        {/* Only show the full-page overlay on the VERY first load */}
+                        {isLoading && <MapLoading message="Locating drivers..." />}
+                    </Card>
                 </div>
 
-                <div className="lg:col-span-1 flex flex-col gap-4 overflow-hidden h-full">
+                <div className="lg:col-span-1 flex flex-col gap-4 overflow-y-auto p-1 -mx-1 h-full">
                     <DriverList 
                         drivers={filteredDrivers} 
                         statusFilter={statusFilter}

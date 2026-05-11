@@ -1,5 +1,5 @@
 import { MenuItem } from '@/types/nav';
-import { LayoutGrid, Map as MapIcon } from 'lucide-react';
+import { Building, LayoutGrid, Map as MapIcon, Settings } from 'lucide-react';
 
 export const systemNav: MenuItem[] = [
     {
@@ -7,6 +7,18 @@ export const systemNav: MenuItem[] = [
         title: 'system_management',
         icon: LayoutGrid,
         path: '/system'
+    },
+    {
+        id: 'company_management',
+        title: 'company_management',
+        icon: Building,
+        path: '/system/companies'
+    },
+    {
+        id: 'system_settings',
+        title: 'system_settings',
+        icon: Settings,
+        path: '/system/settings'
     },
     {
         id: 'map',

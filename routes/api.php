@@ -17,3 +17,8 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+// System Domain (Super Admin)
+Route::prefix('system')->group(function () {
+    Route::apiResource('companies', \App\Http\Controllers\Api\System\Company\CompanyController::class);
+});

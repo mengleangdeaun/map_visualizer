@@ -28,7 +28,7 @@ export const DriverList = ({
     onSortChange
 }: DriverListProps) => {
     return (
-        <Card className="flex flex-col h-full bg-card border shadow-sm overflow-hidden">
+        <Card className="flex flex-col h-full overflow-hidden">
             <CardHeader className="p-4 pt-0 pb-0 space-y-4">
                 <div className="flex items-center justify-between">
                     <div className="space-y-0.5">

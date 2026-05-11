@@ -4,6 +4,8 @@
     "sales": "销售",
     "system_domain": "系统域",
     "system_management": "系统管理",
+    "company_management": "公司管理",
+    "system_settings": "系统设置",
     "demo_maps": "演示地图",
     "static_route": "静态路由",
     "interactive_map": "交互式地图",

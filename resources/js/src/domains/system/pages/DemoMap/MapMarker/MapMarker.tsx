@@ -28,7 +28,7 @@ const initialMarkers: MarkerData[] = [
 const typeColors = {
     hospital: 'bg-red-500',
     restaurant: 'bg-orange-500',
-    park: 'bg-green-500',
+    park: 'bg-emerald-500',
     other: 'bg-primary',
 };
 
@@ -72,105 +72,107 @@ const MapMarkerDemo = () => {
     };
 
     return (
-        <div className="flex flex-col h-[calc(100vh-100px)] gap-4">
+        <div className="flex flex-col h-[calc(100vh-100px)]">
             <PageHeader title="Map Marker Management" subtitle="Add, delete, and explore custom locations with rich popups." />
 
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 flex-1 min-h-0">
-                <div className="lg:col-span-3 h-full relative rounded-xl border bg-card shadow-sm overflow-hidden">
-                    <Map viewport={viewport} onViewportChange={setViewport} onClick={handleMapClick} className="h-full w-full" language="km">
-                        <MapControls position="top-right" showLocate onLocate={(pos) => setUserLocation([pos.longitude, pos.latitude])} />
+                <div className="lg:col-span-3 py-1">
+                    <div className="h-full relative rounded-xl border bg-card shadow-sm overflow-hidden">
+                        <Map viewport={viewport} onViewportChange={setViewport} onClick={handleMapClick} className="h-full w-full" language="km">
+                            <MapControls position="top-right" showLocate onLocate={(pos) => setUserLocation([pos.longitude, pos.latitude])} />
 
-                        <UserLocationMarker coordinates={userLocation} />
+                            <UserLocationMarker coordinates={userLocation} />
 
-                        {filteredMarkers.map((marker) => (
-                            <MapMarker
-                                key={marker.id}
-                                longitude={marker.lng}
-                                latitude={marker.lat}
-                                onClick={() => {
-                                    isInteractingWithMarker.current = true;
-                                    setSelectedId(marker.id);
-                                }}
-                            >
-                                <MarkerContent>
-                                    <div className="relative group/marker cursor-pointer">
-                                        {selectedId === marker.id && <div className="absolute inset-0 -m-2 rounded-full bg-primary/20 animate-ping opacity-75" />}
-                                        <div
+                            {filteredMarkers.map((marker) => (
+                                <MapMarker
+                                    key={marker.id}
+                                    longitude={marker.lng}
+                                    latitude={marker.lat}
+                                    onClick={() => {
+                                        isInteractingWithMarker.current = true;
+                                        setSelectedId(marker.id);
+                                    }}
+                                >
+                                    <MarkerContent>
+                                        <div className="relative group/marker cursor-pointer">
+                                            {selectedId === marker.id && <div className="absolute inset-0 -m-2 rounded-full bg-primary/20 animate-ping opacity-75" />}
+                                            <div
+                                                className={cn(
+                                                    'relative size-6 rounded-full border-2 border-white shadow-xl flex items-center justify-center transition-all duration-300 group-hover/marker:scale-110',
+                                                    typeColors[marker.type],
+                                                    selectedId === marker.id && 'ring-4 ring-primary/30 scale-110',
+                                                )}
+                                            >
+                                                <div className={cn('size-1.5 rounded-full bg-white transition-transform duration-300', selectedId === marker.id ? 'scale-150' : 'scale-100')} />
+                                            </div>
+                                        </div>
+                                        <MarkerLabel
+                                            position="top"
                                             className={cn(
-                                                'relative size-6 rounded-full border-2 border-white shadow-xl flex items-center justify-center transition-all duration-300 group-hover/marker:scale-110',
-                                                typeColors[marker.type],
-                                                selectedId === marker.id && 'ring-4 ring-primary/30 scale-110',
+                                                'transition-all duration-300 pointer-events-none',
+                                                selectedId === marker.id
+                                                    ? 'opacity-100 -translate-y-1 font-bold text-primary bg-card dark:text-white shadow-xl px-2 py-0.5 rounded scale-110'
+                                                    : 'opacity-0 translate-y-2 group-hover/marker:opacity-100 group-hover/marker:translate-y-0',
                                             )}
                                         >
-                                            <div className={cn('size-1.5 rounded-full bg-white transition-transform duration-300', selectedId === marker.id ? 'scale-150' : 'scale-100')} />
-                                        </div>
-                                    </div>
-                                    <MarkerLabel
-                                        position="top"
-                                        className={cn(
-                                            'transition-all duration-300 pointer-events-none',
-                                            selectedId === marker.id
-                                                ? 'opacity-100 -translate-y-1 font-bold text-primary bg-card dark:text-white shadow-xl px-2 py-0.5 rounded scale-110'
-                                                : 'opacity-0 translate-y-2 group-hover/marker:opacity-100 group-hover/marker:translate-y-0',
-                                        )}
-                                    >
-                                        {marker.title}
-                                    </MarkerLabel>
-                                </MarkerContent>
-                                <MarkerPopup className="p-0 border-none bg-transparent shadow-none overflow-visible">
-                                    <div className="w-[220px] overflow-hidden rounded-xl border bg-background shadow-2xl transition-transform active:scale-95">
-                                        <div className="p-4 space-y-3">
-                                            <div className="flex items-start justify-between gap-2">
-                                                <div className="space-y-1 min-w-0">
-                                                    <Badge variant="secondary" className="text-[9px] h-4 px-1.5 font-bold uppercase tracking-wider bg-muted/50 border-none">
-                                                        {marker.type}
-                                                    </Badge>
-                                                    <h4 className="font-bold text-sm leading-tight truncate text-foreground/90">{marker.title}</h4>
+                                            {marker.title}
+                                        </MarkerLabel>
+                                    </MarkerContent>
+                                    <MarkerPopup className="p-0 border-none bg-transparent shadow-none overflow-visible">
+                                        <div className="w-[220px] overflow-hidden rounded-xl border bg-background shadow-2xl transition-transform active:scale-95">
+                                            <div className="p-4 space-y-3">
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <div className="space-y-1 min-w-0">
+                                                        <Badge variant="secondary" className="text-[9px] h-4 px-1.5 font-bold uppercase tracking-wider bg-muted/50 border-none">
+                                                            {marker.type}
+                                                        </Badge>
+                                                        <h4 className="font-bold text-sm leading-tight truncate text-foreground/90">{marker.title}</h4>
+                                                    </div>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon-xs"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            deleteMarker(marker.id);
+                                                        }}
+                                                        className="size-6 -mr-1 -mt-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full shrink-0 transition-all active:scale-90"
+                                                    >
+                                                        <Trash2 className="size-3.5" />
+                                                    </Button>
                                                 </div>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon-xs"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        deleteMarker(marker.id);
-                                                    }}
-                                                    className="size-6 -mr-1 -mt-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full shrink-0 transition-all active:scale-90"
-                                                >
-                                                    <Trash2 className="size-3.5" />
-                                                </Button>
-                                            </div>
 
-                                            <p className="text-xs text-muted-foreground leading-relaxed font-medium">{marker.description}</p>
+                                                <p className="text-xs text-muted-foreground leading-relaxed font-medium">{marker.description}</p>
 
-                                            <div className="flex flex-col gap-1.5 pt-1">
-                                                <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-muted/30 border border-border/50 text-[10px] font-mono text-muted-foreground transition-colors hover:bg-muted/50 group/coords">
-                                                    <Navigation className="size-3 shrink-0 text-primary opacity-60 group-hover/coords:opacity-100 transition-opacity" />
-                                                    <span className="truncate">
-                                                        {marker.lng.toFixed(6)}, {marker.lat.toFixed(6)}
-                                                    </span>
+                                                <div className="flex flex-col gap-1.5 pt-1">
+                                                    <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-muted/30 border border-border/50 text-[10px] font-mono text-muted-foreground transition-colors hover:bg-muted/50 group/coords">
+                                                        <Navigation className="size-3 shrink-0 text-primary opacity-60 group-hover/coords:opacity-100 transition-opacity" />
+                                                        <span className="truncate">
+                                                            {marker.lng.toFixed(6)}, {marker.lat.toFixed(6)}
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </MarkerPopup>
-                            </MapMarker>
-                        ))}
-                    </Map>
+                                    </MarkerPopup>
+                                </MapMarker>
+                            ))}
+                        </Map>
 
-                    <div className="absolute bottom-4 left-4 pointer-events-none">
-                        <div className="bg-background/70 backdrop-blur-md p-3 rounded-lg border shadow-xl flex items-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                                <Plus className="size-5" />
-                            </div>
-                            <div className="flex flex-col">
-                                <span className="text-sm font-bold tracking-tight">Quick Add</span>
-                                <span className="text-xs text-muted-foreground font-medium">Click anywhere on the map</span>
+                        <div className="absolute bottom-4 left-4 pointer-events-none">
+                            <div className="bg-background/70 backdrop-blur-md p-3 rounded-lg border shadow-xl flex items-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                                    <Plus className="size-5" />
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-sm font-bold tracking-tight">Quick Add</span>
+                                    <span className="text-xs text-muted-foreground font-medium">Click anywhere on the map</span>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="lg:col-span-1 flex flex-col gap-4 overflow-hidden h-full">
+                <div className="lg:col-span-1 flex flex-col gap-4 overflow-y-auto p-1 -mx-1 h-full">
                     <Card className="flex flex-col flex-1 min-h-0">
                         <CardHeader>
                             <CardTitle className="text-lg">Saved Locations</CardTitle>

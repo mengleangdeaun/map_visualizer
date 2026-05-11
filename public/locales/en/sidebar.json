@@ -4,6 +4,8 @@
     "sales": "Sales",
     "system_domain": "System Domain",
     "system_management": "System Management",
+    "company_management": "Company Management",
+    "system_settings": "System Settings",
     "demo_maps": "Demo Maps",
     "static_route": "Static Route",
     "interactive_map": "Interactive Map",

@@ -112,7 +112,7 @@ const Sidebar = () => {
 
     return (
         <div className={semidark ? 'dark' : ''}>
-            <nav className={`sidebar fixed min-h-screen h-full top-0 bottom-0 w-[260px] border border-r z-50 transition-all duration-300 ${semidark ? 'text-muted-foreground' : ''}`}>
+            <nav className={`sidebar fixed min-h-screen h-full top-0 bottom-0 w-[260px] z-50 transition-all duration-300 ${semidark ? 'text-muted-foreground' : ''}`}>
                 <div className="bg-background h-full">
                     <div className="flex justify-between items-center px-4 py-3">
                         <Link to="/" className="main-logo flex items-center shrink-0">

@@ -9,6 +9,11 @@ export const systemRoutes = [
     }),
     createRoute({
         getParentRoute: () => rootRoute,
+        path: '/system/companies',
+        component: lazyRouteComponent(() => import('./pages/Company')),
+    }),
+    createRoute({
+        getParentRoute: () => rootRoute,
         path: '/system/users',
         component: lazyRouteComponent(() => import('./pages/Dashboard')), // Placeholder
     }),

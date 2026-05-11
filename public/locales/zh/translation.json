@@ -1,1 +1,15 @@
-{}
+{
+    "company_management": "公司管理",
+    "manage_tenants_and_organizations": "管理租户和组织",
+    "add_company": "添加公司",
+    "all_companies": "所有公司",
+    "company_name": "公司名称",
+    "tax_id": "税号",
+    "currency": "货币",
+    "created_at": "创建于",
+    "actions": "操作",
+    "loading": "加载中",
+    "no_companies_found": "未找到公司",
+    "edit": "编辑",
+    "delete": "删除"
+}

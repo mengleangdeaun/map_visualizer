@@ -155,7 +155,7 @@ const RealtimeTracking = () => {
     }, [isFollowing]);
 
     return (
-        <div className="flex flex-col gap-4 h-[calc(100vh-100px)]">
+        <div className="flex flex-col h-[calc(100vh-100px)]">
             <div className="flex items-center justify-between">
                 <PageHeader title="Real-time Delivery Tracking" subtitle="Live vehicle telemetry via Laravel Reverb & MapLibre GL." />
                 <div className="flex items-center gap-3">
@@ -200,74 +200,76 @@ const RealtimeTracking = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 flex-1 min-h-0">
-                <div className="lg:col-span-3 h-full rounded-2xl border bg-card overflow-hidden relative group">
-                    <Map ref={mapRef} className="h-full w-full" center={[104.8836, 11.5641]} zoom={14} styles={googleKhmerStyle} language="km">
-                        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[100] w-full max-w-md px-4">
-                            <MapSearch
-                                onSelect={(result) => {
-                                    if (mapRef.current) {
-                                        mapRef.current.flyTo({
-                                            center: result.coordinates,
-                                            zoom: 16,
-                                            duration: 1500,
-                                        });
-                                        setIsFollowing(false);
+                <div className="lg:col-span-3 py-1">
+                    <div className="h-full rounded-2xl border bg-card overflow-hidden relative group">
+                        <Map ref={mapRef} className="h-full w-full" center={[104.8836, 11.5641]} zoom={14} styles={googleKhmerStyle} language="km">
+                            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[100] w-full max-w-md px-4">
+                                <MapSearch
+                                    onSelect={(result) => {
+                                        if (mapRef.current) {
+                                            mapRef.current.flyTo({
+                                                center: result.coordinates,
+                                                zoom: 16,
+                                                duration: 1500,
+                                            });
+                                            setIsFollowing(false);
+                                        }
+                                    }}
+                                    className="w-full shadow-2xl"
+                                />
+                            </div>
+
+                            <MapControls
+                                showCompass
+                                showFullscreen
+                                showLocate
+                                showZoom
+                                position="top-right"
+                                onLocate={(coords) => {
+                                    const location: [number, number] = [coords.longitude, coords.latitude];
+                                    setUserLocation(location);
+                                }}
+                            />
+
+                            {history.length > 1 && (
+                                <>
+                                    {/* Shadow/Outer Route */}
+                                    <MapRoute id="vehicle-trail-outer" coordinates={history} color="#10b981" width={8} opacity={0.2} blur={8} />
+                                    {/* Inner Animated Route */}
+                                    <MapRoute id="vehicle-trail" coordinates={history} color="#10b981" width={4} opacity={1} animate />
+                                </>
+                            )}
+
+                            {telemetry && <VehicleMarker longitude={telemetry.longitude} latitude={telemetry.latitude} heading={telemetry.heading} speed={telemetry.speed} />}
+
+                            <UserLocationMarker coordinates={userLocation} label="YOUR LOCATION" />
+                        </Map>
+
+                        {telemetry && (
+                            <DriverCard
+                                className="absolute bottom-6 left-6 z-40 animate-in slide-in-from-bottom-10 duration-500"
+                                driver={{
+                                    name: 'Sok Sombo',
+                                    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sombo',
+                                    rating: 4.9,
+                                    vehicle: 'Toyota Prius',
+                                    plate: '2AA-9999',
+                                }}
+                                status={isConnected ? 'Stable' : 'Connecting'}
+                                onFocus={() => {
+                                    if (telemetry && mapRef.current) {
+                                        mapRef.current.flyTo({ center: [telemetry.longitude, telemetry.latitude], zoom: 17, duration: 1500 });
+                                        setIsFollowing(true);
                                     }
                                 }}
-                                className="w-full shadow-2xl"
                             />
-                        </div>
-
-                        <MapControls
-                            showCompass
-                            showFullscreen
-                            showLocate
-                            showZoom
-                            position="top-right"
-                            onLocate={(coords) => {
-                                const location: [number, number] = [coords.longitude, coords.latitude];
-                                setUserLocation(location);
-                            }}
-                        />
-
-                        {history.length > 1 && (
-                            <>
-                                {/* Shadow/Outer Route */}
-                                <MapRoute id="vehicle-trail-outer" coordinates={history} color="#10b981" width={8} opacity={0.2} blur={8} />
-                                {/* Inner Animated Route */}
-                                <MapRoute id="vehicle-trail" coordinates={history} color="#10b981" width={4} opacity={1} animate />
-                            </>
                         )}
 
-                        {telemetry && <VehicleMarker longitude={telemetry.longitude} latitude={telemetry.latitude} heading={telemetry.heading} speed={telemetry.speed} />}
-
-                        <UserLocationMarker coordinates={userLocation} label="YOUR LOCATION" />
-                    </Map>
-
-                    {telemetry && (
-                        <DriverCard
-                            className="absolute bottom-6 left-6 z-40 animate-in slide-in-from-bottom-10 duration-500"
-                            driver={{
-                                name: 'Sok Sombo',
-                                avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sombo',
-                                rating: 4.9,
-                                vehicle: 'Toyota Prius',
-                                plate: '2AA-9999',
-                            }}
-                            status={isConnected ? 'Stable' : 'Connecting'}
-                            onFocus={() => {
-                                if (telemetry && mapRef.current) {
-                                    mapRef.current.flyTo({ center: [telemetry.longitude, telemetry.latitude], zoom: 17, duration: 1500 });
-                                    setIsFollowing(true);
-                                }
-                            }}
-                        />
-                    )}
-
-                    {!isConnected && <MapLoading message="Signal Lost. Re-establishing link..." />}
+                        {!isConnected && <MapLoading message="Signal Lost. Re-establishing link..." />}
+                    </div>
                 </div>
 
-                <div className="lg:col-span-1 flex flex-col gap-4 overflow-hidden h-full">
+                <div className="lg:col-span-1 flex flex-col gap-4 overflow-y-auto p-1 -mx-1 h-full">
                     <TelemetryCard data={telemetry} isConnected={isConnected} historyLength={history.length} />
                 </div>
             </div>

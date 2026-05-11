@@ -62,7 +62,7 @@ const Header = () => {
 
     return (
         <header className={`z-40 ${themeConfig.semidark && themeConfig.menu === 'horizontal' ? 'dark' : ''}`}>
-            <div className="border-b">
+            <div>
                 <div className="relative bg-background flex w-full items-center px-5 py-2.5">
                     <div className="horizontal-logo flex lg:hidden justify-between items-center ltr:mr-2 rtl:ml-2">
                         <Link activeProps={{ className: 'active' }} to="/" className="main-logo flex items-center shrink-0">
@@ -92,7 +92,7 @@ const Header = () => {
                                 <div className="relative">
                                     <input
                                         type="text"
-                                        className="form-input ltr:pl-9 rtl:pr-9 ltr:sm:pr-4 rtl:sm:pl-4 ltr:pr-9 rtl:pl-9 peer sm:bg-transparent bg-gray-100 placeholder:tracking-widest"
+                                        className="form-input ltr:pl-9 rtl:pr-9 ltr:sm:pr-4 rtl:sm:pl-4 ltr:pr-9 rtl:pl-9 peer sm:bg-transparent bg-secondary placeholder:tracking-widest border-none"
                                         placeholder="Search..."
                                     />
                                     <button type="button" className="absolute w-9 h-9 inset-0 ltr:right-auto rtl:left-auto appearance-none peer-focus:text-primary">

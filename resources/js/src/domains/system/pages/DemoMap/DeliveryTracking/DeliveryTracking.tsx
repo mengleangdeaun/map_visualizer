@@ -311,7 +311,7 @@ const DeliveryTracking = () => {
     };
 
     return (
-        <div className="flex flex-col h-[calc(100vh-100px)] gap-4">
+        <div className="flex flex-col h-[calc(100vh-100px)]">
             <PageHeader title="Delivery Tracking" subtitle={status}>
                 {isAnimating && (
                     <Button variant="destructive" onClick={cancelDelivery} className="animate-in fade-in p-4 slide-in-from-right-4 duration-300">
@@ -352,236 +352,238 @@ const DeliveryTracking = () => {
             </PageHeader>
 
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 flex-1 min-h-0">
-                <div className="lg:col-span-3 h-full relative rounded-xl border bg-card shadow-sm overflow-hidden">
-                    <Map viewport={viewport} onViewportChange={setViewport} onClick={handleMapClick} className="h-full w-full" language="km" styles={googleKhmerStyle}>
-                        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[100] w-full max-w-md px-4">
-                            <MapSearch onSelect={handleSearchSelect} className="w-full" />
-                        </div>
-
-                        <MapControls position="top-right" showZoom showCompass showLocate onLocate={(pos) => setUserLocation([pos.longitude, pos.latitude])} />
-
-                        <UserLocationMarker coordinates={userLocation} />
-
-                        {/* Route Lines */}
-                        {routes.length > 0 && (
-                            <>
-                                {routes.map((r, index) => {
-                                    const isSelected = index === selectedIndex;
-                                    // Don't show alternative routes while animating
-                                    if (isAnimating && !isSelected) return null;
-
-                                    return (
-                                        <MapRoute
-                                            key={index}
-                                            coordinates={r.coordinates}
-                                            color="#10b981"
-                                            width={isSelected ? 10 : 6}
-                                            opacity={isSelected ? (isAnimating ? 0.35 : 1) : 0.2}
-                                            dashArray={undefined}
-                                            onClick={() => {
-                                                if (!isAnimating) {
-                                                    setSelectedIndex(index);
-                                                    setDistance(r.distance / 1000);
-                                                    const durationMins = Math.round(r.duration / 60);
-                                                    setTracking((t) => ({ ...t, eta: durationMins }));
-                                                    setTotalDuration(durationMins);
-                                                }
-                                            }}
-                                            interactive={!isAnimating}
-                                        />
-                                    );
-                                })}
-                                {isAnimating && (
-                                    <>
-                                        {/* Ultra Outer Glow */}
-                                        <MapRoute
-                                            coordinates={routes[selectedIndex].coordinates
-                                                .slice(0, Math.floor(tracking.progress / (100 / (routes[selectedIndex].coordinates.length - 1))) + 1)
-                                                .concat(tracking.pos ? [tracking.pos] : [])}
-                                            color="#10b981"
-                                            width={16}
-                                            opacity={0.15}
-                                            blur={8}
-                                        />
-                                        {/* Core Glow */}
-                                        <MapRoute
-                                            coordinates={routes[selectedIndex].coordinates
-                                                .slice(0, Math.floor(tracking.progress / (100 / (routes[selectedIndex].coordinates.length - 1))) + 1)
-                                                .concat(tracking.pos ? [tracking.pos] : [])}
-                                            color="#10b981"
-                                            width={8}
-                                            opacity={0.4}
-                                            blur={3}
-                                        />
-                                        {/* Inner Bright Line */}
-                                        <MapRoute
-                                            coordinates={routes[selectedIndex].coordinates
-                                                .slice(0, Math.floor(tracking.progress / (100 / (routes[selectedIndex].coordinates.length - 1))) + 1)
-                                                .concat(tracking.pos ? [tracking.pos] : [])}
-                                            color="#10b981"
-                                            width={6}
-                                            opacity={1}
-                                        />
-                                    </>
-                                )}
-                            </>
-                        )}
-
-                        {/* Pickup Point */}
-                        {pickup && (
-                            <MapMarker longitude={pickup[0]} latitude={pickup[1]}>
-                                <MarkerContent>
-                                    <div className="size-8 rounded-full bg-orange-500 border-2 border-white shadow-lg flex items-center justify-center text-white">
-                                        <Store className="size-4" />
-                                    </div>
-                                    <MarkerLabel position="top" className="bg-background px-2 py-0.5 rounded shadow-sm font-bold text-[10px]">
-                                        PICKUP
-                                    </MarkerLabel>
-                                </MarkerContent>
-                            </MapMarker>
-                        )}
-
-                        {/* Dropoff Point */}
-                        {dropoff && (
-                            <MapMarker longitude={dropoff[0]} latitude={dropoff[1]}>
-                                <MarkerContent>
-                                    <div className="size-8 rounded-full bg-primary border-2 border-white shadow-lg flex items-center justify-center text-white">
-                                        <MapPin className="size-4" />
-                                    </div>
-                                    <MarkerLabel position="top" className="bg-background px-2 py-0.5 rounded shadow-sm font-bold text-[10px]">
-                                        DROPOFF
-                                    </MarkerLabel>
-                                </MarkerContent>
-                            </MapMarker>
-                        )}
-
-                        {/* Search Result Marker */}
-                        {searchMarker && (
-                            <MapMarker longitude={searchMarker[0]} latitude={searchMarker[1]}>
-                                <MarkerContent>
-                                    <div className="relative group">
-                                        <div className="absolute inset-0 bg-emerald-500/20 rounded-full animate-ping" />
-                                        <div className="relative size-10 rounded-full bg-white border-2 border-emerald-500 shadow-2xl flex items-center justify-center">
-                                            <MapPin className="size-5 text-emerald-600" />
-                                        </div>
-                                        <MarkerLabel
-                                            position="top"
-                                            className="bg-background/70 backdrop-blur-sm px-3 py-2.5 rounded-lg shadow-xl border flex flex-col items-center gap-1.5 min-w-[120px]"
-                                        >
-                                            <span className="text-sm font-bold text-foreground truncate max-w-[300px]">{searchLabel}</span>
-                                            {!isAnimating && (
-                                                <div className="flex gap-1 w-full">
-                                                    {!pickup && (
-                                                        <Button
-                                                            size="xs"
-                                                            className="flex-1 text-[8px] h-8 bg-emerald-600"
-                                                            onClick={() => {
-                                                                setPickup(searchMarker);
-                                                                setPickupLabel(searchLabel);
-                                                                setSearchMarker(null);
-                                                                setStatus('Select Dropoff Location');
-                                                            }}
-                                                        >
-                                                            Set Pickup
-                                                        </Button>
-                                                    )}
-                                                    {pickup && !dropoff && (
-                                                        <Button
-                                                            size="xs"
-                                                            className="flex-1 text-[8px] h-8"
-                                                            onClick={() => {
-                                                                setDropoff(searchMarker);
-                                                                setDropoffLabel(searchLabel);
-                                                                setSearchMarker(null);
-                                                                setStatus('Ready to Start');
-                                                                fetchRoute(pickup, searchMarker);
-                                                            }}
-                                                        >
-                                                            Set Dropoff
-                                                        </Button>
-                                                    )}
-                                                </div>
-                                            )}
-                                        </MarkerLabel>
-                                        <button
-                                            onClick={() => setSearchMarker(null)}
-                                            className="absolute -top-2 -right-2 size-5 rounded-full bg-destructive text-white border-2 border-white shadow-md flex items-center justify-center hover:scale-110 transition-transform"
-                                        >
-                                            <X className="size-3" />
-                                        </button>
-                                    </div>
-                                </MarkerContent>
-                            </MapMarker>
-                        )}
-
-                        {/* The Animated Car */}
-                        {tracking.pos && (
-                            <MapMarker longitude={tracking.pos[0]} latitude={tracking.pos[1]} rotation={tracking.bearing} rotationAlignment="map">
-                                <MarkerContent>
-                                    <div className="relative group cursor-pointer">
-                                        {/* Custom Car SVG */}
-                                        <div className="relative transition-transform group-hover:scale-110 drop-shadow-[0_4px_8px_rgba(0,0,0,0.3)]">
-                                            <img src="/assets/images/map/car.svg" alt="Car" className="w-6 h-auto" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }} />
-                                        </div>
-                                    </div>
-                                    {tracking.eta > 0 && (
-                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 whitespace-nowrap bg-primary scale-110 text-white text-sm font-bold px-2 py-1 rounded shadow-lg pointer-events-none">
-                                            {formatDuration(tracking.eta)}
-                                        </div>
-                                    )}
-                                </MarkerContent>
-                            </MapMarker>
-                        )}
-                    </Map>
-
-                    {/* Floating Map Overlay */}
-                    {isAnimating && (
-                        <div className="absolute top-3 left-3 p-4 rounded-xl border bg-background/70 dark:bg-background/90 backdrop-blur-md shadow-xl max-w-xs space-y-3 animate-in slide-in-from-bottom-4">
-                            <div className="flex items-center justify-between gap-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="size-10 rounded-full overflow-hidden bg-muted border">
-                                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="Driver" className="size-full object-cover" />
-                                    </div>
-                                    <div>
-                                        <h4 className="text-sm font-bold">Sok Sombo</h4>
-                                        <p className="text-[10px] text-muted-foreground flex items-center gap-1">
-                                            <span className="text-emerald-500 font-bold">4.9 ★</span> • Toyota Prius (2AA-9999)
-                                        </p>
-                                    </div>
-                                </div>
-                                <Button
-                                    size="icon"
-                                    variant="outline"
-                                    className="size-8 rounded-full hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/30 transition-colors"
-                                    onClick={focusDriver}
-                                    title="Center on Driver"
-                                >
-                                    <Target className="size-4" />
-                                </Button>
+                <div className="lg:col-span-3 py-1">
+                    <Card className="h-full relative p-0 overflow-hidden">
+                        <Map viewport={viewport} onViewportChange={setViewport} onClick={handleMapClick} className="h-full w-full" language="km" styles={googleKhmerStyle}>
+                            <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[100] w-full max-w-md px-4">
+                                <MapSearch onSelect={handleSearchSelect} className="w-full" />
                             </div>
-                        </div>
-                    )}
-                    {/* Floating Route List */}
-                    {routes.length > 0 && !isAnimating && (
-                        <FloatingRouteList
-                            routes={routes}
-                            selectedIndex={selectedIndex}
-                            onSelect={(index) => {
-                                setSelectedIndex(index);
-                                const r = routes[index];
-                                setDistance(r.distance / 1000);
-                                const durationMins = Math.round(r.duration / 60);
-                                setTracking((t) => ({ ...t, eta: durationMins }));
-                                setTotalDuration(durationMins);
-                            }}
-                            formatDuration={formatDuration}
-                            formatDistance={(d) => `${(d / 1000).toFixed(2)} km`}
-                        />
-                    )}
+
+                            <MapControls position="top-right" showZoom showCompass showLocate onLocate={(pos) => setUserLocation([pos.longitude, pos.latitude])} />
+
+                            <UserLocationMarker coordinates={userLocation} />
+
+                            {/* Route Lines */}
+                            {routes.length > 0 && (
+                                <>
+                                    {routes.map((r, index) => {
+                                        const isSelected = index === selectedIndex;
+                                        // Don't show alternative routes while animating
+                                        if (isAnimating && !isSelected) return null;
+
+                                        return (
+                                            <MapRoute
+                                                key={index}
+                                                coordinates={r.coordinates}
+                                                color="#10b981"
+                                                width={isSelected ? 10 : 6}
+                                                opacity={isSelected ? (isAnimating ? 0.35 : 1) : 0.2}
+                                                dashArray={undefined}
+                                                onClick={() => {
+                                                    if (!isAnimating) {
+                                                        setSelectedIndex(index);
+                                                        setDistance(r.distance / 1000);
+                                                        const durationMins = Math.round(r.duration / 60);
+                                                        setTracking((t) => ({ ...t, eta: durationMins }));
+                                                        setTotalDuration(durationMins);
+                                                    }
+                                                }}
+                                                interactive={!isAnimating}
+                                            />
+                                        );
+                                    })}
+                                    {isAnimating && (
+                                        <>
+                                            {/* Ultra Outer Glow */}
+                                            <MapRoute
+                                                coordinates={routes[selectedIndex].coordinates
+                                                    .slice(0, Math.floor(tracking.progress / (100 / (routes[selectedIndex].coordinates.length - 1))) + 1)
+                                                    .concat(tracking.pos ? [tracking.pos] : [])}
+                                                color="#10b981"
+                                                width={16}
+                                                opacity={0.15}
+                                                blur={8}
+                                            />
+                                            {/* Core Glow */}
+                                            <MapRoute
+                                                coordinates={routes[selectedIndex].coordinates
+                                                    .slice(0, Math.floor(tracking.progress / (100 / (routes[selectedIndex].coordinates.length - 1))) + 1)
+                                                    .concat(tracking.pos ? [tracking.pos] : [])}
+                                                color="#10b981"
+                                                width={8}
+                                                opacity={0.4}
+                                                blur={3}
+                                            />
+                                            {/* Inner Bright Line */}
+                                            <MapRoute
+                                                coordinates={routes[selectedIndex].coordinates
+                                                    .slice(0, Math.floor(tracking.progress / (100 / (routes[selectedIndex].coordinates.length - 1))) + 1)
+                                                    .concat(tracking.pos ? [tracking.pos] : [])}
+                                                color="#10b981"
+                                                width={6}
+                                                opacity={1}
+                                            />
+                                        </>
+                                    )}
+                                </>
+                            )}
+
+                            {/* Pickup Point */}
+                            {pickup && (
+                                <MapMarker longitude={pickup[0]} latitude={pickup[1]}>
+                                    <MarkerContent>
+                                        <div className="size-8 rounded-full bg-orange-500 border-2 border-white shadow-lg flex items-center justify-center text-white">
+                                            <Store className="size-4" />
+                                        </div>
+                                        <MarkerLabel position="top" className="bg-background px-2 py-0.5 rounded shadow-sm font-bold text-[10px]">
+                                            PICKUP
+                                        </MarkerLabel>
+                                    </MarkerContent>
+                                </MapMarker>
+                            )}
+
+                            {/* Dropoff Point */}
+                            {dropoff && (
+                                <MapMarker longitude={dropoff[0]} latitude={dropoff[1]}>
+                                    <MarkerContent>
+                                        <div className="size-8 rounded-full bg-primary border-2 border-white shadow-lg flex items-center justify-center text-white">
+                                            <MapPin className="size-4" />
+                                        </div>
+                                        <MarkerLabel position="top" className="bg-background px-2 py-0.5 rounded shadow-sm font-bold text-[10px]">
+                                            DROPOFF
+                                        </MarkerLabel>
+                                    </MarkerContent>
+                                </MapMarker>
+                            )}
+
+                            {/* Search Result Marker */}
+                            {searchMarker && (
+                                <MapMarker longitude={searchMarker[0]} latitude={searchMarker[1]}>
+                                    <MarkerContent>
+                                        <div className="relative group">
+                                            <div className="absolute inset-0 bg-emerald-500/20 rounded-full animate-ping" />
+                                            <div className="relative size-10 rounded-full bg-white border-2 border-emerald-500 shadow-2xl flex items-center justify-center">
+                                                <MapPin className="size-5 text-emerald-600" />
+                                            </div>
+                                            <MarkerLabel
+                                                position="top"
+                                                className="bg-background/70 backdrop-blur-sm px-3 py-2.5 rounded-lg shadow-xl border flex flex-col items-center gap-1.5 min-w-[120px]"
+                                            >
+                                                <span className="text-sm font-bold text-foreground truncate max-w-[300px]">{searchLabel}</span>
+                                                {!isAnimating && (
+                                                    <div className="flex gap-1 w-full">
+                                                        {!pickup && (
+                                                            <Button
+                                                                size="xs"
+                                                                className="flex-1 text-[8px] h-8 bg-emerald-600"
+                                                                onClick={() => {
+                                                                    setPickup(searchMarker);
+                                                                    setPickupLabel(searchLabel);
+                                                                    setSearchMarker(null);
+                                                                    setStatus('Select Dropoff Location');
+                                                                }}
+                                                            >
+                                                                Set Pickup
+                                                            </Button>
+                                                        )}
+                                                        {pickup && !dropoff && (
+                                                            <Button
+                                                                size="xs"
+                                                                className="flex-1 text-[8px] h-8"
+                                                                onClick={() => {
+                                                                    setDropoff(searchMarker);
+                                                                    setDropoffLabel(searchLabel);
+                                                                    setSearchMarker(null);
+                                                                    setStatus('Ready to Start');
+                                                                    fetchRoute(pickup, searchMarker);
+                                                                }}
+                                                            >
+                                                                Set Dropoff
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </MarkerLabel>
+                                            <button
+                                                onClick={() => setSearchMarker(null)}
+                                                className="absolute -top-2 -right-2 size-5 rounded-full bg-destructive text-white border-2 border-white shadow-md flex items-center justify-center hover:scale-110 transition-transform"
+                                            >
+                                                <X className="size-3" />
+                                            </button>
+                                        </div>
+                                    </MarkerContent>
+                                </MapMarker>
+                            )}
+
+                            {/* The Animated Car */}
+                            {tracking.pos && (
+                                <MapMarker longitude={tracking.pos[0]} latitude={tracking.pos[1]} rotation={tracking.bearing} rotationAlignment="map">
+                                    <MarkerContent>
+                                        <div className="relative group cursor-pointer">
+                                            {/* Custom Car SVG */}
+                                            <div className="relative transition-transform group-hover:scale-110 drop-shadow-[0_4px_8px_rgba(0,0,0,0.3)]">
+                                                <img src="/assets/images/map/car.svg" alt="Car" className="w-6 h-auto" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }} />
+                                            </div>
+                                        </div>
+                                        {tracking.eta > 0 && (
+                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 whitespace-nowrap bg-primary scale-110 text-white text-sm font-bold px-2 py-1 rounded shadow-lg pointer-events-none">
+                                                {formatDuration(tracking.eta)}
+                                            </div>
+                                        )}
+                                    </MarkerContent>
+                                </MapMarker>
+                            )}
+                        </Map>
+
+                        {/* Floating Map Overlay */}
+                        {isAnimating && (
+                            <div className="absolute top-3 left-3 p-4 rounded-xl border bg-background/70 dark:bg-background/90 backdrop-blur-md shadow-xl max-w-xs space-y-3 animate-in slide-in-from-bottom-4">
+                                <div className="flex items-center justify-between gap-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="size-10 rounded-full overflow-hidden bg-muted border">
+                                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="Driver" className="size-full object-cover" />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-sm font-bold">Sok Sombo</h4>
+                                            <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                                                <span className="text-emerald-500 font-bold">4.9 ★</span> • Toyota Prius (2AA-9999)
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <Button
+                                        size="icon"
+                                        variant="outline"
+                                        className="size-8 rounded-full hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/30 transition-colors"
+                                        onClick={focusDriver}
+                                        title="Center on Driver"
+                                    >
+                                        <Target className="size-4" />
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
+                        {/* Floating Route List */}
+                        {routes.length > 0 && !isAnimating && (
+                            <FloatingRouteList
+                                routes={routes}
+                                selectedIndex={selectedIndex}
+                                onSelect={(index) => {
+                                    setSelectedIndex(index);
+                                    const r = routes[index];
+                                    setDistance(r.distance / 1000);
+                                    const durationMins = Math.round(r.duration / 60);
+                                    setTracking((t) => ({ ...t, eta: durationMins }));
+                                    setTotalDuration(durationMins);
+                                }}
+                                formatDuration={formatDuration}
+                                formatDistance={(d) => `${(d / 1000).toFixed(2)} km`}
+                            />
+                        )}
+                    </Card>
                 </div>
 
-                <div className="lg:col-span-1 flex flex-col gap-4 overflow-hidden h-full">
-                    <Card className="flex flex-col flex-1 min-h-0 bg-card border shadow-sm">
+                <div className="lg:col-span-1 flex flex-col gap-4 overflow-y-auto p-1 -mx-1 h-full">
+                    <Card className="flex flex-col flex-1 min-h-0">
                         <DeliveryHeader status={status} eta={tracking.eta} formatDuration={formatDuration} />
 
                         <CardContent className="flex-1 min-h-0 p-0">

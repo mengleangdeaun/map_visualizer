@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 
 import { UserLocationMarker } from '@/components/shared/map/UserLocationMarker';
 
-const StartMarkerIcon = () => <div className="size-4 rounded-full bg-green-500 border-2 border-white shadow-md" />;
+const StartMarkerIcon = () => <div className="size-4 rounded-full bg-emerald-500 border-2 border-white shadow-md" />;
 
 const EndMarkerIcon = () => <div className="size-4 rounded-full bg-red-500 border-2 border-white shadow-md" />;
 
@@ -84,66 +84,68 @@ const MapDemo = () => {
         });
 
     return (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col">
             <PageHeader title="Real-World Travel Route" subtitle="Fetching real-time driving directions from OSRM between Phnom Penh city center and Olympic Market." />
 
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 flex-1 min-h-0">
-                <div className="lg:col-span-3 h-[600px] rounded-xl border bg-card shadow-sm overflow-hidden relative">
-                    <Map viewport={viewport} onViewportChange={setViewport} className="h-full w-full" language="km">
-                        <MapControls position="top-right" showLocate onLocate={(pos) => setUserLocation([pos.longitude, pos.latitude])} />
+                <div className="lg:col-span-3 py-1">
+                    <Card className="p-0 h-[600px] rounded-xl shadow-sm overflow-hidden relative">
+                        <Map viewport={viewport} onViewportChange={setViewport} className="h-full w-full" language="km">
+                            <MapControls position="top-right" showLocate onLocate={(pos) => setUserLocation([pos.longitude, pos.latitude])} />
 
-                        {sortedRoutes.map(({ route, index }) => {
-                            const isSelected = index === selectedIndex;
-                            return (
-                                <MapRoute
-                                    key={index}
-                                    coordinates={route.coordinates}
-                                    color={isSelected ? '#10b981' : '#94a3b8'}
-                                    width={isSelected ? 6 : 4}
-                                    opacity={isSelected ? 1 : 0.6}
-                                    onClick={() => setSelectedIndex(index)}
-                                    interactive
-                                />
-                            );
-                        })}
+                            {sortedRoutes.map(({ route, index }) => {
+                                const isSelected = index === selectedIndex;
+                                return (
+                                    <MapRoute
+                                        key={index}
+                                        coordinates={route.coordinates}
+                                        color={isSelected ? '#10b981' : '#94a3b8'}
+                                        width={isSelected ? 6 : 4}
+                                        opacity={isSelected ? 1 : 0.6}
+                                        onClick={() => setSelectedIndex(index)}
+                                        interactive
+                                    />
+                                );
+                            })}
 
-                        <MapMarker longitude={start.lng} latitude={start.lat}>
-                            <MarkerContent>
-                                <StartMarkerIcon />
-                                <MarkerLabel position="top">{start.name}</MarkerLabel>
-                            </MarkerContent>
-                            <MarkerPopup>
-                                <div className="p-2">
-                                    <h3 className="font-bold">{start.name}</h3>
-                                    <p className="text-xs text-muted-foreground">Start Point</p>
-                                </div>
-                            </MarkerPopup>
-                        </MapMarker>
+                            <MapMarker longitude={start.lng} latitude={start.lat}>
+                                <MarkerContent>
+                                    <StartMarkerIcon />
+                                    <MarkerLabel position="top">{start.name}</MarkerLabel>
+                                </MarkerContent>
+                                <MarkerPopup>
+                                    <div className="p-2">
+                                        <h3 className="font-bold">{start.name}</h3>
+                                        <p className="text-xs text-muted-foreground">Start Point</p>
+                                    </div>
+                                </MarkerPopup>
+                            </MapMarker>
 
-                        <MapMarker longitude={end.lng} latitude={end.lat}>
-                            <MarkerContent>
-                                <EndMarkerIcon />
-                                <MarkerLabel position="bottom">{end.name}</MarkerLabel>
-                            </MarkerContent>
-                            <MarkerPopup>
-                                <div className="p-2">
-                                    <h3 className="font-bold">{end.name}</h3>
-                                    <p className="text-xs text-muted-foreground">Destination</p>
-                                </div>
-                            </MarkerPopup>
-                        </MapMarker>
+                            <MapMarker longitude={end.lng} latitude={end.lat}>
+                                <MarkerContent>
+                                    <EndMarkerIcon />
+                                    <MarkerLabel position="bottom">{end.name}</MarkerLabel>
+                                </MarkerContent>
+                                <MarkerPopup>
+                                    <div className="p-2">
+                                        <h3 className="font-bold">{end.name}</h3>
+                                        <p className="text-xs text-muted-foreground">Destination</p>
+                                    </div>
+                                </MarkerPopup>
+                            </MapMarker>
 
-                        <UserLocationMarker coordinates={userLocation} />
-                    </Map>
+                            <UserLocationMarker coordinates={userLocation} />
+                        </Map>
 
-                    {routes.length > 0 && (
-                        <FloatingRouteList routes={routes} selectedIndex={selectedIndex} onSelect={setSelectedIndex} formatDuration={formatDuration} formatDistance={formatDistance} />
-                    )}
+                        {routes.length > 0 && (
+                            <FloatingRouteList routes={routes} selectedIndex={selectedIndex} onSelect={setSelectedIndex} formatDuration={formatDuration} formatDistance={formatDistance} />
+                        )}
 
-                    {isLoading && <MapLoading message="Calculating routes..." />}
+                        {isLoading && <MapLoading message="Calculating routes..." />}
+                    </Card>
                 </div>
 
-                <div className="lg:col-span-1 space-y-4 overflow-y-auto p-1 pt-0">
+                <div className="lg:col-span-1 space-y-4 overflow-y-auto p-1 -mx-1">
                     <Card>
                         <CardHeader>
                             <CardTitle className="text-lg">Route Details</CardTitle>
@@ -152,7 +154,7 @@ const MapDemo = () => {
                         <CardContent className="space-y-6">
                             <div className="space-y-4">
                                 <div className="flex items-center gap-3">
-                                    <div className="size-8 rounded-full bg-green-500/10 flex items-center justify-center text-green-600">
+                                    <div className="size-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600">
                                         <MapPin className="size-4" />
                                     </div>
                                     <div className="flex flex-col">

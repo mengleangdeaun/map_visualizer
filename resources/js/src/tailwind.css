@@ -1,7 +1,6 @@
 /* Animate css */
 @import './assets/css/animate.css';
 @import "tw-animate-css";
-@import "shadcn/tailwind.css";
 @import "@fontsource-variable/inter";
 @import "@fontsource-variable/roboto";
 @tailwind base;
@@ -20,15 +19,15 @@
     --primary-foreground: 0.979 0.021 166.113;
     --secondary: 0.967 0.001 286.375;
     --secondary-foreground: 0.21 0.006 285.885;
-    --muted: 0.963 0.002 165.612;
-    --muted-foreground: 0.56 0.021 165.612;
-    --accent: 0.963 0.002 165.612;
+    --muted: 0.963 0.002 197.1;
+    --muted-foreground: 0.56 0.021 213.5;
+    --accent: 0.963 0.002 197.1;
     --accent-foreground: 0.218 0.008 223.9;
     --destructive: 0.577 0.245 27.325;
     --destructive-foreground: 0.979 0.021 166.113;
-    --border: 0.925 0.005 165.612;
-    --input: 0.925 0.005 165.612;
-    --ring: 0.723 0.014 165.612;
+    --border: 0.925 0.005 214.3;
+    --input: 0.925 0.005 214.3;
+    --ring: 0.723 0.014 214.4;
     --radius: 0.625rem;
     --chart-1: 0.845 0.143 164.978;
     --chart-2: 0.696 0.17 162.48;
@@ -93,6 +92,16 @@
   }
   html {
     @apply font-sans;
+  }
+  .theme {
+    --font-heading: var(--font-sans);
+    --font-sans: 'Inter Variable', sans-serif;
+  }
+  * {
+    @apply border-border outline-ring/50;
+  }
+  button:not(:disabled), [role="button"]:not(:disabled) {
+    cursor: pointer;
   }
 }
 
@@ -177,7 +186,7 @@
     .sidebar ul.sub-menu li a.active {
         @apply text-primary font-black transition-colors;
     }
-    
+
     .sidebar ul.sub-menu li button.active::before,
     .sidebar ul.sub-menu li a.active::before {
         @apply !bg-primary w-3;
@@ -334,7 +343,6 @@
         @apply lg:w-0;
     }
 
-
     /* code hightlight */
     pre {
         direction: ltr;
@@ -362,8 +370,6 @@
 .ps .ps__rail-y.ps--clicking {
     @apply !bg-transparent;
 }
-
-
 
 /* apex chart */
 .apexcharts-canvas .apexcharts-tooltip.apexcharts-theme-light,
@@ -448,7 +454,6 @@
 .slide-down-leave-from {
     @apply transform scale-100 opacity-100;
 }
-
 
 /* Hightlight JS */
 pre.hljs {
