@@ -12,9 +12,21 @@ class CompanyController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $companies = Company::latest()->paginate(10);
+        $perPage = $request->input('per_page', 10);
+        $search = $request->input('search');
+
+        $query = Company::query();
+
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'LIKE', "%{$search}%")
+                  ->orWhere('tax_id', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $companies = $query->latest()->paginate($perPage);
         return response()->json($companies);
     }
 

@@ -19,8 +19,10 @@ export interface PaginatedResponse<T> {
 }
 
 export const companyService = {
-    getCompanies: async (page = 1) => {
-        const response = await api.get<PaginatedResponse<Company>>(`/system/companies?page=${page}`);
+    getCompanies: async (page = 1, perPage = 10, search?: string) => {
+        const response = await api.get<PaginatedResponse<Company>>(`/system/companies`, {
+            params: { page, per_page: perPage, search }
+        });
         return response.data;
     },
     getCompany: async (id: string) => {

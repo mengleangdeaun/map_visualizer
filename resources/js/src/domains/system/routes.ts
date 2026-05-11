@@ -1,5 +1,12 @@
+import { z } from 'zod';
 import { createRoute, lazyRouteComponent } from '@tanstack/react-router';
 import { rootRoute } from '../../router/root';
+
+const companySearchSchema = z.object({
+    page: z.number().catch(1),
+    per_page: z.number().catch(10),
+    search: z.string().optional().catch(''),
+});
 
 export const systemRoutes = [
     createRoute({
@@ -10,6 +17,7 @@ export const systemRoutes = [
     createRoute({
         getParentRoute: () => rootRoute,
         path: '/system/companies',
+        validateSearch: (search) => companySearchSchema.parse(search),
         component: lazyRouteComponent(() => import('./pages/Company')),
     }),
     createRoute({

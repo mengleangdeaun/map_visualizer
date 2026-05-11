@@ -32,7 +32,7 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
         <Suspense>
             <QueryClientProvider client={queryClient}>
                 <RouterProvider router={router} />
-                <Toaster position="top-right" richColors />
+                <Toaster position="top-center" richColors />
             </QueryClientProvider>
         </Suspense>
     </React.StrictMode>

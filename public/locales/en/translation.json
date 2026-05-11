@@ -23,5 +23,16 @@
     "saving": "Saving",
     "field_required": "This field is required",
     "company_created_successfully": "Company created successfully",
-    "error_creating_company": "Error creating company"
+    "error_creating_company": "Error creating company",
+    "company_updated_successfully": "Company updated successfully",
+    "error_updating_company": "Error updating company",
+    "company_deleted_successfully": "Company deleted successfully",
+    "error_deleting_company": "Error deleting company",
+    "delete_company": "Delete Company",
+    "are_you_sure_you_want_to_delete_company": "Are you sure you want to delete {{name}}? This action cannot be undone.",
+    "search_companies": "Search companies...",
+    "search_placeholder": "Search...",
+    "no_results_found": "No results found",
+    "edit_company": "Edit Company",
+    "update_the_details_of_the_organization": "Update the details of the organization."
 }

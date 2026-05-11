@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useForm } from '@tanstack/react-form';
 import { z } from 'zod';
 import { 
@@ -13,13 +13,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useTranslation } from 'react-i18next';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { companyService } from '../../../services/companyService';
-import { toast } from 'sonner';
+import { useCreateCompany, useUpdateCompany } from '../hooks/useCompanies';
+import { Company } from '../../../services/companyService';
 
-interface AddCompanyModalProps {
+interface CompanyModalProps {
     isOpen: boolean;
     onClose: () => void;
+    initialData?: Company | null;
 }
 
 const companySchema = z.object({
@@ -29,36 +29,42 @@ const companySchema = z.object({
     telegram_user_id: z.string(),
 });
 
-const AddCompanyModal = ({ isOpen, onClose }: AddCompanyModalProps) => {
+const CompanyModal = ({ isOpen, onClose, initialData }: CompanyModalProps) => {
     const { t } = useTranslation();
-    const queryClient = useQueryClient();
+    const createMutation = useCreateCompany();
+    const updateMutation = useUpdateCompany();
 
-    const mutation = useMutation({
-        mutationFn: companyService.createCompany,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['companies'] });
-            toast.success(t('company_created_successfully'));
-            onClose();
-        },
-        onError: (error: any) => {
-            toast.error(error.response?.data?.message || t('error_creating_company'));
-        }
-    });
+    const isEditing = !!initialData;
 
     const form = useForm({
         defaultValues: {
-            name: '',
-            tax_id: '',
-            base_currency: 'USD',
-            telegram_user_id: '',
+            name: initialData?.name || '',
+            tax_id: initialData?.tax_id || '',
+            base_currency: initialData?.base_currency || 'USD',
+            telegram_user_id: initialData?.telegram_user_id || '',
         },
         validators: {
             onChange: companySchema,
         },
         onSubmit: async ({ value }) => {
-            mutation.mutate(value);
+            if (isEditing && initialData) {
+                updateMutation.mutate({ id: initialData.id, data: value }, {
+                    onSuccess: () => onClose()
+                });
+            } else {
+                createMutation.mutate(value, {
+                    onSuccess: () => onClose()
+                });
+            }
         },
     });
+
+    // Reset form when initialData changes or modal opens
+    useEffect(() => {
+        if (isOpen) {
+            form.reset();
+        }
+    }, [isOpen, initialData]);
 
     const handleClose = () => {
         form.reset();
@@ -67,11 +73,15 @@ const AddCompanyModal = ({ isOpen, onClose }: AddCompanyModalProps) => {
 
     return (
         <Dialog open={isOpen} onOpenChange={handleClose}>
-            <DialogContent className="sm:max-w-[425px] bg-card backdrop-blur-lg border-none shadow-2xl">
+            <DialogContent className="sm:max-w-[425px] bg-card/95 backdrop-blur-xl border-border/50 shadow-2xl">
                 <DialogHeader>
-                    <DialogTitle className="text-xl font-bold text-primary">{t('add_new_company')}</DialogTitle>
+                    <DialogTitle className="text-xl font-bold text-primary">
+                        {isEditing ? t('edit_company') : t('add_new_company')}
+                    </DialogTitle>
                     <DialogDescription>
-                        {t('enter_the_details_of_the_new_organization')}
+                        {isEditing 
+                            ? t('update_the_details_of_the_organization') 
+                            : t('enter_the_details_of_the_new_organization')}
                     </DialogDescription>
                 </DialogHeader>
                 
@@ -109,7 +119,7 @@ const AddCompanyModal = ({ isOpen, onClose }: AddCompanyModalProps) => {
                                 <Label>{t('tax_id')}</Label>
                                 <Input 
                                     name={field.name}
-                                    value={field.state.value}
+                                    value={field.state.value ?? ''}
                                     onBlur={field.handleBlur}
                                     onChange={(e) => field.handleChange(e.target.value)}
                                     placeholder={t('enter_tax_id')}
@@ -142,11 +152,10 @@ const AddCompanyModal = ({ isOpen, onClose }: AddCompanyModalProps) => {
                                     <Label>{t('telegram_id')}</Label>
                                     <Input 
                                         name={field.name}
-                                        value={field.state.value}
+                                        value={field.state.value ?? ''}
                                         onBlur={field.handleBlur}
                                         onChange={(e) => field.handleChange(e.target.value)}
                                         placeholder="@username"
-                                        
                                     />
                                 </div>
                             )}
@@ -160,8 +169,14 @@ const AddCompanyModal = ({ isOpen, onClose }: AddCompanyModalProps) => {
                         <form.Subscribe
                             selector={(state) => [state.canSubmit, state.isSubmitting]}
                             children={([canSubmit, isSubmitting]) => (
-                                <Button type="submit" size="lg" disabled={!canSubmit || mutation.isPending}>
-                                    {mutation.isPending || isSubmitting ? t('saving') + '...' : t('save_company')}
+                                <Button 
+                                    type="submit" 
+                                    size="lg" 
+                                    disabled={!canSubmit || createMutation.isPending || updateMutation.isPending}
+                                >
+                                    {(createMutation.isPending || updateMutation.isPending || isSubmitting) 
+                                        ? t('saving') + '...' 
+                                        : t('save_company')}
                                 </Button>
                             )}
                         />
@@ -172,4 +187,4 @@ const AddCompanyModal = ({ isOpen, onClose }: AddCompanyModalProps) => {
     );
 };
 
-export default AddCompanyModal;
+export default CompanyModal;
