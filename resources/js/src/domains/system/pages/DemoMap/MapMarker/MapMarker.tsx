@@ -157,8 +157,8 @@ const MapMarkerDemo = () => {
                         ))}
                     </Map>
 
-                    <div className="absolute bottom-6 left-6 pointer-events-none">
-                        <div className="bg-background/95 backdrop-blur-md px-5 py-3 rounded-2xl border shadow-xl flex items-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="absolute bottom-4 left-4 pointer-events-none">
+                        <div className="bg-background/70 backdrop-blur-md p-3 rounded-lg border shadow-xl flex items-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
                             <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                                 <Plus className="size-5" />
                             </div>

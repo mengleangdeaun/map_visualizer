@@ -26,7 +26,7 @@ The ecosystem consists of three main applications, each with distinct focuses:
 - **Real-time WebSockets:** Laravel Reverb (Native, lightweight, highly performant for handling 200+ concurrent driver connections and admin dashboards).
 
 ### Backend (Laravel)
-- **Framework:** Laravel 11+
+- **Framework:** Laravel 12+
 - **Performance Engine:** Laravel Octane powered by FrankenPHP.
 - **Authentication:** Laravel Sanctum (Token-based for the PWA, Session-based for the Admin Panel).
 

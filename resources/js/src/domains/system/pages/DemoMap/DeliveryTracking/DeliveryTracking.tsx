@@ -354,7 +354,7 @@ const DeliveryTracking = () => {
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 flex-1 min-h-0">
                 <div className="lg:col-span-3 h-full relative rounded-xl border bg-card shadow-sm overflow-hidden">
                     <Map viewport={viewport} onViewportChange={setViewport} onClick={handleMapClick} className="h-full w-full" language="km" styles={googleKhmerStyle}>
-                        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-[100] w-full max-w-md px-4">
+                        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[100] w-full max-w-md px-4">
                             <MapSearch onSelect={handleSearchSelect} className="w-full" />
                         </div>
 
@@ -536,7 +536,7 @@ const DeliveryTracking = () => {
 
                     {/* Floating Map Overlay */}
                     {isAnimating && (
-                        <div className="absolute top-2 left-2 p-4 rounded-xl border bg-background/70 dark:bg-background/90 backdrop-blur-md shadow-xl max-w-xs space-y-3 animate-in slide-in-from-bottom-4">
+                        <div className="absolute top-3 left-3 p-4 rounded-xl border bg-background/70 dark:bg-background/90 backdrop-blur-md shadow-xl max-w-xs space-y-3 animate-in slide-in-from-bottom-4">
                             <div className="flex items-center justify-between gap-4">
                                 <div className="flex items-center gap-3">
                                     <div className="size-10 rounded-full overflow-hidden bg-muted border">

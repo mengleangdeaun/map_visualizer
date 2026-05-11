@@ -229,7 +229,7 @@ const AvailableDriver = () => {
                         className="h-full w-full"
                         language="km"
                     >
-                        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-[100] w-full max-w-md px-4">
+                        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[100] w-full max-w-md px-4">
                             <MapSearch 
                                 onSelect={handleSearchSelect} 
                                 className="w-full"
@@ -241,6 +241,9 @@ const AvailableDriver = () => {
                             showZoom
                             showCompass
                             showLocate 
+                            showRefresh
+                            onRefresh={refreshDrivers}
+                            isRefreshing={isFetching}
                             onLocate={(pos) => {
                                 const coords: [number, number] = [pos.longitude, pos.latitude];
                                 setCenter(coords);
@@ -350,23 +353,7 @@ const AvailableDriver = () => {
                         <RadiusControl radius={radius} onRadiusChange={setRadius} />
                     </div>
 
-                    {/* Refresh Button - Positioned to match MapControls */}
-                    <div className="absolute top-2 right-12 z-10">
-                        <div className="flex flex-col overflow-hidden rounded-md border border-border bg-background shadow-sm">
-                            <button 
-                                onClick={refreshDrivers}
-                                disabled={isFetching}
-                                className={cn(
-                                    "flex size-8 items-center justify-center transition-all",
-                                    "hover:bg-accent dark:hover:bg-accent/40",
-                                    "disabled:opacity-50"
-                                )}
-                                title="Refresh drivers"
-                            >
-                                <RefreshCw className={cn("size-4 text-foreground/80", isFetching && "animate-spin")} />
-                            </button>
-                        </div>
-                    </div>
+
 
                     {/* Only show the full-page overlay on the VERY first load */}
                     {isLoading && <MapLoading message="Locating drivers..." />}

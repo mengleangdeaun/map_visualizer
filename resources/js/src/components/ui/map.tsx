@@ -17,7 +17,7 @@ import {
 } from "react";
 import { MapContext, useMap, type MapViewport } from "./map-context";
 import { createPortal } from "react-dom";
-import { X, Minus, Plus, Locate, Maximize, Loader2 } from "lucide-react";
+import { X, Minus, Plus, Locate, Maximize, Loader2, RefreshCw } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -816,13 +816,19 @@ type MapControlsProps = {
   className?: string;
   /** Callback with user coordinates when located */
   onLocate?: (coords: { longitude: number; latitude: number }) => void;
+  /** Show refresh button (default: false) */
+  showRefresh?: boolean;
+  /** Callback fired when the refresh button is clicked */
+  onRefresh?: () => void;
+  /** Whether the map data is currently being refreshed (shows loading state) */
+  isRefreshing?: boolean;
 };
 
 const positionClasses = {
-  "top-left": "top-2 left-2",
-  "top-right": "top-2 right-2",
-  "bottom-left": "bottom-2 left-2",
-  "bottom-right": "bottom-10 right-2",
+  "top-left": "top-3 left-3",
+  "top-right": "top-3 right-3",
+  "bottom-left": "bottom-3 left-3",
+  "bottom-right": "bottom-10 right-3",
 };
 
 function ControlGroup({ children }: { children: React.ReactNode }) {
@@ -869,8 +875,11 @@ function MapControls({
   showCompass = false,
   showLocate = false,
   showFullscreen = false,
+  showRefresh = false,
   className,
   onLocate,
+  onRefresh,
+  isRefreshing = false,
 }: MapControlsProps) {
   const { map } = useMap();
   const [waitingForLocation, setWaitingForLocation] = useState(false);
@@ -964,6 +973,17 @@ function MapControls({
         <ControlGroup>
           <ControlButton onClick={handleFullscreen} label="Toggle fullscreen">
             <Maximize className="size-4" />
+          </ControlButton>
+        </ControlGroup>
+      )}
+      {showRefresh && (
+        <ControlGroup>
+          <ControlButton 
+            onClick={() => onRefresh?.()} 
+            label="Refresh data"
+            disabled={isRefreshing}
+          >
+            <RefreshCw className={cn("size-4", isRefreshing && "animate-spin")} />
           </ControlButton>
         </ControlGroup>
       )}

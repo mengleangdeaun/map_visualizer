@@ -140,11 +140,10 @@ const RealtimeTracking = () => {
             }
         };
 
-        channel.on('VehicleUpdated', updateTelemetry);
-        channel.on('.vehicle.location.updated', updateTelemetry);
-        channel.on('vehicle.location.updated', updateTelemetry);
-        channel.on('VehicleLocationUpdated', updateTelemetry);
-        channel.on('.VehicleLocationUpdated', updateTelemetry);
+        channel.listen('.vehicle.location.updated', updateTelemetry);
+        channel.listen('vehicle.location.updated', updateTelemetry);
+        channel.listen('VehicleLocationUpdated', updateTelemetry);
+        channel.listen('.VehicleLocationUpdated', updateTelemetry);
 
         echo.connector.pusher.connection.bind('state_change', (states: any) => {
             setIsConnected(states.current === 'connected');
