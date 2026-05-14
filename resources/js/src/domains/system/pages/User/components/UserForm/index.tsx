@@ -15,6 +15,7 @@ import { Loader2, ShieldCheck, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
 import { useLocations } from '../../../Location/hooks/useLocations';
+import { SearchableSelect } from '@/components/shared/SearchableSelect';
 
 const getUserSchema = (isEditing: boolean, isPlatformStaff?: boolean) => z.object({
     company_id: isPlatformStaff ? z.string().optional() : z.string().min(1, 'field_required'),
@@ -23,7 +24,7 @@ const getUserSchema = (isEditing: boolean, isPlatformStaff?: boolean) => z.objec
     phone: z.string().min(1, 'field_required'),
     email: z.string().email().or(z.literal('')),
     password: isEditing 
-        ? z.string().min(8, 'password_min_length').or(z.literal(''))
+        ? z.string().refine(val => val === '' || val.length >= 8, { message: 'password_min_length' })
         : z.string().min(1, 'field_required').min(8, 'password_min_length'),
     status: z.enum(['active', 'suspended', 'inactive']),
     telegram_user_id: z.string().or(z.literal('')),
@@ -65,16 +66,7 @@ const UserForm = ({ open, onOpenChange, user, isPlatformStaff }: UserFormProps) 
             profile_url: user?.profile_full_url || user?.profile_url || null,
             permissions: (user?.permissions as Record<string, boolean>) || {},
         },
-        validators: {
-            onChange: ({ value }) => getUserSchema(!!user, isPlatformStaff || (value.role === 'super_admin' || value.role === 'system_staff')).safeParse(value),
-        },
         onSubmit: async ({ value }) => {
-            // Re-validate on submit just in case
-            const result = getUserSchema(isEditing, showPlatformRoles).safeParse(value);
-            if (!result.success) {
-                return;
-            }
-
             const formData = new FormData();
             
             const base64ToFile = (base64: string, filename: string) => {
@@ -155,17 +147,19 @@ const UserForm = ({ open, onOpenChange, user, isPlatformStaff }: UserFormProps) 
                 profile_url: null,
                 permissions: {},
             });
-            
+
             // Trigger validation after reset to update canSubmit state
-            setTimeout(() => form.validate(), 0);
+            setTimeout(() => form.validate('change'), 0);
         }
     }, [open, user, showPlatformRoles]);
 
     const isLoading = createMutation.isPending || updateMutation.isPending;
 
     const validateField = (name: string, value: any) => {
-        const schema = getUserSchema(isEditing, showPlatformRoles);
-        const result = schema.safeParse({ ...form.state.values, [name]: value });
+        const currentValues = { ...form.state.values, [name]: value };
+        const dynamicIsPlatformStaff = isPlatformStaff || (currentValues.role === 'super_admin' || currentValues.role === 'system_staff');
+        const schema = getUserSchema(isEditing, dynamicIsPlatformStaff);
+        const result = schema.safeParse(currentValues);
         if (!result.success) {
             const error = result.error.issues.find(issue => issue.path.includes(name));
             return error ? t(error.message) : undefined;
@@ -229,7 +223,7 @@ const UserForm = ({ open, onOpenChange, user, isPlatformStaff }: UserFormProps) 
                                             onChange={(e) => field.handleChange(e.target.value)}
                                             placeholder={t('enter_full_name','Enter Full Name')}
                                         />
-                                        {field.state.meta.errors.length > 0 && (
+                                        {field.state.meta.isTouched && field.state.meta.errors.length > 0 && (
                                             <p className="text-xs text-destructive">{field.state.meta.errors[0]}</p>
                                         )}
                                     </div>
@@ -250,6 +244,9 @@ const UserForm = ({ open, onOpenChange, user, isPlatformStaff }: UserFormProps) 
                                                 onChange={(e) => field.handleChange(e.target.value)}
                                                 placeholder="user@example.com"
                                             />
+                                            {field.state.meta.isTouched && field.state.meta.errors.length > 0 && (
+                                                <p className="text-xs text-destructive">{field.state.meta.errors[0]}</p>
+                                            )}
                                         </div>
                                     )}
                                 />
@@ -265,6 +262,9 @@ const UserForm = ({ open, onOpenChange, user, isPlatformStaff }: UserFormProps) 
                                                 onChange={(e) => field.handleChange(e.target.value)}
                                                 placeholder={t('phone')}
                                             />
+                                            {field.state.meta.isTouched && field.state.meta.errors.length > 0 && (
+                                                <p className="text-xs text-destructive">{field.state.meta.errors[0]}</p>
+                                            )}
                                         </div>
                                     )}
                                 />
@@ -285,24 +285,22 @@ const UserForm = ({ open, onOpenChange, user, isPlatformStaff }: UserFormProps) 
                                 children={(field) => (
                                     <div className="flex-1 w-full space-y-2">
                                         <Label htmlFor={field.name}>{t('company')}</Label>
-                                        <Select
+                                        <SearchableSelect
+                                            options={companiesData?.data || []}
                                             value={field.state.value}
-                                            onValueChange={(val: any) => {
-                                                field.handleChange(val);
+                                            onChange={(val) => {
+                                                field.handleChange(val || '');
                                                 form.setFieldValue('base_hub_id', '');
                                             }}
-                                        >
-                                            <SelectTrigger className="bg-background">
-                                                <SelectValue placeholder={t('select_company')} />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {companiesData?.data.map((company) => (
-                                                    <SelectItem key={company.id} value={company.id}>
-                                                        {company.name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                            isLoading={!companiesData}
+                                            placeholder={t('select_company')}
+                                            searchPlaceholder={t('search_company','Search organization...')}
+                                            getOptionValue={(c) => c.id}
+                                            getOptionLabel={(c) => c.name}
+                                        />
+                                        {field.state.meta.isTouched && field.state.meta.errors.length > 0 && (
+                                            <p className="text-xs text-destructive">{field.state.meta.errors[0]}</p>
+                                        )}
                                     </div>
                                 )}
                             />
@@ -312,22 +310,17 @@ const UserForm = ({ open, onOpenChange, user, isPlatformStaff }: UserFormProps) 
                                 children={(field) => (
                                     <div className="space-y-2">
                                         <Label htmlFor={field.name}>{t('base_hub','Base Hub')}</Label>
-                                        <Select
+                                        <SearchableSelect
+                                            options={hubsData?.data || []}
                                             value={field.state.value}
-                                            onValueChange={(val: any) => field.handleChange(val)}
-                                            disabled={!companyId || isLoadingHubs}
-                                        >
-                                            <SelectTrigger className="bg-background">
-                                                <SelectValue placeholder={!companyId ? t('select_company_first','Select Company First') : (isLoadingHubs ? t('loading') : t('select_hub'))} />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {hubsData?.data.map((hub) => (
-                                                    <SelectItem key={hub.id} value={hub.id}>
-                                                        {hub.name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                            onChange={(val) => field.handleChange(val || '')}
+                                            isLoading={isLoadingHubs}
+                                            disabled={!companyId}
+                                            placeholder={!companyId ? t('select_company_first') : t('select_hub')}
+                                            searchPlaceholder={t('search_hub','Search hub...')}
+                                            getOptionValue={(h) => h.id}
+                                            getOptionLabel={(h) => h.name}
+                                        />
                                     </div>
                                 )}
                             />
@@ -338,10 +331,10 @@ const UserForm = ({ open, onOpenChange, user, isPlatformStaff }: UserFormProps) 
                         <div className="space-y-4">
                             <form.Field
                                 name="role"
+                                validators={{ onChange: ({ value }) => validateField('role', value) }}
                                 children={(field) => (
                                     <div className="space-y-2">
-                                        <Label htmlFor={field.name} className="flex items-center gap-2">
-                                            <ShieldCheck size={14} className="text-primary" />
+                                        <Label htmlFor={field.name}>
                                             {t('role')}
                                         </Label>
                                         <Select
@@ -358,6 +351,9 @@ const UserForm = ({ open, onOpenChange, user, isPlatformStaff }: UserFormProps) 
                                                 <SelectItem value="driver">{t('role_driver')}</SelectItem>
                                             </SelectContent>
                                         </Select>
+                                        {field.state.meta.isTouched && field.state.meta.errors.length > 0 && (
+                                            <p className="text-xs text-destructive">{field.state.meta.errors[0]}</p>
+                                        )}
                                     </div>
                                 )}
                             />
@@ -393,7 +389,11 @@ const UserForm = ({ open, onOpenChange, user, isPlatformStaff }: UserFormProps) 
                                     <div className="space-y-2">
                                         <Label htmlFor={field.name} className="flex items-center gap-2">
                                             {t('password')}
-                                            {isEditing && <span className="text-[10px] text-muted-foreground font-normal italic">({t('optional')})</span>}
+                                            {isEditing && (
+                                                <span className="text-[10px] text-muted-foreground font-normal italic">
+                                                    ({t('leave_blank_to_keep_current', 'Leave Blank to keep current')})
+                                                </span>
+                                            )}
                                         </Label>
                                         <Input
                                             id={field.name}
@@ -403,6 +403,9 @@ const UserForm = ({ open, onOpenChange, user, isPlatformStaff }: UserFormProps) 
                                             placeholder="••••••••"
                                             className="bg-background"
                                         />
+                                        {field.state.meta.isTouched && field.state.meta.errors.length > 0 && (
+                                            <p className="text-xs text-destructive">{field.state.meta.errors[0]}</p>
+                                        )}
                                     </div>
                                 )}
                             />
@@ -427,14 +430,9 @@ const UserForm = ({ open, onOpenChange, user, isPlatformStaff }: UserFormProps) 
 
                     <DialogFooter>
                         <form.Subscribe
-                            selector={(state) => [state.canSubmit, state.isSubmitting, state.errors]}
-                            children={([canSubmit, isSubmitting, errors]) => (
+                            selector={(state) => [state.canSubmit, state.isSubmitting]}
+                            children={([canSubmit, isSubmitting]) => (
                                 <div className="flex flex-col items-end gap-2">
-                                    {errors.length > 0 && (
-                                        <div className="text-[10px] font-bold text-destructive bg-destructive/10 px-2 py-1 rounded border border-destructive/20 animate-in fade-in slide-in-from-bottom-1">
-                                            {t('please_fix_errors_before_saving','Please fix all errors before saving')}
-                                        </div>
-                                    )}
                                     <div className="flex items-center gap-3">
                                         <Button 
                                             size="lg"

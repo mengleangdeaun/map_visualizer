@@ -9,13 +9,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Truck } from 'lucide-react';
+import { Loader2, Truck, Weight, Box, Tag, Activity, ShieldCheck, UserPlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
 import { useDrivers } from '../../../../hooks/useDrivers';
 import { User } from '../../../../../system/services/userService';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User as UserIcon } from 'lucide-react';
+import { SearchableSelect } from '@/components/shared/SearchableSelect';
 
 const vehicleSchema = z.object({
     type: z.enum(['motorcycle', 'tuktuk', 'minivan', 'box_truck']),
@@ -66,6 +67,8 @@ const VehicleForm = ({ open, onOpenChange, vehicle }: VehicleFormProps) => {
     useEffect(() => {
         if (open) {
             form.reset();
+            // Trigger validation after reset to update canSubmit state
+            setTimeout(() => form.validate('change'), 0);
         }
     }, [open, vehicle]);
 
@@ -84,13 +87,19 @@ const VehicleForm = ({ open, onOpenChange, vehicle }: VehicleFormProps) => {
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[550px] bg-card shadow-2xl">
                 <DialogHeader>
-                    <DialogTitle className="text-xl font-bold text-primary flex items-center gap-2">
-                        <Truck className="size-5" />
-                        {isEditing ? t('edit_vehicle') : t('add_new_vehicle') || 'Add New Vehicle'}
-                    </DialogTitle>
-                    <DialogDescription>
-                        {isEditing ? t('update_vehicle_details') || 'Update the details of the vehicle.' : t('enter_vehicle_details') || 'Enter the details of the new vehicle to add it to your fleet.'}
-                    </DialogDescription>
+                    <div className="flex items-center gap-2 mb-1">
+                        <div className="p-2 bg-primary/10 rounded-lg">
+                            <Truck className="size-5 text-primary" />
+                        </div>
+                        <div>
+                            <DialogTitle className="text-xl font-bold text-primary">
+                                {isEditing ? t('edit_vehicle') : t('add_new_vehicle') || 'Add New Vehicle'}
+                            </DialogTitle>
+                            <DialogDescription>
+                                {isEditing ? t('update_vehicle_details') || 'Update the details of the vehicle.' : t('enter_vehicle_details') || 'Enter the details of the new vehicle to add it to your fleet.'}
+                            </DialogDescription>
+                        </div>
+                    </div>
                 </DialogHeader>
 
                 <form 
@@ -99,191 +108,218 @@ const VehicleForm = ({ open, onOpenChange, vehicle }: VehicleFormProps) => {
                         e.stopPropagation();
                         form.handleSubmit();
                     }} 
-                    className="space-y-4 pt-4"
+                    className="space-y-6 pt-4"
                 >
-                    <div className="grid grid-cols-2 gap-4">
-                        <form.Field
-                            name="type"
-                            children={(field) => (
-                                <div className="space-y-2">
-                                    <Label htmlFor={field.name}>{t('type') || 'Vehicle Type'}</Label>
-                                    <Select
-                                        value={field.state.value}
-                                        onValueChange={(val: any) => field.handleChange(val)}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder={t('select_type')} />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="motorcycle">{t('type_motorcycle')}</SelectItem>
-                                            <SelectItem value="tuktuk">{t('type_tuktuk')}</SelectItem>
-                                            <SelectItem value="minivan">{t('type_minivan')}</SelectItem>
-                                            <SelectItem value="box_truck">{t('type_box_truck')}</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            )}
-                        />
+                    <div className="bg-muted/30 p-4 rounded-xl border border-dashed space-y-4">
+                        <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                            <Tag size={12} className="text-primary" />
+                            {t('vehicle_info','Vehicle Information')}
+                        </Label>
+                        <div className="grid grid-cols-2 gap-4">
+                            <form.Field
+                                name="type"
+                                children={(field) => (
+                                    <div className="space-y-2">
+                                        <Label htmlFor={field.name}>{t('type') || 'Vehicle Type'}</Label>
+                                        <Select
+                                            value={field.state.value}
+                                            onValueChange={(val: any) => field.handleChange(val)}
+                                        >
+                                            <SelectTrigger className="bg-background">
+                                                <SelectValue placeholder={t('select_type')} />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="motorcycle">{t('type_motorcycle')}</SelectItem>
+                                                <SelectItem value="tuktuk">{t('type_tuktuk')}</SelectItem>
+                                                <SelectItem value="minivan">{t('type_minivan')}</SelectItem>
+                                                <SelectItem value="box_truck">{t('type_box_truck')}</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                )}
+                            />
 
-                        <form.Field
-                            name="plate_number"
-                            validators={{
-                                onChange: ({ value }) => validateField('plate_number', value)
-                            }}
-                            children={(field) => (
-                                <div className="space-y-2">
-                                    <Label htmlFor={field.name}>{t('plate_number')}</Label>
-                                    <Input
-                                        id={field.name}
-                                        value={field.state.value}
-                                        onBlur={field.handleBlur}
-                                        onChange={(e) => field.handleChange(e.target.value)}
-                                        placeholder="AB-1234"
-                                        className="font-mono uppercase"
-                                    />
-                                    {field.state.meta.errors.length > 0 && (
-                                        <p className="text-xs text-destructive">
-                                            {field.state.meta.errors.map((error: any) => error).join(', ')}
-                                        </p>
-                                    )}
-                                </div>
-                            )}
-                        />
+                            <form.Field
+                                name="plate_number"
+                                validators={{
+                                    onChange: ({ value }) => validateField('plate_number', value)
+                                }}
+                                children={(field) => (
+                                    <div className="space-y-2">
+                                        <Label htmlFor={field.name}>{t('plate_number')}</Label>
+                                        <Input
+                                            id={field.name}
+                                            value={field.state.value}
+                                            onBlur={field.handleBlur}
+                                            onChange={(e) => field.handleChange(e.target.value)}
+                                            placeholder="AB-1234"
+                                            className="font-mono uppercase bg-background"
+                                        />
+                                        {field.state.meta.isTouched && field.state.meta.errors.length > 0 && (
+                                            <p className="text-xs text-destructive">
+                                                {field.state.meta.errors.map((error: any) => error).join(', ')}
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+                            />
+                        </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <form.Field
-                            name="max_weight_kg"
-                            children={(field) => (
-                                <div className="space-y-2">
-                                    <Label htmlFor={field.name}>{t('max_weight_kg') || 'Max Weight (kg)'}</Label>
-                                    <Input
-                                        id={field.name}
-                                        type="number"
-                                        value={field.state.value}
-                                        onBlur={field.handleBlur}
-                                        onChange={(e) => field.handleChange(e.target.value)}
-                                        placeholder="1000"
-                                    />
-                                </div>
-                            )}
-                        />
+                    <div className="bg-accent/5 p-4 rounded-xl border space-y-4">
+                        <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                            <ShieldCheck size={12} className="text-primary" />
+                            {t('specifications','Specifications')}
+                        </Label>
+                        <div className="grid grid-cols-2 gap-4">
+                            <form.Field
+                                name="max_weight_kg"
+                                children={(field) => (
+                                    <div className="space-y-2">
+                                        <Label htmlFor={field.name}>
+                                            {t('max_weight_kg') || 'Max Weight (kg)'}
+                                        </Label>
+                                        <Input
+                                            id={field.name}
+                                            type="number"
+                                            value={field.state.value}
+                                            onBlur={field.handleBlur}
+                                            onChange={(e) => field.handleChange(e.target.value)}
+                                            placeholder="1000"
+                                            className="bg-background"
+                                        />
+                                    </div>
+                                )}
+                            />
 
-                        <form.Field
-                            name="max_volume_cbm"
-                            children={(field) => (
-                                <div className="space-y-2">
-                                    <Label htmlFor={field.name}>{t('max_volume_cbm') || 'Max Volume (cbm)'}</Label>
-                                    <Input
-                                        id={field.name}
-                                        type="number"
-                                        step="0.01"
-                                        value={field.state.value}
-                                        onBlur={field.handleBlur}
-                                        onChange={(e) => field.handleChange(e.target.value)}
-                                        placeholder="5.5"
-                                    />
-                                </div>
-                            )}
-                        />
+                            <form.Field
+                                name="max_volume_cbm"
+                                children={(field) => (
+                                    <div className="space-y-2">
+                                        <Label htmlFor={field.name}>
+                                            {t('max_volume_cbm') || 'Max Volume (cbm)'}
+                                        </Label>
+                                        <Input
+                                            id={field.name}
+                                            type="number"
+                                            step="0.01"
+                                            value={field.state.value}
+                                            onBlur={field.handleBlur}
+                                            onChange={(e) => field.handleChange(e.target.value)}
+                                            placeholder="5.5"
+                                            className="bg-background"
+                                        />
+                                    </div>
+                                )}
+                            />
+                        </div>
                     </div>
 
-                    <form.Field
-                        name="driver_id"
-                        children={(field) => {
-                            const selectedDriver = drivers?.find(d => d.id === field.state.value);
-                            return (
+                    <div className="bg-muted/30 p-4 rounded-xl border border-dashed space-y-4">
+                        <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                            <UserPlus size={12} className="text-primary" />
+                            {t('assignment','Assignment')}
+                        </Label>
+                        <form.Field
+                            name="driver_id"
+                            children={(field) => (
                                 <div className="space-y-2">
                                     <Label htmlFor={field.name}>{t('assign_driver', 'Assign Driver')}</Label>
-                                    <Select
-                                        value={field.state.value || "none"}
-                                        onValueChange={(val: any) => field.handleChange(val === "none" ? null : val)}
-                                        disabled={isLoadingDrivers}
-                                    >
-                                        <SelectTrigger className="h-12 bg-background border-border/50 shadow-sm transition-all hover:border-primary/30">
-                                            <SelectValue placeholder={isLoadingDrivers ? t('loading_drivers') : t('select_driver')}>
-                                                {selectedDriver ? (
-                                                    <div className="flex items-center gap-2 text-left">
-                                                        <Avatar className="h-7 w-7 border-border/40 shadow-sm">
-                                                            <AvatarImage src={selectedDriver.profile_full_url || ''} />
-                                                            <AvatarFallback className="text-[10px] bg-primary/5 text-primary">
-                                                                <UserIcon size={12} />
-                                                            </AvatarFallback>
-                                                        </Avatar>
-                                                        <div className="flex items-center gap-2 min-w-0">
-                                                            <span className="text-xs font-bold truncate">{selectedDriver.name}</span>
-                                                            <span className="text-[10px] font-bold text-muted-foreground/60 bg-muted/30 px-1 rounded-sm border border-border/30">
-                                                                {selectedDriver.phone}
-                                                            </span>
-                                                        </div>
+                                    <SearchableSelect
+                                        options={drivers || []}
+                                        value={field.state.value}
+                                        onChange={field.handleChange}
+                                        isLoading={isLoadingDrivers}
+                                        placeholder={t('select_driver')}
+                                        searchPlaceholder={t('search_driver_name_or_phone','Search name or phone...')}
+                                        getOptionValue={(d) => d.id}
+                                        getOptionLabel={(d) => d.name}
+                                        getOptionSearchTerms={(d) => [d.name, d.phone, d.email || '']}
+                                        triggerClassName="min-h-[4rem]"
+                                        renderTrigger={(selectedDriver) => (
+                                            <div className="flex items-center gap-3 text-left w-full">
+                                                <Avatar className="h-10 w-10 border-border/40 shadow-sm flex-shrink-0">
+                                                    <AvatarImage src={selectedDriver.profile_full_url || ''} />
+                                                    <AvatarFallback className="text-[10px] bg-primary/5 text-primary">
+                                                        <UserIcon size={12} />
+                                                    </AvatarFallback>
+                                                </Avatar>
+                                                <div className="flex flex-1 items-center justify-between min-w-0">
+                                                    <span className="text-xs font-bold truncate">{selectedDriver.name}</span>
+                                                    <span className="text-[10px] font-bold text-muted-foreground/60 bg-muted/30 px-1.5 py-0.5 rounded-md border border-border/30 font-mono">
+                                                        {selectedDriver.phone}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        )}
+                                        renderOption={(driver) => (
+                                            <div className="flex items-center gap-3">
+                                                <Avatar className="h-9 w-9 border border-border/50 shadow-sm">
+                                                    <AvatarImage src={driver.profile_full_url || ''} />
+                                                    <AvatarFallback className="text-xs bg-primary/5 text-primary font-black uppercase">
+                                                        {driver.name.substring(0, 2)}
+                                                    </AvatarFallback>
+                                                </Avatar>
+                                                <div className="flex flex-col">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-bold text-sm leading-tight text-foreground/90">{driver.name}</span>
+                                                        <span className="text-[10px] font-bold text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded-md border border-border/40 font-mono">
+                                                            {driver.phone}
+                                                        </span>
                                                     </div>
-                                                ) : null}
-                                            </SelectValue>
-                                        </SelectTrigger>
-                                        <SelectContent className="max-h-[300px]">
-                                            <SelectItem value="none" className="text-muted-foreground font-medium">
-                                                {t('unassigned', 'Unassigned')}
-                                            </SelectItem>
-                                            {drivers?.map((driver: User) => (
-                                                <SelectItem key={driver.id} value={driver.id} className="py-2.5">
-                                                    <div className="flex items-center gap-3">
-                                                        <Avatar className="h-8 w-8 border border-border/50 shadow-sm">
-                                                            <AvatarImage src={driver.profile_full_url || ''} />
-                                                            <AvatarFallback className="text-xs bg-primary/5 text-primary font-black uppercase">
-                                                                {driver.name.substring(0, 2)}
-                                                            </AvatarFallback>
-                                                        </Avatar>
-                                                        <div className="flex flex-col">
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="font-bold text-sm leading-tight text-foreground/90">{driver.name}</span>
-                                                                <span className="text-[10px] font-bold text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded-md border border-border/40 font-mono">
-                                                                    {driver.phone}
-                                                                </span>
-                                                            </div>
-                                                            <span className="text-[10px] text-muted-foreground/60 font-medium">
-                                                                {driver.email || t('system:no_email_address')}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    {field.state.meta.errors.length > 0 && (
+                                                    <span className="text-[10px] text-muted-foreground/60 font-medium">
+                                                        {driver.email || t('system:no_email_address')}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        )}
+                                    />
+                                    {field.state.meta.isTouched && field.state.meta.errors.length > 0 && (
                                         <p className="text-xs text-destructive mt-1 font-medium px-1">
                                             {field.state.meta.errors.map((error: any) => t(`system:${error?.message ?? error}`)).join(', ')}
                                         </p>
                                     )}
                                 </div>
-                            );
-                        }}
-                    />
+                            )}
+                        />
+                    </div>
 
-                    <form.Field
-                        name="is_active"
-                        children={(field) => (
-                            <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/20">
-                                <div className="space-y-0.5">
-                                    <Label className="text-sm font-semibold">{t('active_status') || 'Active Status'}</Label>
-                                    <p className="text-[10px] text-muted-foreground">{t('active_status_desc') || 'Enable or disable this vehicle from the fleet.'}</p>
+                    <div className="bg-muted/30 p-4 rounded-xl border border-dashed space-y-4">
+                        <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                            <Activity size={12} className="text-primary" />
+                            {t('status','Status')}
+                        </Label>
+                        <form.Field
+                            name="is_active"
+                            children={(field) => (
+                                <div className="flex items-center justify-between p-3 border rounded-lg bg-card shadow-sm">
+                                    <div className="space-y-0.5">
+                                        <Label className="text-sm font-semibold cursor-pointer" htmlFor="is_active_switch">{t('active_status') || 'Active Status'}</Label>
+                                        <p className="text-[10px] text-muted-foreground">{t('active_status_desc') || 'Enable or disable this vehicle from the fleet.'}</p>
+                                    </div>
+                                    <Switch
+                                        id="is_active_switch"
+                                        checked={field.state.value}
+                                        onCheckedChange={field.handleChange}
+                                    />
                                 </div>
-                                <Switch
-                                    checked={field.state.value}
-                                    onCheckedChange={field.handleChange}
-                                />
-                            </div>
-                        )}
-                    />
+                            )}
+                        />
+                    </div>
 
                     <DialogFooter className="pt-4">
-                        <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+                        <Button
+                        size='lg'
+                        type="button" variant="outline" onClick={() => onOpenChange(false)}>
                             {t('cancel')}
                         </Button>
                         <form.Subscribe
                             selector={(state) => [state.canSubmit, state.isSubmitting]}
                             children={([canSubmit, isSubmitting]) => (
                                 <Button 
-                                    type="submit" 
+                                    size='lg'
+                                    type="submit"
+                                    className='px-4' 
                                     disabled={!canSubmit || isLoading || isSubmitting}
                                 >
                                     {(isLoading || isSubmitting) ? (

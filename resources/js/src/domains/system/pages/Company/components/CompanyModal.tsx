@@ -24,6 +24,17 @@ import {
     SelectValue 
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { 
+    Building2, 
+    Link as LinkIcon, 
+    ReceiptText, 
+    Coins, 
+    Send, 
+    Activity, 
+    FileText,
+    Image as ImageIcon,
+    Loader2
+} from 'lucide-react';
 
 interface CompanyModalProps {
     isOpen: boolean;
@@ -64,9 +75,6 @@ const CompanyModal = ({ isOpen, onClose, initialData }: CompanyModalProps) => {
             telegram_user_id: initialData?.telegram_user_id ?? null,
             logo_url: initialData?.logo_full_url || initialData?.logo_url || null,
             status: initialData?.status || 'active',
-        },
-        validators: {
-            onChange: companySchema,
         },
         onSubmit: async ({ value }) => {
             const formData = new FormData();
@@ -119,8 +127,19 @@ const CompanyModal = ({ isOpen, onClose, initialData }: CompanyModalProps) => {
     useEffect(() => {
         if (isOpen) {
             form.reset();
+            // Trigger validation after reset to update canSubmit state
+            setTimeout(() => form.validate('change'), 0);
         }
     }, [isOpen, initialData]);
+
+    const validateField = (name: string, value: any) => {
+        const result = companySchema.safeParse({ ...form.state.values, [name]: value });
+        if (!result.success) {
+            const error = result.error.issues.find(issue => issue.path.includes(name));
+            return error ? t(error.message) : undefined;
+        }
+        return undefined;
+    };
 
     const handleClose = () => {
         form.reset();
@@ -131,14 +150,21 @@ const CompanyModal = ({ isOpen, onClose, initialData }: CompanyModalProps) => {
         <Dialog open={isOpen} onOpenChange={handleClose}>
             <DialogContent className="sm:max-w-[550px] bg-card shadow-2xl overflow-y-auto max-h-[90vh]">
                 <DialogHeader>
-                    <DialogTitle className="text-xl font-bold text-primary">
-                        {isEditing ? t('edit_company') : t('add_new_company')}
-                    </DialogTitle>
-                    <DialogDescription>
-                        {isEditing 
-                            ? t('update_the_details_of_the_organization') 
-                            : t('enter_the_details_of_the_new_organization')}
-                    </DialogDescription>
+                    <div className="flex items-center gap-2 mb-1">
+                        <div className="p-2 bg-primary/10 rounded-lg">
+                            <Building2 className="size-5 text-primary" />
+                        </div>
+                        <div>
+                            <DialogTitle className="text-xl font-bold text-primary">
+                                {isEditing ? t('edit_company') : t('add_new_company')}
+                            </DialogTitle>
+                            <DialogDescription>
+                                {isEditing 
+                                    ? t('update_the_details_of_the_organization') 
+                                    : t('enter_the_details_of_the_new_organization')}
+                            </DialogDescription>
+                        </div>
+                    </div>
                 </DialogHeader>
                 
                 <form 
@@ -149,180 +175,209 @@ const CompanyModal = ({ isOpen, onClose, initialData }: CompanyModalProps) => {
                     }} 
                     className="space-y-4 pt-4"
                 >
-                    <form.Field
-                        name="logo_url"
-                        children={(field) => (
-                            <div className="flex justify-start pb-4">
-                                <LogoUpload
-                                    value={field.state.value ?? ''}
-                                    onChange={field.handleChange}
-                                    variant="square"
-                                    size="lg"
-                                    description="Upload your company logo. Max size 2MB."
-                                />
-                            </div>
-                        )}
-                    />
+                    <div className="bg-muted/30 p-4 rounded-xl border border-dashed space-y-6">
+                        <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                            <FileText size={12} className="text-primary" />
+                            {t('identity','Identity')}
+                        </Label>
 
-                    <div className="grid grid-cols-2 gap-4">
                         <form.Field
-                            name="name"
+                            name="logo_url"
                             children={(field) => (
-                                <div className="space-y-2">
-                                    <Label>{t('company_name')}</Label>
-                                    <Input 
-                                        name={field.name}
-                                        value={field.state.value}
-                                        onBlur={field.handleBlur}
-                                        onChange={(e) => {
-                                            field.handleChange(e.target.value);
-                                            // Auto-generate slug if it's a new company
-                                            if (!isEditing) {
-                                                const slug = e.target.value
-                                                    .toLowerCase()
-                                                    .replace(/ /g, '-')
-                                                    .replace(/[^\w-]+/g, '');
-                                                form.setFieldValue('slug', slug);
-                                            }
-                                        }}
-                                        placeholder={t('enter_company_name')}
+                                <div className="flex justify-start">
+                                    <LogoUpload
+                                        value={field.state.value ?? ''}
+                                        onChange={field.handleChange}
+                                        variant="square"
+                                        size="lg"
+                                        description="Upload your company logo. Max size 2MB."
                                     />
-                                    {field.state.meta.errors.length > 0 && (
-                                        <span className="text-xs text-destructive">
-                                            {field.state.meta.errors.map((error: any) => error?.message ?? error).join(', ')}
-                                        </span>
-                                    )}
                                 </div>
                             )}
                         />
 
-                        <form.Field
-                            name="slug"
-                            children={(field) => (
-                                <div className="space-y-2">
-                                    <Label>{t('slug')}</Label>
-                                    <Input 
-                                        name={field.name}
-                                        value={field.state.value}
-                                        onBlur={field.handleBlur}
-                                        onChange={(e) => field.handleChange(e.target.value)}
-                                        placeholder="company-slug"
-                                    />
-                                    {field.state.meta.errors.length > 0 && (
-                                        <span className="text-xs text-destructive">
-                                            {field.state.meta.errors.map((error: any) => error?.message ?? error).join(', ')}
-                                        </span>
-                                    )}
-                                </div>
-                            )}
-                        />
+                        <div className="grid grid-cols-2 gap-4">
+                            <form.Field
+                                name="name"
+                                validators={{ onChange: ({ value }) => validateField('name', value) }}
+                                children={(field) => (
+                                    <div className="space-y-2">
+                                        <Label>{t('company_name')}</Label>
+                                        <Input 
+                                            name={field.name}
+                                            value={field.state.value}
+                                            onBlur={field.handleBlur}
+                                            onChange={(e) => {
+                                                field.handleChange(e.target.value);
+                                                // Auto-generate slug if it's a new company
+                                                if (!isEditing) {
+                                                    const slug = e.target.value
+                                                        .toLowerCase()
+                                                        .replace(/ /g, '-')
+                                                        .replace(/[^\w-]+/g, '');
+                                                    form.setFieldValue('slug', slug);
+                                                }
+                                            }}
+                                            placeholder={t('enter_company_name')}
+                                            className="bg-background"
+                                        />
+                                        {field.state.meta.isTouched && field.state.meta.errors.length > 0 && (
+                                            <span className="text-xs text-destructive">
+                                                {field.state.meta.errors.map((error: any) => error?.message ?? error).join(', ')}
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
+                            />
+
+                            <form.Field
+                                name="slug"
+                                validators={{ onChange: ({ value }) => validateField('slug', value) }}
+                                children={(field) => (
+                                    <div className="space-y-2">
+                                        <Label>{t('slug')}</Label>
+                                        <Input 
+                                            name={field.name}
+                                            value={field.state.value}
+                                            onBlur={field.handleBlur}
+                                            onChange={(e) => field.handleChange(e.target.value)}
+                                            placeholder="company-slug"
+                                            className="bg-background font-mono"
+                                        />
+                                        {field.state.meta.isTouched && field.state.meta.errors.length > 0 && (
+                                            <span className="text-xs text-destructive">
+                                                {field.state.meta.errors.map((error: any) => error?.message ?? error).join(', ')}
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
+                            />
+                        </div>
                     </div>
 
-                    <form.Field
-                        name="tax_id"
-                        children={(field) => (
-                            <div className="space-y-2">
-                                <Label>{t('tax_id')}</Label>
-                                <Input 
-                                    name={field.name}
-                                    value={field.state.value ?? ''}
-                                    onBlur={field.handleBlur}
-                                    onChange={(e) => field.handleChange(e.target.value)}
-                                    placeholder={t('enter_tax_id')}
-                                />
-                                {field.state.meta.errors.length > 0 && (
-                                    <span className="text-xs text-destructive">
-                                        {field.state.meta.errors.map((error: any) => error?.message ?? error).join(', ')}
-                                    </span>
+                    <div className="bg-accent/5 p-4 rounded-xl border space-y-4">
+                        <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                            <ReceiptText size={12} className="text-primary" />
+                            {t('financials','Financials')}
+                        </Label>
+                        <div className="grid grid-cols-2 gap-4">
+                            <form.Field
+                                name="tax_id"
+                                children={(field) => (
+                                    <div className="space-y-2">
+                                        <Label>{t('tax_id')}</Label>
+                                        <Input 
+                                            name={field.name}
+                                            value={field.state.value ?? ''}
+                                            onBlur={field.handleBlur}
+                                            onChange={(e) => field.handleChange(e.target.value)}
+                                            placeholder={t('enter_tax_id')}
+                                            className="bg-background"
+                                        />
+                                        {field.state.meta.isTouched && field.state.meta.errors.length > 0 && (
+                                            <span className="text-xs text-destructive">
+                                                {field.state.meta.errors.map((error: any) => error?.message ?? error).join(', ')}
+                                            </span>
+                                        )}
+                                    </div>
                                 )}
-                            </div>
-                        )}
-                    />
+                            />
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <form.Field
-                            name="base_currency"
-                            children={(field) => (
-                                <div className="space-y-2">
-                                    <Label>{t('base_currency')}</Label>
-                                    <Input 
-                                        name={field.name}
-                                        value={field.state.value}
-                                        onBlur={field.handleBlur}
-                                        onChange={(e) => field.handleChange(e.target.value.toUpperCase())}
-                                        placeholder="USD"
-                                        maxLength={3}
-                                    />
-                                    {field.state.meta.errors.length > 0 && (
-                                        <span className="text-xs text-destructive">
-                                            {field.state.meta.errors.map((error: any) => error?.message ?? error).join(', ')}
-                                        </span>
-                                    )}
-                                </div>
-                        )}
-                    />
-                    
-                    <form.Field
-                        name="telegram_user_id"
-                            children={(field) => (
-                                <div className="space-y-2">
-                                    <Label>{t('telegram_id')}</Label>
-                                    <Input 
-                                        name={field.name}
-                                        value={field.state.value ?? ''}
-                                        onBlur={field.handleBlur}
-                                        onChange={(e) => field.handleChange(e.target.value)}
-                                        placeholder="@username"
-                                    />
-                                    {field.state.meta.errors.length > 0 && (
-                                        <span className="text-xs text-destructive">
-                                            {field.state.meta.errors.map((error: any) => error?.message ?? error).join(', ')}
-                                        </span>
-                                    )}
-                                </div>
-                            )}
-                        />
-                        <form.Field
-                            name="status"
-                            children={(field) => (
-                                <div className="space-y-2">
-                                    <Label>{t('status')}</Label>
-                                    <Select 
-                                        value={field.state.value} 
-                                        onValueChange={(value) => field.handleChange(value as 'active' | 'inactive' | 'suspended')}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select Status" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="active">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="h-2 w-2 rounded-full bg-green-500" />
-                                                    Active
-                                                </div>
-                                            </SelectItem>
-                                            <SelectItem value="inactive">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="h-2 w-2 rounded-full bg-gray-400" />
-                                                    Inactive
-                                                </div>
-                                            </SelectItem>
-                                            <SelectItem value="suspended">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="h-2 w-2 rounded-full bg-red-500" />
-                                                    Suspended
-                                                </div>
-                                            </SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    {field.state.meta.errors.length > 0 && (
-                                        <span className="text-xs text-destructive">
-                                            {field.state.meta.errors.map((error: any) => error?.message ?? error).join(', ')}
-                                        </span>
-                                    )}
-                                </div>
-                            )}
-                        />
+                            <form.Field
+                                name="base_currency"
+                                children={(field) => (
+                                    <div className="space-y-2">
+                                        <Label>{t('base_currency')}</Label>
+                                        <Input 
+                                            name={field.name}
+                                            value={field.state.value}
+                                            onBlur={field.handleBlur}
+                                            onChange={(e) => field.handleChange(e.target.value.toUpperCase())}
+                                            placeholder="USD"
+                                            maxLength={3}
+                                            className="bg-background font-black"
+                                        />
+                                        {field.state.meta.isTouched && field.state.meta.errors.length > 0 && (
+                                            <span className="text-xs text-destructive">
+                                                {field.state.meta.errors.map((error: any) => error?.message ?? error).join(', ')}
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="bg-muted/30 p-4 rounded-xl border border-dashed space-y-4">
+                        <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                            <Activity size={12} className="text-primary" />
+                            {t('status_social','Status & Social')}
+                        </Label>
+                        <div className="grid grid-cols-2 gap-4">
+                            <form.Field
+                                name="telegram_user_id"
+                                children={(field) => (
+                                    <div className="space-y-2">
+                                        <Label>{t('telegram_id')}</Label>
+                                        <Input 
+                                            name={field.name}
+                                            value={field.state.value ?? ''}
+                                            onBlur={field.handleBlur}
+                                            onChange={(e) => field.handleChange(e.target.value)}
+                                            placeholder="@username"
+                                            className="bg-background"
+                                        />
+                                        {field.state.meta.isTouched && field.state.meta.errors.length > 0 && (
+                                            <span className="text-xs text-destructive">
+                                                {field.state.meta.errors.map((error: any) => error?.message ?? error).join(', ')}
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
+                            />
+
+                            <form.Field
+                                name="status"
+                                children={(field) => (
+                                    <div className="space-y-2">
+                                        <Label>{t('status')}</Label>
+                                        <Select 
+                                            value={field.state.value} 
+                                            onValueChange={(value) => field.handleChange(value as 'active' | 'inactive' | 'suspended')}
+                                        >
+                                            <SelectTrigger className="bg-background">
+                                                <SelectValue placeholder="Select Status" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="active">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="h-2 w-2 rounded-full bg-green-500" />
+                                                        Active
+                                                    </div>
+                                                </SelectItem>
+                                                <SelectItem value="inactive">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="h-2 w-2 rounded-full bg-gray-400" />
+                                                        Inactive
+                                                    </div>
+                                                </SelectItem>
+                                                <SelectItem value="suspended">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="h-2 w-2 rounded-full bg-red-500" />
+                                                        Suspended
+                                                    </div>
+                                                </SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        {field.state.meta.isTouched && field.state.meta.errors.length > 0 && (
+                                            <span className="text-xs text-destructive">
+                                                {field.state.meta.errors.map((error: any) => error?.message ?? error).join(', ')}
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
+                            />
+                        </div>
                     </div>
 
                     <DialogFooter className="pt-4">

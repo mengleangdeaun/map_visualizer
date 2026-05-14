@@ -109,6 +109,8 @@ const PlatformStaffForm = ({ open, onOpenChange, user }: PlatformStaffFormProps)
     useEffect(() => {
         if (open) {
             form.reset();
+            // Trigger validation after reset to update canSubmit state
+            setTimeout(() => form.validate('change'), 0);
         }
     }, [open, user]);
 
@@ -124,17 +126,9 @@ const PlatformStaffForm = ({ open, onOpenChange, user }: PlatformStaffFormProps)
         return undefined;
     };
 
-    const handlePermissionToggle = (key: string) => {
-        const currentPermissions = form.getFieldValue('permissions') || {};
-        form.setFieldValue('permissions', {
-            ...currentPermissions,
-            [key]: !currentPermissions[key]
-        });
-    };
-
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[650px] bg-card shadow-2xl overflow-y-auto max-h-[90vh]">
+            <DialogContent className="sm:max-w-[600px] bg-card shadow-2xl overflow-y-auto max-h-[90vh]">
                 <DialogHeader>
                     <div className="flex items-center gap-2 mb-1">
                         <div className="p-2 bg-primary/10 rounded-lg">
@@ -184,10 +178,11 @@ const PlatformStaffForm = ({ open, onOpenChange, user }: PlatformStaffFormProps)
                                         <Input
                                             id={field.name}
                                             value={field.state.value}
+                                            onBlur={field.handleBlur}
                                             onChange={(e) => field.handleChange(e.target.value)}
                                             placeholder={t('enter_full_name')}
                                         />
-                                        {field.state.meta.errors.length > 0 && (
+                                        {field.state.meta.isTouched && field.state.meta.errors.length > 0 && (
                                             <p className="text-xs text-destructive">{field.state.meta.errors[0]}</p>
                                         )}
                                     </div>
@@ -205,8 +200,10 @@ const PlatformStaffForm = ({ open, onOpenChange, user }: PlatformStaffFormProps)
                                                 id={field.name}
                                                 type="email"
                                                 value={field.state.value}
+                                                onBlur={field.handleBlur}
                                                 onChange={(e) => field.handleChange(e.target.value)}
                                                 placeholder="admin@mapcn.com"
+                                                className="font-mono text-xs"
                                             />
                                         </div>
                                     )}
@@ -220,9 +217,13 @@ const PlatformStaffForm = ({ open, onOpenChange, user }: PlatformStaffFormProps)
                                             <Input
                                                 id={field.name}
                                                 value={field.state.value}
+                                                onBlur={field.handleBlur}
                                                 onChange={(e) => field.handleChange(e.target.value)}
                                                 placeholder={t('phone')}
                                             />
+                                            {field.state.meta.isTouched && field.state.meta.errors.length > 0 && (
+                                                <p className="text-xs text-destructive">{field.state.meta.errors[0]}</p>
+                                            )}
                                         </div>
                                     )}
                                 />
@@ -230,54 +231,64 @@ const PlatformStaffForm = ({ open, onOpenChange, user }: PlatformStaffFormProps)
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 bg-muted/30 p-4 rounded-xl border border-dashed">
-                        <form.Field
-                            name="role"
-                            children={(field) => (
-                                <div className="space-y-2">
-                                    <Label htmlFor={field.name} className="flex items-center gap-2">
-                                        <ShieldCheck size={14} className="text-primary" />
-                                        {t('system_role') || 'System Role'}
-                                    </Label>
-                                    <Select
-                                        value={field.state.value}
-                                        onValueChange={(val: any) => field.handleChange(val)}
-                                    >
-                                        <SelectTrigger className="bg-background">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="super_admin">{t('role_super_admin')}</SelectItem>
-                                            <SelectItem value="system_staff">{t('role_system_staff')}</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            )}
-                        />
+                    <div className="bg-muted/30 p-4 rounded-xl border border-dashed space-y-4">
+                        <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                            <Lock size={12} className="text-primary" />
+                            {t('security_role','Security & Role')}
+                        </Label>
+                        <div className="grid grid-cols-2 gap-4">
+                            <form.Field
+                                name="role"
+                                children={(field) => (
+                                    <div className="space-y-2">
+                                        <Label htmlFor={field.name}>{t('system_role') || 'System Role'}</Label>
+                                        <Select
+                                            value={field.state.value}
+                                            onValueChange={(val: any) => field.handleChange(val)}
+                                        >
+                                            <SelectTrigger className="bg-background">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="super_admin">{t('role_super_admin')}</SelectItem>
+                                                <SelectItem value="system_staff">{t('role_system_staff')}</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                )}
+                            />
 
-                        <form.Field
-                            name="password"
-                            validators={{ onChange: ({ value }) => validateField('password', value) }}
-                            children={(field) => (
-                                <div className="space-y-2">
-                                    <Label htmlFor={field.name} className="flex items-center gap-2">
-                                        <Lock size={14} className="text-primary" />
-                                        {t('password')}
-                                    </Label>
-                                    <Input
-                                        id={field.name}
-                                        type="password"
-                                        value={field.state.value}
-                                        onChange={(e) => field.handleChange(e.target.value)}
-                                        placeholder={isEditing ? '••••••••' : t('enter_password')}
-                                    />
-                                </div>
-                            )}
-                        />
+                            <form.Field
+                                name="password"
+                                validators={{ onChange: ({ value }) => validateField('password', value) }}
+                                children={(field) => (
+                                    <div className="space-y-2">
+                                        <Label htmlFor={field.name} className="flex items-center gap-2">
+                                            {t('password')}
+                                            {isEditing && (
+                                                <span className="text-[10px] text-muted-foreground font-normal italic">
+                                                    ({t('leave_blank_to_keep_current', 'Leave Blank')})
+                                                </span>
+                                            )}
+                                        </Label>
+                                        <Input
+                                            id={field.name}
+                                            type="password"
+                                            value={field.state.value}
+                                            onBlur={field.handleBlur}
+                                            onChange={(e) => field.handleChange(e.target.value)}
+                                            placeholder={isEditing ? '••••••••' : t('enter_password')}
+                                            className="bg-background"
+                                        />
+                                    </div>
+                                )}
+                            />
+                        </div>
                     </div>
 
-                    <div className="space-y-3">
-                        <Label className="text-sm font-semibold text-muted-foreground">
+                    <div className="bg-accent/5 p-4 rounded-xl border space-y-4">
+                        <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                            <ShieldCheck size={12} className="text-primary" />
                             {t('platform_permissions','Platform Permissions')}
                         </Label>
                         <div className="grid grid-cols-2 gap-3">
@@ -287,18 +298,24 @@ const PlatformStaffForm = ({ open, onOpenChange, user }: PlatformStaffFormProps)
                                 { key: 'edit_system_settings', label: t('edit_system_settings') || 'Edit System Settings' },
                                 { key: 'manage_platform_users', label: t('manage_platform_users') || 'Manage Platform Team' },
                             ].map((perm) => (
-                                <div key={perm.key} className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
-                                    <span className="text-sm font-medium">{perm.label}</span>
-                                    <Switch
-                                        checked={(form.getFieldValue('permissions') as any)?.[perm.key] || false}
-                                        onCheckedChange={() => handlePermissionToggle(perm.key)}
-                                    />
-                                </div>
+                                <form.Field
+                                    key={perm.key}
+                                    name={`permissions.${perm.key}`}
+                                    children={(field) => (
+                                        <div className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/10 transition-colors shadow-sm">
+                                            <span className="text-xs font-semibold text-foreground/80">{perm.label}</span>
+                                            <Switch
+                                                checked={field.state.value as boolean}
+                                                onCheckedChange={field.handleChange}
+                                            />
+                                        </div>
+                                    )}
+                                />
                             ))}
                         </div>
                     </div>
 
-                    <DialogFooter className="pt-4 border-t">
+                    <DialogFooter className="pt-4">
                         <Button 
                             size="lg"
                             type="button" variant="ghost" onClick={() => onOpenChange(false)}>
@@ -310,12 +327,14 @@ const PlatformStaffForm = ({ open, onOpenChange, user }: PlatformStaffFormProps)
                                 <Button 
                                     size="lg"
                                     type="submit" 
-                                    className="px-8"
+                                    className="px-8 shadow-lg shadow-primary/20"
                                     disabled={!canSubmit || isLoading || isSubmitting}
                                 >
                                     {(isLoading || isSubmitting) ? (
                                         <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                                    ) : null}
+                                    ) : (
+                                        <ShieldCheck className="h-4 w-4 mr-2" />
+                                    )}
                                     {t('save_staff_member') || 'Save Staff Member'}
                                 </Button>
                             )}

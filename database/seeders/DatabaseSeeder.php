@@ -14,29 +14,16 @@ class DatabaseSeeder extends Seeder
     {
         // Create Platform Company
         $platform = \App\Models\System\Company::updateOrCreate(
-            ['slug' => 'platform'],
+            ['slug' => 'sccg'],
             [
-                'name' => 'MapCN Platform',
+                'name' => 'SCCG Platform',
                 'status' => 'active',
             ]
         );
 
-        // Create Super Admin User
-        \App\Models\User\User::updateOrCreate(
-            ['email' => 'mengleangdeaun@gmail.com'],
-            [
-                'company_id' => null, // Platform Staff have null company_id
-                'role' => 'admin',
-                'name' => 'Mengleang Deaun',
-                'password' => \Illuminate\Support\Facades\Hash::make('111213@S251'),
-                'status' => 'active',
-                'operational_status' => 'online',
-                'permissions' => [
-                    'manage_all_companies' => true,
-                    'access_billing' => true,
-                    'edit_system_settings' => true,
-                ],
-            ]
-        );
+        // Call other seeders
+        $this->call([
+            UserSeeder::class,
+        ]);
     }
 }

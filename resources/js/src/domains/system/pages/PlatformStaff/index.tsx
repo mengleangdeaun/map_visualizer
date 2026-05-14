@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDeleteUser } from '../User/hooks/useUsers';
+import { useAuthStore } from '@/domains/auth/store/useAuthStore';
 import { usePlatformStaff } from './hooks/usePlatformStaff';
 import { useDebounce } from '@/hooks/useDebounce';
 import { User } from '../../services/userService';
@@ -18,6 +19,9 @@ import PlatformStaffForm from './components/PlatformStaffForm/index';
 
 const PlatformStaffPage = () => {
     const { t } = useTranslation('system');
+    const { user: currentUser } = useAuthStore();
+    const canManageStaff = currentUser?.role === 'super_admin' || currentUser?.permissions?.manage_platform_users;
+    
     const [searchInput, setSearchInput] = useState('');
     const debouncedSearch = useDebounce(searchInput, 500);
     const [page, setPage] = useState(1);
@@ -148,10 +152,12 @@ const PlatformStaffPage = () => {
                         <TableActionButton 
                             variant="edit" 
                             onClick={() => handleEdit(user)} 
+                            disabled={!canManageStaff}
                         />
                         <TableActionButton 
                             variant="delete" 
                             onClick={() => handleDeleteClick(user)} 
+                            disabled={!canManageStaff}
                         />
                     </TableActionButtons>
                 );
@@ -168,11 +174,11 @@ const PlatformStaffPage = () => {
                     onClick: () => refetch(),
                     isFetching: isFetching
                 }}
-                primaryAction={{
+                primaryAction={canManageStaff ? {
                     label: t('add_team_member'),
                     onClick: handleAdd,
                     icon: <UserPlus className="size-4 mr-2" />
-                }}
+                } : undefined}
             />
 
             <div className="bg-card border rounded-2xl overflow-hidden shadow-sm transition-all hover:shadow-md">
