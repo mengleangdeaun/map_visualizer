@@ -72,7 +72,7 @@ export function DataTable<TData, TValue>({
     onEmptyAction,
     emptyActionLabel,
 }: DataTableProps<TData, TValue>) {
-    const { t } = useTranslation();
+    const { t } = useTranslation('system');
     const [sorting, setSorting] = React.useState<SortingState>([]);
 
     const table = useReactTable({

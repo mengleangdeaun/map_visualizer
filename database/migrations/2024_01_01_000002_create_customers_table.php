@@ -18,6 +18,7 @@ return new class extends Migration
             
             $table->text('default_address')->nullable();
             $table->geometry('default_location', subtype: 'point')->nullable();
+            $table->string('profile_url')->nullable();
             
             $table->integer('total_orders')->default(0);
             

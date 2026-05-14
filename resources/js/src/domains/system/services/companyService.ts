@@ -3,8 +3,12 @@ import api from '@/lib/api';
 export interface Company {
     id: string;
     name: string;
+    slug: string;
     tax_id: string | null;
     base_currency: string;
+    logo_url: string | null;
+    logo_full_url: string | null;
+    status: 'active' | 'inactive' | 'suspended';
     telegram_user_id: string | null;
     created_at: string;
     updated_at: string;
@@ -29,12 +33,17 @@ export const companyService = {
         const response = await api.get<Company>(`/system/companies/${id}`);
         return response.data;
     },
-    createCompany: async (data: Partial<Company>) => {
+    createCompany: async (data: FormData | Partial<Company>) => {
         const response = await api.post('/system/companies', data);
         return response.data;
     },
-    updateCompany: async (id: string, data: Partial<Company>) => {
-        const response = await api.put(`/system/companies/${id}`, data);
+    updateCompany: async (id: string, data: FormData | Partial<Company>) => {
+        // Use POST with _method=PUT for multipart/form-data support in Laravel
+        const finalData = data instanceof FormData ? data : { ...data, _method: 'PUT' };
+        if (data instanceof FormData && !data.has('_method')) {
+            data.append('_method', 'PUT');
+        }
+        const response = await api.post(`/system/companies/${id}`, finalData);
         return response.data;
     },
     deleteCompany: async (id: string) => {

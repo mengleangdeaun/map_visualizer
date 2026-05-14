@@ -26,6 +26,7 @@ return new class extends Migration
             $table->ulid('base_hub_id')->nullable(); // Foreign key to locations (added logically, schema constraint can be added after locations table exists)
             
             $table->enum('status', ['active', 'suspended', 'inactive'])->default('active');
+            $table->string('profile_url')->nullable();
 
             $table->rememberToken();
             $table->timestamps();

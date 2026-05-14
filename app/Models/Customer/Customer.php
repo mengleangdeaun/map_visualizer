@@ -18,6 +18,7 @@ class Customer extends Model
         'default_address',
         'default_location',
         'total_orders',
+        'profile_url',
     ];
 
     /**

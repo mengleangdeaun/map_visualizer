@@ -31,7 +31,7 @@ export const useUpdateCompany = () => {
     const { t } = useTranslation();
 
     return useMutation({
-        mutationFn: ({ id, data }: { id: string; data: Partial<Company> }) => 
+        mutationFn: ({ id, data }: { id: string; data: FormData | Partial<Company> }) => 
             companyService.updateCompany(id, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['companies'] });

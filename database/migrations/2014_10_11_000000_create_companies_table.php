@@ -14,8 +14,11 @@ return new class extends Migration
         Schema::create('companies', function (Blueprint $table) {
             $table->ulid('id')->primary();
             $table->string('name');
+            $table->string('slug')->unique();
             $table->string('tax_id')->nullable();
             $table->string('base_currency', 3)->default('USD');
+            $table->string('logo_url')->nullable();
+            $table->string('status')->default('active');
             $table->timestamps();
         });
     }

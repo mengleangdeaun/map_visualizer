@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('plate_number');
             $table->decimal('max_weight_kg', 8, 2)->nullable();
             $table->decimal('max_volume_cbm', 8, 2)->nullable();
+            $table->string('image_url')->nullable();
             
             $table->timestamps();
             

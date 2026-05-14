@@ -1,15 +1,10 @@
 {
-    "company_management": "ការគ្រប់គ្រងក្រុមហ៊ុន",
-    "manage_tenants_and_organizations": "គ្រប់គ្រងភតិកៈ និងអង្គភាព",
-    "add_company": "បន្ថែមក្រុមហ៊ុន",
-    "all_companies": "ក្រុមហ៊ុនទាំងអស់",
-    "company_name": "ឈ្មោះក្រុមហ៊ុន",
-    "tax_id": "លេខអត្តសញ្ញាណកម្មពន្ធ",
-    "currency": "រូបិយប័ណ្ណ",
-    "created_at": "បានបង្កើតនៅ",
-    "actions": "សកម្មភាព",
-    "loading": "កំពុងផ្ទុក",
-    "no_companies_found": "រកមិនឃើញក្រុមហ៊ុនទេ",
-    "edit": "កែសម្រួល",
-    "delete": "លុប"
+    "logout": "ចាកចេញ",
+    "profile": "ប្រវត្តិរូប",
+    "account_settings": "ការកំណត់គណនី",
+    "dashboard": "ផ្ទាំងគ្រប់គ្រង",
+    "welcome_back": "ស្វាគមន៍ការត្រឡប់មកវិញ",
+    "you_are_now_logged_in": "ឥឡូវនេះអ្នកបានចូលក្នុងគណនីរបស់អ្នកហើយ",
+    "field_required": "វាលនេះតម្រូវឱ្យបំពេញ",
+    "search_placeholder": "ស្វែងរក..."
 }

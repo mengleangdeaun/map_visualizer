@@ -22,9 +22,11 @@ import { ColumnDef } from '@tanstack/react-table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 
 const CompanyPage = () => {
-    const { t } = useTranslation();
+    const { t } = useTranslation('system');
     const search = useSearch({ from: '/system/companies' });
     const navigate = useNavigate({ from: '/system/companies' });
 
@@ -120,13 +122,49 @@ const CompanyPage = () => {
                     </Button>
                 );
             },
-            cell: ({ row }) => (
-                <HighlightSearch 
-                    text={row.getValue('name')} 
-                    query={search.search || ''} 
-                    className="font-bold text-foreground/90"
-                />
-            ),
+            cell: ({ row }) => {
+                const company = row.original;
+                return (
+                    <div className="flex items-center gap-3">
+                        <Avatar>
+                            <AvatarImage src={company.logo_full_url || company.logo_url || ''} alt={company.name} className="object-cover" />
+                            <AvatarFallback className=" text-primary">
+                                {company.name.substring(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                        </Avatar>
+                        <div className="flex flex-col">
+                            <HighlightSearch 
+                                text={company.name} 
+                                query={search.search || ''} 
+                                className="font-bold text-foreground/90 leading-tight"
+                            />
+                            <span className="text-[10px] text-muted-foreground font-mono">
+                                {company.slug}
+                            </span>
+                        </div>
+                    </div>
+                );
+            },
+        },
+        {
+            accessorKey: 'status',
+            header: t('status'),
+            cell: ({ row }) => {
+                const status = row.getValue('status') as string;
+                return (
+                    <Badge 
+                        variant="outline" 
+                        className={cn(
+                            "capitalize text-[10px] font-black tracking-wider px-2 py-0 border",
+                            status === 'active' && "bg-green-500/10 text-green-600 border-green-500/20",
+                            status === 'inactive' && "bg-gray-500/10 text-gray-500 border-gray-500/20",
+                            status === 'suspended' && "bg-red-500/10 text-red-600 border-red-500/20"
+                        )}
+                    >
+                        {status}
+                    </Badge>
+                );
+            },
         },
         {
             accessorKey: 'tax_id',

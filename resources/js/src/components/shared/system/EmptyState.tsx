@@ -43,7 +43,7 @@ export const EmptyState = ({
     actionLabel,
     className 
 }: EmptyStateProps) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation('system');
 
     const config = {
         'no-data': {

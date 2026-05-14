@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\System\Company;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class CompanyController extends Controller
 {
@@ -22,6 +24,7 @@ class CompanyController extends Controller
         if ($search) {
             $query->where(function($q) use ($search) {
                 $q->where('name', 'LIKE', "%{$search}%")
+                  ->orWhere('slug', 'LIKE', "%{$search}%")
                   ->orWhere('tax_id', 'LIKE', "%{$search}%");
             });
         }
@@ -37,8 +40,12 @@ class CompanyController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
+            'slug' => 'required|string|max:255|unique:companies,slug',
             'tax_id' => 'nullable|string|max:255',
             'base_currency' => 'nullable|string|size:3',
+            'logo' => 'nullable|file|image|max:2048',
+            'logo_url' => 'nullable|string|max:2048',
+            'status' => 'nullable|string|in:active,inactive,suspended',
             'telegram_user_id' => 'nullable|string|max:255',
         ]);
 
@@ -46,7 +53,16 @@ class CompanyController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $company = Company::create($validator->validated());
+        $data = $validator->validated();
+        
+        $company = new Company();
+        $company->fill($data);
+        
+        if ($request->hasFile('logo')) {
+            $company->logo_url = $request->file('logo')->store('logos', 'public');
+        }
+
+        $company->save();
 
         return response()->json([
             'message' => 'Company created successfully',
@@ -69,8 +85,12 @@ class CompanyController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'sometimes|required|string|max:255',
+            'slug' => 'sometimes|required|string|max:255|unique:companies,slug,' . $company->id,
             'tax_id' => 'nullable|string|max:255',
             'base_currency' => 'sometimes|required|string|size:3',
+            'logo' => 'nullable|file|image|max:2048',
+            'logo_url' => 'nullable|string|max:2048',
+            'status' => 'sometimes|required|string|in:active,inactive,suspended',
             'telegram_user_id' => 'nullable|string|max:255',
         ]);
 
@@ -78,7 +98,27 @@ class CompanyController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $company->update($validator->validated());
+        $data = $validator->validated();
+
+        if ($request->hasFile('logo')) {
+            $oldPath = $company->getAttributes()['logo_url'] ?? null;
+            if ($oldPath && Storage::disk('public')->exists($oldPath)) {
+                Storage::disk('public')->delete($oldPath);
+            }
+            $company->logo_url = $request->file('logo')->store('logos', 'public');
+            unset($data['logo_url']); // Remove from data array to avoid double-handling
+        } elseif ($request->exists('logo_url') && ($request->logo_url === null || $request->logo_url === '')) {
+            $oldPath = $company->getAttributes()['logo_url'] ?? null;
+            if ($oldPath && Storage::disk('public')->exists($oldPath)) {
+                Storage::disk('public')->delete($oldPath);
+            }
+            $company->logo_url = null;
+            unset($data['logo_url']);
+        }
+
+        unset($data['logo']);
+        $company->fill($data);
+        $company->save();
 
         return response()->json([
             'message' => 'Company updated successfully',
@@ -91,6 +131,13 @@ class CompanyController extends Controller
      */
     public function destroy(Company $company)
     {
+        // Get raw path from database to avoid accessor interference
+        $oldPath = $company->getAttributes()['logo_url'] ?? null;
+        
+        if ($oldPath && Storage::disk('public')->exists($oldPath)) {
+            Storage::disk('public')->delete($oldPath);
+        }
+        
         $company->delete();
         return response()->json(['message' => 'Company deleted successfully']);
     }
