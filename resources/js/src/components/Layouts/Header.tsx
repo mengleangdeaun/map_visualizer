@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react';
 import useThemeConfig from '../../store/useThemeConfig';
-import { Link, useLocation } from '@tanstack/react-router';
+import { Link, useLocation, useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import i18next from 'i18next';
+import { useAuthStore } from '../../domains/auth/store/useAuthStore';
+import { authService } from '../../domains/auth/services/authService';
+import { toast } from 'sonner';
 import { 
     DropdownMenu, 
     DropdownMenuContent, 
@@ -34,11 +37,24 @@ import {
 } from 'lucide-react';
 
 const Header = () => {
-    const location = useLocation();
-    useEffect(() => {
-        // Parent menu active state logic can be handled here if needed, 
-        // but Link activeProps handles the specific links.
-    }, [location]);
+    const { user, clearAuth, lock } = useAuthStore();
+    const navigate = useNavigate();
+
+    const handleLogout = async () => {
+        try {
+            await authService.logout();
+        } catch (error) {
+            // Silently fail if session already expired
+        }
+        clearAuth();
+        navigate({ to: '/auth/login' });
+        toast.success(t('logged_out_successfully', { ns: 'auth' }));
+    };
+
+    const handleLock = () => {
+        lock();
+        navigate({ to: '/auth/lockscreen' });
+    };
 
     const themeConfig = useThemeConfig();
     const isRtl = themeConfig.rtlClass === 'rtl';
@@ -63,7 +79,7 @@ const Header = () => {
     return (
         <header className={`z-40 ${themeConfig.semidark && themeConfig.menu === 'horizontal' ? 'dark' : ''}`}>
             <div>
-                <div className="relative bg-background flex w-full items-center px-5 py-2.5">
+                <div className="relative bg-card flex w-full items-center px-5 py-2.5">
                     <div className="horizontal-logo flex lg:hidden justify-between items-center ltr:mr-2 rtl:ml-2">
                         <Link activeProps={{ className: 'active' }} to="/" className="main-logo flex items-center shrink-0">
                             <img className="w-12 ltr:-ml-1 rtl:-mr-1 inline" src="/assets/images/logo.svg" alt="logo" />
@@ -272,13 +288,13 @@ const Header = () => {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align={isRtl ? "start" : "end"} className="w-[240px] p-1">
                                     <div className="flex items-center px-4 py-4 gap-3 border-b mb-1">
-                                        <img className="rounded-md w-10 h-10 object-cover" src="/assets/images/user-profile.jpeg" alt="userProfile" />
+                                        <img className="rounded-md w-10 h-10 object-cover" src={user?.profile_full_url || "/assets/images/user-profile.jpeg"} alt="userProfile" />
                                         <div className="truncate">
                                             <h4 className="text-sm font-bold flex items-center gap-2">
-                                                John Doe
-                                                <span className="text-[10px] bg-success/10 text-success px-1.5 py-0.5 rounded font-bold">PRO</span>
+                                                {user?.name}
+                                                <span className="text-[10px] bg-success/10 text-success px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">{user?.role}</span>
                                             </h4>
-                                            <p className="text-[11px] text-muted-foreground truncate">johndoe@gmail.com</p>
+                                            <p className="text-[11px] text-muted-foreground truncate">{user?.email}</p>
                                         </div>
                                     </div>
                                     
@@ -295,11 +311,11 @@ const Header = () => {
                                                 <span>Inbox</span>
                                             </Link>
                                         </DropdownMenuItem>
-                                        <DropdownMenuItem asChild>
-                                            <Link to="/auth/boxed-lockscreen" className="flex items-center gap-2 cursor-pointer py-2">
+                                        <DropdownMenuItem onClick={handleLock}>
+                                            <div className="flex items-center gap-2 cursor-pointer py-2 w-full">
                                                 <Lock className="size-4 opacity-70" />
                                                 <span>Lock Screen</span>
-                                            </Link>
+                                            </div>
                                         </DropdownMenuItem>
                                     </DropdownMenuGroup>
 
@@ -317,11 +333,11 @@ const Header = () => {
 
                                     <DropdownMenuSeparator />
 
-                                    <DropdownMenuItem asChild className="text-destructive focus:bg-destructive focus:text-destructive-foreground">
-                                        <Link to="/auth/boxed-signin" className="flex items-center gap-2 cursor-pointer py-2">
+                                    <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:bg-destructive focus:text-destructive-foreground">
+                                        <div className="flex items-center gap-2 cursor-pointer py-2 w-full">
                                             <LogOut className="size-4 opacity-70" />
                                             <span>Sign Out</span>
-                                        </Link>
+                                        </div>
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>

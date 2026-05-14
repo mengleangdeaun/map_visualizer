@@ -8,6 +8,7 @@ import Portals from '../../components/Portals';
 import { MapLoading } from '../shared/map/MapLoading';
 
 import { Toaster } from '../ui/sonner';
+import { TooltipProvider } from '../ui/tooltip';
 
 const DefaultLayout = ({ children }: PropsWithChildren) => {
     const themeConfig = useThemeConfig();
@@ -46,6 +47,7 @@ const DefaultLayout = ({ children }: PropsWithChildren) => {
 
     return (
         <App>
+            <TooltipProvider delayDuration={0}>
             {/* BEGIN MAIN CONTAINER */}
             <div className="relative bg-muted dark:bg-background">
                 {/* sidebar menu overlay */}
@@ -98,7 +100,8 @@ const DefaultLayout = ({ children }: PropsWithChildren) => {
                     </div>
                 </div>
             </div>
-        </App>
+        </TooltipProvider>
+    </App>
     );
 };
 

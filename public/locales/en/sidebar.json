@@ -12,5 +12,11 @@
     "map_marker": "Map Marker",
     "delivery_tracking": "Delivery Tracking",
     "available_driver": "Available Driver",
-    "realtime_tracking": "Realtime Tracking"
+    "realtime_tracking": "Realtime Tracking",
+    "user_management": "Users Management",
+    "hub_management": "Hub Management",
+    "driver_management": "Driver Management",
+    "exchange_rate_management": "Exchange Rate Setting",
+    "platform_team": "Platform Team",
+    "platform_team_management": "Platform Team Management"
 }

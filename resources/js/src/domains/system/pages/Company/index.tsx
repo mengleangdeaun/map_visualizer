@@ -8,14 +8,9 @@ import CompanyModal from './components/CompanyModal';
 import { DeleteConfirmModal } from '@/components/shared/system/DeleteConfirmModal';
 import { HighlightSearch } from '@/components/shared/system/HighlightSearch';
 import { SearchInput } from '@/components/shared/system/SearchInput';
+import { TableActionButtons, TableActionButton } from '@/components/shared/system/TableActionButtons';
 import { Button } from '@/components/ui/button';
-import { Plus, Building, MoreHorizontal, Edit2, Trash2, ArrowUpDown, Search, RotateCw } from 'lucide-react';
-import { 
-    DropdownMenu, 
-    DropdownMenuContent, 
-    DropdownMenuItem, 
-    DropdownMenuTrigger 
-} from '@/components/ui/dropdown-menu';
+import { Plus, ArrowUpDown, RotateCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Company } from '@/domains/system/services/companyService';
 import { ColumnDef } from '@tanstack/react-table';
@@ -27,8 +22,8 @@ import { Badge } from '@/components/ui/badge';
 
 const CompanyPage = () => {
     const { t } = useTranslation('system');
-    const search = useSearch({ from: '/system/companies' });
-    const navigate = useNavigate({ from: '/system/companies' });
+    const search = useSearch({ from: '/layout/system/companies' });
+    const navigate = useNavigate({ from: '/layout/system/companies' });
 
     const page = search.page || 1;
     const perPage = search.per_page || 10;
@@ -155,7 +150,7 @@ const CompanyPage = () => {
                     <Badge 
                         variant="outline" 
                         className={cn(
-                            "capitalize text-[10px] font-black tracking-wider px-2 py-0 border",
+                            "capitalize text-[10px] font-semibold px-2 py-0 border",
                             status === 'active' && "bg-green-500/10 text-green-600 border-green-500/20",
                             status === 'inactive' && "bg-gray-500/10 text-gray-500 border-gray-500/20",
                             status === 'suspended' && "bg-red-500/10 text-red-600 border-red-500/20"
@@ -195,28 +190,16 @@ const CompanyPage = () => {
             cell: ({ row }) => {
                 const company = row.original;
                 return (
-                    <div className="text-right">
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-primary/10 hover:text-primary transition-all">
-                                    <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-40 bg-card backdrop-blur-md border-border/50 shadow-xl">
-                                <DropdownMenuItem onClick={() => handleEdit(company)} className="cursor-pointer group">
-                                    <Edit2 className="mr-2 h-3.5 w-3.5 group-hover:text-primary transition-colors" />
-                                    {t('edit')}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem 
-                                    onClick={() => handleDeleteClick(company)} 
-                                    className="text-destructive cursor-pointer focus:bg-destructive/10 focus:text-destructive group"
-                                >
-                                    <Trash2 className="mr-2 h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
-                                    {t('delete')}
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
+                    <TableActionButtons>
+                        <TableActionButton 
+                            variant="edit" 
+                            onClick={() => handleEdit(company)} 
+                        />
+                        <TableActionButton 
+                            variant="delete" 
+                            onClick={() => handleDeleteClick(company)} 
+                        />
+                    </TableActionButtons>
                 );
             },
         },
@@ -227,37 +210,15 @@ const CompanyPage = () => {
             <PageHeader 
                 title={t('company_management')} 
                 subtitle={t('manage_tenants_and_organizations')}
-            >
-                <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2">
-                        <SearchInput
-                            placeholder={t('search_companies')}
-                            value={searchInput}
-                            onChange={(e) => setSearchInput(e.target.value)}
-                            onClear={handleSearchClear}
-                            isLoading={isFetching}
-                            className="hidden sm:block w-[240px]"
-                        />
-                        <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => refetch()}
-                            disabled={isFetching}
-                            className="h-8 w-8 bg-background border-border hover:bg-primary/5 hover:text-primary transition-all shadow-sm"
-                        >
-                            <RotateCw className={cn("size-4 transition-all", isFetching && "animate-spin text-primary")} />
-                        </Button>
-                    </div>
-                    <Button
-                        size="lg"
-                        className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all"
-                        onClick={handleAdd}
-                    >
-                        <Plus className="mr-2 h-4 w-4" />
-                        {t('add_company')}
-                    </Button>
-                </div>
-            </PageHeader>
+                refreshAction={{
+                    onClick: () => refetch(),
+                    isFetching: isFetching
+                }}
+                primaryAction={{
+                    label: t('add_company'),
+                    onClick: handleAdd
+                }}
+            />
 
             <CompanyModal 
                 isOpen={isModalOpen} 
@@ -274,22 +235,20 @@ const CompanyPage = () => {
                 isPending={deleteMutation.isPending}
             />
 
-            <div className="panel border-none p-0 overflow-hidden shadow-sm">
-                <div className="p-4 pb-0 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="size-10 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20">
-                            <Building className="h-5 w-5 text-primary" />
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-bold tracking-tight">{t('all_companies')}</h3>
-                            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
-                                {data?.total || 0} {t('registered_organizations')}
-                            </p>
+            <div className="bg-card border rounded-xl overflow-hidden shadow-sm">
+                <div className="p-4 border-b bg-muted/30">
+                    <div className="flex items-center justify-between gap-4">
+                        <div className="flex-1 max-w-sm">
+                            <SearchInput
+                                placeholder={t('search_companies')}
+                                value={searchInput}
+                                onChange={(e) => setSearchInput(e.target.value)}
+                                onClear={handleSearchClear}
+                                isLoading={isFetching}
+                            />
                         </div>
                     </div>
                 </div>
-
-                <div className="mt-4">
                     <DataTable 
                         columns={columns} 
                         data={data?.data || []} 
@@ -311,7 +270,7 @@ const CompanyPage = () => {
                         onEmptyAction={search.search ? handleSearchClear : () => setIsModalOpen(true)}
                         emptyActionLabel={search.search ? t('clear_search') : t('add_new_company')}
                     />
-                </div>
+                
             </div>
         </div>
     );

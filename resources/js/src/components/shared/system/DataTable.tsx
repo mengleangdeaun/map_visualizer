@@ -140,7 +140,7 @@ export function DataTable<TData, TValue>({
                                 <TableCell colSpan={columns.length} className="h-40 text-center">
                                     <div className="flex flex-col items-center justify-center gap-3 opacity-60">
                                         <div className="size-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                                        <span className="text-[10px] font-black uppercase tracking-[0.2em]">{t('loading')}</span>
+                                        <span className="text-[10px] font-semibold uppercase">{t('loading')}</span>
                                     </div>
                                 </TableCell>
                             </TableRow>
@@ -172,7 +172,7 @@ export function DataTable<TData, TValue>({
             {/* Pagination & Controls */}
             <div className="px-6 py-4 border-t border-border/30 flex flex-col md:flex-row items-center justify-between gap-4">
                 {/* Item Counts */}
-                <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+                <div className="text-[10px] font-semibold tracking-wide uppercase text-muted-foreground/60">
                     {t('showing')} <span className="text-foreground">{from}</span> - <span className="text-foreground">{to}</span> {t('of')} <span className="text-foreground">{displayTotal}</span>
                 </div>
 
@@ -226,7 +226,7 @@ export function DataTable<TData, TValue>({
 
                 {/* Page Size */}
                 <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground/60">{t('per_page')}</span>
+                    <span className="text-[10px] font-semibold tracking-wider text-muted-foreground/60">{t('per_page')}</span>
                     <Select
                         value={pageSize.toString()}
                         onValueChange={(value) => onPageSizeChange?.(Number(value))}
@@ -235,7 +235,7 @@ export function DataTable<TData, TValue>({
                         <SelectTrigger className="h-8 w-[70px] text-[10px] font-bold bg-muted/20 border-border/40">
                             <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="bg-card/95 backdrop-blur-md">
+                        <SelectContent align="start">
                             {[10, 20, 50, 100].map((size) => (
                                 <SelectItem key={size} value={size.toString()} className="text-[10px] font-bold">
                                     {size}

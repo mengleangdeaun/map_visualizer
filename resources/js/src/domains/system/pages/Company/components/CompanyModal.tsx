@@ -129,7 +129,7 @@ const CompanyModal = ({ isOpen, onClose, initialData }: CompanyModalProps) => {
 
     return (
         <Dialog open={isOpen} onOpenChange={handleClose}>
-            <DialogContent className="sm:max-w-[550px] bg-card/95 backdrop-blur-xl border-border/50 shadow-2xl overflow-y-auto max-h-[90vh]">
+            <DialogContent className="sm:max-w-[550px] bg-card shadow-2xl overflow-y-auto max-h-[90vh]">
                 <DialogHeader>
                     <DialogTitle className="text-xl font-bold text-primary">
                         {isEditing ? t('edit_company') : t('add_new_company')}

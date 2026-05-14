@@ -10,7 +10,7 @@ import './i18n';
 
 // Router
 import { RouterProvider } from '@tanstack/react-router';
-import router from './router/index';
+import router from './router/appRouter';
 
 // TanStack Query
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';

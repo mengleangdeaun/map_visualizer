@@ -12,11 +12,31 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // \App\Models\User::factory(10)->create();
+        // Create Platform Company
+        $platform = \App\Models\System\Company::updateOrCreate(
+            ['slug' => 'platform'],
+            [
+                'name' => 'MapCN Platform',
+                'status' => 'active',
+            ]
+        );
 
-        // \App\Models\User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@example.com',
-        // ]);
+        // Create Super Admin User
+        \App\Models\User\User::updateOrCreate(
+            ['email' => 'mengleangdeaun@gmail.com'],
+            [
+                'company_id' => null, // Platform Staff have null company_id
+                'role' => 'admin',
+                'name' => 'Mengleang Deaun',
+                'password' => \Illuminate\Support\Facades\Hash::make('111213@S251'),
+                'status' => 'active',
+                'operational_status' => 'online',
+                'permissions' => [
+                    'manage_all_companies' => true,
+                    'access_billing' => true,
+                    'edit_system_settings' => true,
+                ],
+            ]
+        );
     }
 }

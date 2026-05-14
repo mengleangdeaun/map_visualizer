@@ -9,12 +9,18 @@ import { systemNav } from '@/domains/system/nav';
 import { MenuItem } from '@/types/nav';
 import { ChevronRight } from 'lucide-react';
 
+import { useAuthStore } from '@/domains/auth/store/useAuthStore';
+
 const Sidebar = () => {
+    const { user } = useAuthStore();
     const [currentMenu, setCurrentMenu] = useState<string>('');
     const themeConfig = useThemeConfig();
     const semidark = themeConfig.semidark;
     const location = useLocation();
     const { t } = useTranslation('sidebar');
+
+    const isSuperAdmin = user?.role === 'super_admin' || user?.role === 'system_staff' || !user?.company_id;
+    const isAdmin = user?.role === 'admin' || user?.role === 'dispatcher' || isSuperAdmin;
 
     const toggleMenu = (value: string) => {
         setCurrentMenu((oldValue) => (oldValue === value ? '' : value));
@@ -113,7 +119,7 @@ const Sidebar = () => {
     return (
         <div className={semidark ? 'dark' : ''}>
             <nav className={`sidebar fixed min-h-screen h-full top-0 bottom-0 w-[260px] z-50 transition-all duration-300 ${semidark ? 'text-muted-foreground' : ''}`}>
-                <div className="bg-background h-full">
+                <div className="bg-card h-full">
                     <div className="flex justify-between items-center px-4 py-3">
                         <Link to="/" className="main-logo flex items-center shrink-0">
                             <img className="w-12 ml-[5px] flex-none" src="/assets/images/logo.svg" alt="logo" />
@@ -133,17 +139,23 @@ const Sidebar = () => {
                     
                     <PerfectScrollbar className="h-[calc(100vh-80px)] relative">
                         <ul className="relative font-semibold space-y-0.5 p-4 py-0">
-                            {/* Admin Section */}
-                            <h2 className="px-4 py-2 text-[11px] font-bold text-muted-foreground/60 tracking-wider border-b border-border/50">
-                                <span>{t('admin_domain')}</span>
-                            </h2>
-                            {renderNavItems(adminNav)}
+                            {isAdmin && (
+                                <>
+                                    <h2 className="px-4 py-2 text-[11px] font-bold text-muted-foreground/60 tracking-wider border-b border-border/50">
+                                        <span>{t('admin_domain')}</span>
+                                    </h2>
+                                    {renderNavItems(adminNav)}
+                                </>
+                            )}
 
-                            {/* System Section */}
-                            <h2 className="px-4 py-2 mt-6 text-[11px] font-bold text-muted-foreground/60 tracking-wider border-b border-border/50">
-                                <span>{t('system_domain')}</span>
-                            </h2>
-                            {renderNavItems(systemNav)}
+                            {isSuperAdmin && (
+                                <>
+                                    <h2 className="px-4 py-2 mt-6 text-[11px] font-bold text-muted-foreground/60 tracking-wider border-b border-border/50">
+                                        <span>{t('system_domain')}</span>
+                                    </h2>
+                                    {renderNavItems(systemNav)}
+                                </>
+                            )}
                         </ul>
                     </PerfectScrollbar>
                 </div>
