@@ -40,7 +40,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('admin')->group(function () {
         Route::prefix('fleet')->group(function () {
             Route::apiResource('vehicles', \App\Http\Controllers\Api\Admin\Fleet\VehicleController::class);
+            Route::apiResource('tasks', \App\Http\Controllers\Api\Admin\Fleet\TaskController::class);
+            Route::apiResource('customers', \App\Http\Controllers\Api\Admin\Customer\CustomerController::class);
+            Route::patch('vehicles/active/location', [\App\Http\Controllers\Api\Admin\Fleet\VehicleController::class, 'updateActiveLocation']);
             Route::patch('vehicles/{vehicle}/location', [\App\Http\Controllers\Api\Admin\Fleet\VehicleController::class, 'updateLocation']);
         });
+    });
+
+    // Driver Domain
+    Route::prefix('driver')->group(function () {
+        Route::get('tasks', [\App\Http\Controllers\Api\Driver\Task\TaskController::class, 'index']);
+        Route::patch('tasks/{task}/status', [\App\Http\Controllers\Api\Driver\Task\TaskController::class, 'updateStatus']);
+        Route::patch('location', [\App\Http\Controllers\Api\Driver\Telemetry\TelemetryController::class, 'updateLocation']);
     });
 });

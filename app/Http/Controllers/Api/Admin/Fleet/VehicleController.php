@@ -48,6 +48,7 @@ class VehicleController extends Controller
             'max_weight_kg' => 'nullable|numeric',
             'max_volume_cbm' => 'nullable|numeric',
             'image_url' => 'nullable|string',
+            'max_speed_kmh' => 'nullable|numeric|min:0',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
         ]);
@@ -88,6 +89,7 @@ class VehicleController extends Controller
             'max_volume_cbm' => 'nullable|numeric',
             'image_url' => 'nullable|string',
             'is_active' => 'boolean',
+            'max_speed_kmh' => 'nullable|numeric|min:0',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
         ]);
@@ -119,13 +121,51 @@ class VehicleController extends Controller
     public function updateLocation(Request $request, string $id): JsonResponse
     {
         $vehicle = Vehicle::findOrFail($id);
-        
+        return $this->processLocationUpdate($request, $vehicle);
+    }
+
+    /**
+     * Update active vehicle live location for the authenticated driver.
+     */
+    public function updateActiveLocation(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $vehicle = Vehicle::where('driver_id', $user->id)->first();
+
+        if (!$vehicle) {
+            return response()->json(['message' => 'No active vehicle assigned to you'], 404);
+        }
+
+        return $this->processLocationUpdate($request, $vehicle);
+    }
+
+    /**
+     * Shared logic for processing location updates.
+     */
+    protected function processLocationUpdate(Request $request, Vehicle $vehicle): JsonResponse
+    {
         $validated = $request->validate([
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
+            'heading' => 'nullable|numeric',
+            'speed' => 'nullable|numeric',
         ]);
 
-        $vehicle = $this->vehicleService->update($vehicle, $validated);
+        $vehicle = $this->vehicleService->update($vehicle, [
+            'latitude' => $validated['latitude'],
+            'longitude' => $validated['longitude'],
+        ]);
+
+        // Broadcast the update to the fleet channel
+        event(new \App\Events\VehicleLocationUpdated(
+            $validated['latitude'],
+            $validated['longitude'],
+            $validated['heading'] ?? 0,
+            $validated['speed'] ?? 0,
+            $vehicle->id,
+            $vehicle->company_id,
+            $vehicle->max_speed_kmh
+        ));
 
         return response()->json([
             'message' => 'Vehicle location updated',

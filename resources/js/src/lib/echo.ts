@@ -11,4 +11,42 @@ export const echo = new Echo({
     wssPort: import.meta.env.VITE_REVERB_PORT ?? 8080,
     forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? 'http') === 'https',
     enabledTransports: ['ws', 'wss'],
+    authEndpoint: '/broadcasting/auth',
+    auth: {
+        headers: {
+            'Accept': 'application/json',
+        },
+    },
+    authorizer: (channel: any, options: any) => {
+        return {
+            authorize: (socketId: string, callback: any) => {
+                const token = JSON.parse(localStorage.getItem('mapcn-auth-storage') || '{}')?.state?.token;
+                
+                fetch('/broadcasting/auth', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        socket_id: socketId,
+                        channel_name: channel.name
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Channel authorization failed');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    callback(false, data);
+                })
+                .catch(error => {
+                    callback(true, error);
+                });
+            }
+        };
+    }
 }) as any;

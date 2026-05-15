@@ -271,8 +271,17 @@ const Map = forwardRef<MapRef, MapProps>(function Map(
     map.on("move", handleMove);
     setMapInstance(map);
 
+    // Auto-resize handler for dynamic containers (like ResizablePanel)
+    const resizeObserver = new ResizeObserver(() => {
+      map.resize();
+    });
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+
     return () => {
       clearStyleTimeout();
+      resizeObserver.disconnect();
       map.off("load", loadHandler);
       map.off("styledata", styleDataHandler);
       map.off("move", handleMove);

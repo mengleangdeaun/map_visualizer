@@ -349,27 +349,6 @@
     }
 }
 
-/* perfect scrollbar */
-.ps__rail-y > .ps__thumb-y,
-.ps__rail-y > .ps__thumb-y {
-    @apply !w-1.5 !bg-[#DDDDDD] dark:!bg-[#2d334c];
-}
-.ps .ps__rail-x:hover,
-.ps .ps__rail-y:hover,
-.ps .ps__rail-x:focus,
-.ps .ps__rail-y:focus,
-.ps .ps__rail-x.ps--clicking,
-.ps .ps__rail-y.ps--clicking {
-    @apply !opacity-60;
-}
-.ps .ps__rail-x:hover,
-.ps .ps__rail-y:hover,
-.ps .ps__rail-x:focus,
-.ps .ps__rail-y:focus,
-.ps .ps__rail-x.ps--clicking,
-.ps .ps__rail-y.ps--clicking {
-    @apply !bg-transparent;
-}
 
 /* apex chart */
 .apexcharts-canvas .apexcharts-tooltip.apexcharts-theme-light,

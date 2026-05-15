@@ -1,16 +1,7 @@
-import { Link } from '@tanstack/react-router';
-import { Button } from '@/components/ui/button';
+import MonitoringPage from './Monitoring';
 
 const Index = () => {
-    return (
-        <div className="space-y-4">
-            <h1 className="text-2xl font-bold">Starter Page</h1>
-            <p>Welcome to the MapCN starter project.</p>
-            <div>
-                <Button>Button</Button>
-            </div>
-        </div>
-    );
+    return <MonitoringPage />;
 };
 
 export default Index;

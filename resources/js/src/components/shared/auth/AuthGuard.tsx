@@ -5,10 +5,10 @@ import { Loader2, Map as MapIcon } from 'lucide-react';
 
 interface AuthGuardProps {
     children: React.ReactNode;
-    requireAdmin?: boolean;
+    allowedRoles?: string[];
 }
 
-export const AuthGuard = ({ children, requireAdmin = false }: AuthGuardProps) => {
+export const AuthGuard = ({ children, allowedRoles }: AuthGuardProps) => {
     const navigate = useNavigate();
     const { isAuthenticated, isLocked, user } = useAuthStore();
 
@@ -17,8 +17,23 @@ export const AuthGuard = ({ children, requireAdmin = false }: AuthGuardProps) =>
             navigate({ to: '/auth/login' });
         } else if (isLocked) {
             navigate({ to: '/auth/lockscreen' });
+        } else if (allowedRoles && !allowedRoles.includes(user?.role || '')) {
+            // Redirect based on role if trying to access unauthorized domain
+            if (user?.role === 'driver') {
+                navigate({ to: '/driver' });
+            } else if (user?.role === 'admin' || user?.role === 'super_admin' || user?.role === 'system_staff') {
+                // Platform admins (super_admin, system_staff) go to system if they have no company
+                // Regular admins (company admins) go to admin
+                if (!user?.company_id && (user?.role === 'super_admin' || user?.role === 'system_staff')) {
+                    navigate({ to: '/system' });
+                } else {
+                    navigate({ to: '/admin' });
+                }
+            } else {
+                navigate({ to: '/' });
+            }
         }
-    }, [isAuthenticated, isLocked, navigate]);
+    }, [isAuthenticated, isLocked, user?.role, allowedRoles, navigate]);
 
     if (!isAuthenticated) {
         return (

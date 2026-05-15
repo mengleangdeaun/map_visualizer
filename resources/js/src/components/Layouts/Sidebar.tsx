@@ -1,4 +1,3 @@
-import PerfectScrollbar from 'react-perfect-scrollbar';
 import { useTranslation } from 'react-i18next';
 import useThemeConfig from '../../store/useThemeConfig';
 import { Link, useLocation } from '@tanstack/react-router';
@@ -8,6 +7,7 @@ import { adminNav } from '@/domains/admin/nav';
 import { systemNav } from '@/domains/system/nav';
 import { MenuItem } from '@/types/nav';
 import { ChevronRight } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 import { useAuthStore } from '@/domains/auth/store/useAuthStore';
 
@@ -137,8 +137,8 @@ const Sidebar = () => {
                         </button>
                     </div>
                     
-                    <PerfectScrollbar className="h-[calc(100vh-80px)] relative">
-                        <ul className="relative font-semibold space-y-0.5 p-4 py-0">
+                    <ScrollArea className="h-[calc(100vh-80px)]">
+                        <ul className="relative font-semibold space-y-0.5 p-4 py-0 pr-4">
                             {isAdmin && (
                                 <>
                                     <h2 className="px-4 py-2 text-[11px] font-bold text-muted-foreground/60 tracking-wider border-b border-border/50">
@@ -157,7 +157,7 @@ const Sidebar = () => {
                                 </>
                             )}
                         </ul>
-                    </PerfectScrollbar>
+                    </ScrollArea>
                 </div>
             </nav>
         </div>

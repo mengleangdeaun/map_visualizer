@@ -60,7 +60,7 @@ export const HubMarker = ({
                         className={cn(
                             'transition-all duration-300 pointer-events-none whitespace-nowrap',
                             isSelected
-                                ? 'opacity-100 -translate-y-1 font-bold text-primary bg-card shadow-xl px-2 py-0.5 rounded-md border border-primary/20 scale-110'
+                                ? 'opacity-100 -translate-y-1 dark:bg-white font-bold text-primary bg-card shadow-xl px-2 py-0.5 rounded-md border border-primary/20 scale-110'
                                 : 'opacity-0 translate-y-2 group-hover/marker:opacity-100 group-hover/marker:translate-y-0 text-[10px] font-bold text-foreground bg-card/90 backdrop-blur-sm px-1.5 py-0.5 rounded shadow-sm border border-border',
                         )}
                     >

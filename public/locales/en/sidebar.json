@@ -18,5 +18,9 @@
     "driver_management": "Driver Management",
     "exchange_rate_management": "Exchange Rate Setting",
     "platform_team": "Platform Team",
-    "platform_team_management": "Platform Team Management"
+    "platform_team_management": "Platform Team Management",
+    "fleet": "Fleet",
+    "monitoring": "Monitoring",
+    "vehicles": "Vehicles",
+    "hubs": "Hubs"
 }

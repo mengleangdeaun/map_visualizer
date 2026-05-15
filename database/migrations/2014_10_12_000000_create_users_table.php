@@ -15,7 +15,7 @@ return new class extends Migration
             $table->ulid('id')->primary();
             $table->foreignUlid('company_id')->constrained('companies')->cascadeOnDelete();
             
-            $table->enum('role', ['admin', 'dispatcher', 'hub_operator', 'driver'])->index();
+            $table->string('role')->default('driver')->index(); // admin, dispatcher, hub_operator, driver
             $table->string('name');
             $table->string('phone')->nullable();
             $table->string('email')->nullable();
@@ -23,7 +23,7 @@ return new class extends Migration
             
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->ulid('base_hub_id')->nullable(); // Foreign key to locations (added logically, schema constraint can be added after locations table exists)
+            $table->ulid('base_hub_id')->nullable(); 
             
             $table->enum('status', ['active', 'suspended', 'inactive'])->default('active');
             $table->string('profile_url')->nullable();

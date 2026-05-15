@@ -22,5 +22,12 @@
     "location_created_successfully": "Hub created successfully",
     "location_updated_successfully": "Hub updated successfully",
     "location_deleted_successfully": "Hub deleted successfully",
-    "are_you_sure_you_want_to_delete_hub": "Are you sure you want to delete {{name}}? This action cannot be undone."
+    "are_you_sure_you_want_to_delete_hub": "Are you sure you want to delete {{name}}? This action cannot be undone.",
+    "monitoring_dashboard": "Monitoring Dashboard",
+    "realtime_fleet_overview": "Real-time overview of your fleet and infrastructure",
+    "loading_monitoring_data": "Loading Monitoring Data...",
+    "updating_realtime": "Updating real-time data...",
+    "vehicles": "Vehicles",
+    "hubs": "Hubs",
+    "monitoring": "Monitoring"
 }

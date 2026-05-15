@@ -12,6 +12,8 @@ export interface Vehicle {
     is_active: boolean;
     latitude: number | null;
     longitude: number | null;
+    speed: number | null;
+    max_speed_kmh: number | null;
     created_at: string;
     updated_at: string;
     company?: { name: string };

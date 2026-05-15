@@ -14,7 +14,7 @@ return new class extends Migration
             
             $table->foreignUlid('driver_id')->nullable()->constrained('users')->nullOnDelete();
             
-            $table->enum('type', ['motorcycle', 'tuktuk', 'minivan', 'box_truck']);
+            $table->string('type')->default('motorcycle'); // motorcycle, tuktuk, minivan, box_truck
             $table->string('plate_number');
             $table->decimal('max_weight_kg', 8, 2)->nullable();
             $table->decimal('max_volume_cbm', 8, 2)->nullable();

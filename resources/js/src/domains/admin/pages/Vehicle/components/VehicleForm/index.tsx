@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Loader2, Truck, Weight, Box, Tag, Activity, ShieldCheck, UserPlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useDrivers } from '../../../../hooks/useDrivers';
 import { User } from '../../../../../system/services/userService';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -23,6 +24,7 @@ const vehicleSchema = z.object({
     plate_number: z.string().min(1, 'field_required').max(20),
     max_weight_kg: z.number().nullable().or(z.string().transform(v => v === '' ? null : Number(v))),
     max_volume_cbm: z.number().nullable().or(z.string().transform(v => v === '' ? null : Number(v))),
+    max_speed_kmh: z.number().min(10).max(200).or(z.string().transform(v => v === '' ? 60 : Number(v))),
     is_active: z.boolean(),
     driver_id: z.string().nullable().optional(),
 });
@@ -47,6 +49,7 @@ const VehicleForm = ({ open, onOpenChange, vehicle }: VehicleFormProps) => {
             plate_number: vehicle?.plate_number || '',
             max_weight_kg: vehicle?.max_weight_kg || '',
             max_volume_cbm: vehicle?.max_volume_cbm || '',
+            max_speed_kmh: vehicle?.max_speed_kmh || 60,
             is_active: vehicle?.is_active ?? true,
             driver_id: vehicle?.driver_id || null,
         },
@@ -85,9 +88,9 @@ const VehicleForm = ({ open, onOpenChange, vehicle }: VehicleFormProps) => {
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[550px] bg-card shadow-2xl">
-                <DialogHeader>
-                    <div className="flex items-center gap-2 mb-1">
+            <DialogContent className="sm:max-w-[600px] h-[90vh] gap-0 p-0 bg-background shadow-2xl flex flex-col overflow-hidden">
+                <DialogHeader className="p-4 border-b bg-background flex-shrink-0 ">
+                    <div className="flex items-center gap-2">
                         <div className="p-2 bg-primary/10 rounded-lg">
                             <Truck className="size-5 text-primary" />
                         </div>
@@ -108,10 +111,12 @@ const VehicleForm = ({ open, onOpenChange, vehicle }: VehicleFormProps) => {
                         e.stopPropagation();
                         form.handleSubmit();
                     }} 
-                    className="space-y-6 pt-4"
+                    className="flex-1 flex flex-col min-h-0 overflow-hidden"
                 >
-                    <div className="bg-muted/30 p-4 rounded-xl border border-dashed space-y-4">
-                        <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                    <ScrollArea className="flex-1 min-h-0">
+                        <div className="p-4 space-y-4">
+                            <div className="bg-muted/30 p-4 rounded-xl border border-dashed space-y-4">
+                        <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
                             <Tag size={12} className="text-primary" />
                             {t('vehicle_info','Vehicle Information')}
                         </Label>
@@ -166,8 +171,8 @@ const VehicleForm = ({ open, onOpenChange, vehicle }: VehicleFormProps) => {
                         </div>
                     </div>
 
-                    <div className="bg-accent/5 p-4 rounded-xl border space-y-4">
-                        <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                    <div className="bg-muted/30 p-4 rounded-xl border space-y-4">
+                        <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
                             <ShieldCheck size={12} className="text-primary" />
                             {t('specifications','Specifications')}
                         </Label>
@@ -214,9 +219,41 @@ const VehicleForm = ({ open, onOpenChange, vehicle }: VehicleFormProps) => {
                             />
                         </div>
                     </div>
+ 
+                    <div className="bg-red-500/5 p-4 rounded-xl border border-red-500/10 space-y-4">
+                        <Label className="text-[10px] font-bold text-red-600 uppercase tracking-wide flex items-center gap-2">
+                            <ShieldCheck size={12} className="text-red-500" />
+                            {t('safety_policy','Safety Policy')}
+                        </Label>
+                        <form.Field
+                            name="max_speed_kmh"
+                            children={(field) => (
+                                <div className="space-y-2">
+                                    <Label htmlFor={field.name} className="flex items-center justify-between">
+                                        <span>{t('max_speed_limit') || 'Max Speed Limit (km/h)'}</span>
+                                        <span className="text-[10px] font-bold text-red-600 bg-red-500/10 px-1.5 py-0.5 rounded-full border border-red-500/20">
+                                            {field.state.value} km/h
+                                        </span>
+                                    </Label>
+                                    <Input
+                                        id={field.name}
+                                        type="number"
+                                        value={field.state.value}
+                                        onBlur={field.handleBlur}
+                                        onChange={(e) => field.handleChange(e.target.value)}
+                                        placeholder="60"
+                                        className="bg-background border-red-500/20 focus-visible:ring-red-500/30"
+                                    />
+                                    <p className="text-[10px] text-muted-foreground italic">
+                                        {t('speed_limit_desc', 'Admins will be notified immediately if the driver exceeds this speed.')}
+                                    </p>
+                                </div>
+                            )}
+                        />
+                    </div>
 
                     <div className="bg-muted/30 p-4 rounded-xl border border-dashed space-y-4">
-                        <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                        <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
                             <UserPlus size={12} className="text-primary" />
                             {t('assignment','Assignment')}
                         </Label>
@@ -285,7 +322,7 @@ const VehicleForm = ({ open, onOpenChange, vehicle }: VehicleFormProps) => {
                     </div>
 
                     <div className="bg-muted/30 p-4 rounded-xl border border-dashed space-y-4">
-                        <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                        <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
                             <Activity size={12} className="text-primary" />
                             {t('status','Status')}
                         </Label>
@@ -306,30 +343,35 @@ const VehicleForm = ({ open, onOpenChange, vehicle }: VehicleFormProps) => {
                             )}
                         />
                     </div>
-
-                    <DialogFooter className="pt-4">
-                        <Button
-                        size='lg'
-                        type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                            {t('cancel')}
+                </div>
+            </ScrollArea>
+ 
+            <DialogFooter className="p-4 border-t bg-muted/5 flex-shrink-0">
+                <Button
+                    size='lg'
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => onOpenChange(false)}
+                >
+                    {t('cancel')}
+                </Button>
+                <form.Subscribe
+                    selector={(state) => [state.canSubmit, state.isSubmitting]}
+                    children={([canSubmit, isSubmitting]) => (
+                        <Button 
+                            size='lg'
+                            type="submit"
+                            className='px-8' 
+                            disabled={!canSubmit || isLoading || isSubmitting}
+                        >
+                            {(isLoading || isSubmitting) ? (
+                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                            ) : null}
+                            {t('save_vehicle') || 'Save Vehicle'}
                         </Button>
-                        <form.Subscribe
-                            selector={(state) => [state.canSubmit, state.isSubmitting]}
-                            children={([canSubmit, isSubmitting]) => (
-                                <Button 
-                                    size='lg'
-                                    type="submit"
-                                    className='px-4' 
-                                    disabled={!canSubmit || isLoading || isSubmitting}
-                                >
-                                    {(isLoading || isSubmitting) ? (
-                                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                                    ) : null}
-                                    {t('save_vehicle') || 'Save Vehicle'}
-                                </Button>
-                            )}
-                        />
-                    </DialogFooter>
+                    )}
+                />
+            </DialogFooter>
                 </form>
             </DialogContent>
         </Dialog>

@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { vehicleService, Vehicle } from '../services/vehicleService';
 import { toast } from 'sonner';
 
-export const useVehicles = (params: any) => {
+export const useVehicles = (params: any = {}) => {
     return useQuery({
         queryKey: ['admin', 'vehicles', params],
         queryFn: () => vehicleService.list(params),

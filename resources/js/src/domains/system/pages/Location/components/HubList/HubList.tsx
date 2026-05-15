@@ -36,7 +36,7 @@ export const HubList = ({
     );
 
     return (
-        <Card className="flex flex-col h-full border-none shadow-none bg-transparent">
+        <Card className="flex flex-col h-full shadow-none bg-transparent">
             <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
                     <MapPin className="size-4 text-primary" />

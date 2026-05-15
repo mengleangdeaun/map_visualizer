@@ -19,6 +19,7 @@ class Vehicle extends Model
         'max_volume_cbm',
         'image_url',
         'is_active',
+        'max_speed_kmh',
     ];
 
     protected $appends = ['latitude', 'longitude'];

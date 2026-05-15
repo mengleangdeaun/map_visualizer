@@ -3,6 +3,7 @@ import React from 'react';
 import { z } from 'zod';
 import DefaultLayout from '../components/Layouts/DefaultLayout';
 import { AuthGuard } from '../components/shared/auth/AuthGuard';
+import { MobileLayout } from '../domains/driver/components/Layout/MobileLayout';
 
 const ComingSoon = () => (
     <div className="p-10 text-center">
@@ -25,10 +26,20 @@ const mainLayoutRoute = createRoute({
     getParentRoute: () => rootRoute,
     id: 'layout',
     component: () => (
-        <AuthGuard>
+        <AuthGuard allowedRoles={['admin', 'super_admin', 'system_staff']}>
             <DefaultLayout>
                 <Outlet />
             </DefaultLayout>
+        </AuthGuard>
+    ),
+});
+
+const driverLayoutRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    id: 'driver-layout',
+    component: () => (
+        <AuthGuard allowedRoles={['driver']}>
+            <MobileLayout />
         </AuthGuard>
     ),
 });
@@ -50,16 +61,26 @@ const systemHubsRoute = createRoute({ getParentRoute: () => mainLayoutRoute, pat
 const systemStaffRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'system/staff', component: lazyRouteComponent(() => import('../domains/system/pages/PlatformStaff/index')) });
 
 const adminDashboardRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'admin', component: lazyRouteComponent(() => import('../domains/admin/pages/Index')) });
+const driverDashboardRoute = createRoute({ getParentRoute: () => driverLayoutRoute, path: 'driver', component: lazyRouteComponent(() => import('../domains/driver/pages/Dashboard/index')) });
+const driverTasksRoute = createRoute({ getParentRoute: () => driverLayoutRoute, path: 'driver/tasks', component: lazyRouteComponent(() => import('../domains/driver/pages/Tasks/index')) });
+const landingPageRoute = createRoute({ getParentRoute: () => rootRoute, path: '/', component: lazyRouteComponent(() => import('../domains/system/pages/Landing/index')) });
 const adminVehiclesRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'admin/fleet/vehicles', component: lazyRouteComponent(() => import('../domains/admin/pages/Vehicle/index')) });
 const adminHubsRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'admin/fleet/hubs', component: lazyRouteComponent(() => import('../domains/admin/pages/Hub/index')) });
+const adminMonitoringRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'admin/fleet/monitoring', component: lazyRouteComponent(() => import('../domains/admin/pages/Monitoring/index')) });
+const adminCustomersRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'admin/fleet/customers', component: lazyRouteComponent(() => import('../domains/admin/pages/Customer/index')) });
+const adminTasksRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'admin/fleet/tasks', component: lazyRouteComponent(() => import('../domains/admin/pages/Tasks/index')) });
+const systemDemoStaticRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'system/demomap/static', component: lazyRouteComponent(() => import('../domains/system/pages/DemoMap/StaticMap/StaticMap')) });
+const systemDemoInteractiveRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'system/demomap/interactive', component: lazyRouteComponent(() => import('../domains/system/pages/DemoMap/InteractiveMap/InteractiveMap')) });
+const systemDemoMarkerRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'system/demomap/marker', component: lazyRouteComponent(() => import('../domains/system/pages/DemoMap/MapMarker/MapMarker')) });
+const systemDemoDeliveryRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'system/demomap/delivery', component: lazyRouteComponent(() => import('../domains/system/pages/DemoMap/DeliveryTracking/DeliveryTracking')) });
+const systemDemoAvailableDriverRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'system/demomap/available-driver', component: lazyRouteComponent(() => import('../domains/system/pages/DemoMap/AvailableDriver/AvailableDriver')) });
+const systemDemoRealtimeRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'system/demomap/realtime', component: lazyRouteComponent(() => import('../domains/system/pages/DemoMap/RealtimeTracking/RealtimeTracking')) });
 
-const indexRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: '/', component: lazyRouteComponent(() => import('../domains/admin/pages/Index')) });
 const error404Route = createRoute({ getParentRoute: () => rootRoute, path: '/pages/error404', component: ComingSoon });
 
 // 5. Construct Tree
 const routeTree = rootRoute.addChildren([
     mainLayoutRoute.addChildren([
-        indexRoute,
         systemDashboardRoute,
         systemCompaniesRoute,
         systemUsersRoute,
@@ -70,11 +91,25 @@ const routeTree = rootRoute.addChildren([
         adminDashboardRoute,
         adminVehiclesRoute,
         adminHubsRoute,
+        adminMonitoringRoute,
+        adminCustomersRoute,
+        adminTasksRoute,
+        systemDemoStaticRoute,
+        systemDemoInteractiveRoute,
+        systemDemoMarkerRoute,
+        systemDemoDeliveryRoute,
+        systemDemoAvailableDriverRoute,
+        systemDemoRealtimeRoute,
     ]),
     loginRoute,
     lockscreenRoute,
     forgotPasswordRoute,
     error404Route,
+    landingPageRoute,
+    driverLayoutRoute.addChildren([
+        driverDashboardRoute,
+        driverTasksRoute,
+    ]),
 ]);
 
 // 6. Create Router

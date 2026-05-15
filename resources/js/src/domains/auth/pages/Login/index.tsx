@@ -30,8 +30,10 @@ const LoginPage = () => {
             toast.success(t('welcome_back'));
             
             // Redirect based on role or just to dashboard
-            if (data.user.role === 'admin' && !data.user.company_id) {
+            if ((data.user.role === 'system_staff' || data.user.role === 'super_admin') && !data.user.company_id) {
                 navigate({ to: '/system' });
+            } else if (data.user.role === 'driver') {
+                navigate({ to: '/driver' });
             } else {
                 navigate({ to: '/admin' });
             }
@@ -74,7 +76,7 @@ const LoginPage = () => {
                                     {t('email')}
                                 </Label>
                                 <div className="relative group">
-                                    <Mail className="absolute left-3 top-3 size-4 text-white/30 group-focus-within:text-primary transition-colors" />
+                                    <Mail className="absolute left-3 top-2 size-4 text-white/30 group-focus-within:text-primary transition-colors" />
                                     <Input 
                                         id="email" 
                                         type="email" 
@@ -100,7 +102,7 @@ const LoginPage = () => {
                                     </button>
                                 </div>
                                 <div className="relative group">
-                                    <Lock className="absolute left-3 top-3 size-4 text-white/30 group-focus-within:text-primary transition-colors" />
+                                    <Lock className="absolute left-3 top-2 size-4 text-white/30 group-focus-within:text-primary transition-colors" />
                                     <Input 
                                         id="password" 
                                         type="password" 
@@ -125,7 +127,7 @@ const LoginPage = () => {
                                 </label>
                             </div>
                         </CardContent>
-                        <CardFooter className="flex flex-col gap-4">
+                        <CardFooter className="flex flex-col gap-4 mt-4">
                             <Button 
                                 type="submit" 
                                 className="w-full h-11 text-sm font-black uppercase tracking-widest bg-primary hover:bg-primary/90 text-primary-foreground shadow-xl shadow-primary/20 transition-all active:scale-[0.98]"

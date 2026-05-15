@@ -1,5 +1,6 @@
 {
     "add_platform_staff": "Add Platform Staff",
+    "platform_team_management": "Platform Team Management",
     "edit_platform_staff": "Edit Platform Staff",
     "delete_platform_staff": "Delete Platform Staff",
     "are_you_sure_you_want_to_delete_platform_staff": "Are you sure you want to delete {{name}}?",
@@ -26,6 +27,8 @@
     "telegram_id": "Telegram ID",
     "cancel": "Cancel",
     "save_company": "Save Company",
+    "system_role": "System Role",
+    "save_changes": "Save Changes",
     "save_staff_member": "Save Staff",
     "save_exchange_rate": "Save Exchange Rate",
     "save_hub": "Save Hub",
@@ -88,6 +91,7 @@
     "status_inactive": "Inactive",
     "password": "Password",
     "enter_password": "Enter password",
+    "enter_full_name": "Enter Full Name",
     "password_min_length": "Password must be at least 8 characters",
     "profile_picture": "Profile Picture",
     "select_company": "Select Company",

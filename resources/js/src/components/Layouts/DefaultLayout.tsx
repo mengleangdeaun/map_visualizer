@@ -7,7 +7,6 @@ import Sidebar from './Sidebar';
 import Portals from '../../components/Portals';
 import { MapLoading } from '../shared/map/MapLoading';
 
-import { Toaster } from '../ui/sonner';
 import { TooltipProvider } from '../ui/tooltip';
 
 const DefaultLayout = ({ children }: PropsWithChildren) => {
@@ -96,7 +95,6 @@ const DefaultLayout = ({ children }: PropsWithChildren) => {
                         <Footer />
                         {/* END FOOTER */}
                         <Portals />
-                        <Toaster />
                     </div>
                 </div>
             </div>
