@@ -41,6 +41,14 @@ interface TaskDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     task?: Task | null;
+    initialValues?: Partial<{
+        pickup_lat: number | null;
+        pickup_lng: number | null;
+        dropoff_lat: number | null;
+        dropoff_lng: number | null;
+        pickup_address: string;
+        dropoff_address: string;
+    }>;
 }
 
 /**
@@ -85,7 +93,7 @@ const HubSelector = ({ onSelect, label, hubs, t }: { onSelect: (hub: any) => voi
     );
 };
 
-const TaskDialog = ({ open, onOpenChange, task }: TaskDialogProps) => {
+const TaskDialog = ({ open, onOpenChange, task, initialValues }: TaskDialogProps) => {
     const { t } = useTranslation('admin');
     const { data: vehiclesData, isLoading: isLoadingVehicles } = useVehicles();
     const { data: hubsData } = useHubs();
@@ -104,20 +112,29 @@ const TaskDialog = ({ open, onOpenChange, task }: TaskDialogProps) => {
             status: task?.status || 'assigned',
             contact_name: task?.contact_name || '',
             contact_phone: task?.contact_phone || '',
-            pickup_address: task?.pickup_address || '',
-            dropoff_address: task?.dropoff_address || '',
-            pickup_lat: task?.pickup_lat || null,
-            pickup_lng: task?.pickup_lng || null,
-            dropoff_lat: task?.dropoff_lat || null,
-            dropoff_lng: task?.dropoff_lng || null,
+            pickup_address: task?.pickup_address || initialValues?.pickup_address || '',
+            dropoff_address: task?.dropoff_address || initialValues?.dropoff_address || '',
+            pickup_lat: task?.pickup_lat || initialValues?.pickup_lat || null,
+            pickup_lng: task?.pickup_lng || initialValues?.pickup_lng || null,
+            dropoff_lat: task?.dropoff_lat || initialValues?.dropoff_lat || null,
+            dropoff_lng: task?.dropoff_lng || initialValues?.dropoff_lng || null,
             scheduled_at: task?.scheduled_at || null,
         },
         onSubmit: async ({ value }) => {
             try {
+                // Sanitize coordinates before submission
+                const sanitizedValue = {
+                    ...value,
+                    pickup_lat: sanitizeCoord(value.pickup_lat),
+                    pickup_lng: sanitizeCoord(value.pickup_lng),
+                    dropoff_lat: sanitizeCoord(value.dropoff_lat),
+                    dropoff_lng: sanitizeCoord(value.dropoff_lng),
+                };
+
                 if (isEditing) {
-                    await updateMutation.mutateAsync({ id: task.id, data: value as any });
+                    await updateMutation.mutateAsync({ id: task.id, data: sanitizedValue as any });
                 } else {
-                    await createMutation.mutateAsync(value as any);
+                    await createMutation.mutateAsync(sanitizedValue as any);
                 }
                 onOpenChange(false);
             } catch (error) {}
@@ -128,24 +145,69 @@ const TaskDialog = ({ open, onOpenChange, task }: TaskDialogProps) => {
         if (open) {
             form.reset();
         }
-    }, [open, task]);
+    }, [open, task, initialValues]);
 
     const handleAddressPaste = (e: React.ClipboardEvent, fieldName: 'pickup' | 'dropoff') => {
         const text = e.clipboardData.getData('text');
-        const coords = parseGoogleMapsUrl(text);
+        
+        // Clean up text if it contains POINT(...) wrapper
+        let cleanText = text;
+        if (typeof text === 'string' && text.includes('POINT')) {
+            const match = text.match(/\(([^)]+)\)/);
+            if (match) {
+                const parts = match[1].split(' ');
+                if (parts.length === 2) {
+                    // WKT is POINT(lng lat), but we might just want to parse the URL
+                    // If it's already a WKT, we don't necessarily want to parse it as a URL
+                }
+            }
+        }
+
+        const coords = parseGoogleMapsUrl(cleanText);
         if (coords) {
             e.preventDefault();
-            form.setFieldValue(`${fieldName}_address` as any, text);
+            const optimizedAddress = coords.address || `${coords.lat.toFixed(6)}, ${coords.lng.toFixed(6)}`;
+            
+            // Strictly update ONLY the target fields
+            form.setFieldValue(`${fieldName}_address` as any, optimizedAddress);
             form.setFieldValue(`${fieldName}_lat` as any, coords.lat);
             form.setFieldValue(`${fieldName}_lng` as any, coords.lng);
         }
+    };
+
+    /**
+     * Sanitizes coordinate input to ensure only numeric values are sent
+     */
+    const sanitizeCoord = (val: any): number | null => {
+        if (val === null || val === undefined || val === '') return null;
+        
+        // If it's already a number, return it
+        if (typeof val === 'number') return isNaN(val) ? null : val;
+        
+        // If it's a string, try to extract numbers
+        if (typeof val === 'string') {
+            // Remove POINT() wrapper if present
+            if (val.includes('POINT')) {
+                const match = val.match(/-?\d+\.\d+/g);
+                if (match) {
+                    // Usually WKT is POINT(lng lat), but our lat/lng fields expect individual numbers
+                    // This is tricky because we don't know if the string was Lat or Lng
+                    // Best to just parse as a single float if it's a simple string
+                    return parseFloat(val.replace(/[^\d.-]/g, ''));
+                }
+            }
+            const parsed = parseFloat(val);
+            return isNaN(parsed) ? null : parsed;
+        }
+        
+        return null;
     };
 
     const isLoading = createMutation.isPending || updateMutation.isPending;
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[650px] h-[90vh] gap-0 p-0 bg-background shadow-2xl flex flex-col overflow-hidden">
+            <DialogContent className="sm:max-w-[650px] max-h-[90vh] h-fit gap-0 p-0 bg-background shadow-2xl grid grid-rows-[auto_1fr] overflow-hidden">
                 <DialogHeader className="p-4 border-b bg-background flex-shrink-0">
                     <div className="flex items-center gap-2">
                         <div className="p-2 bg-primary/10 rounded-lg">
@@ -169,9 +231,9 @@ const TaskDialog = ({ open, onOpenChange, task }: TaskDialogProps) => {
                         e.stopPropagation();
                         form.handleSubmit();
                     }} 
-                    className="flex-1 flex flex-col h-full min-h-0 overflow-hidden"
+                    className="flex flex-col min-h-0 overflow-hidden"
                 >
-                    <ScrollArea className="flex-1 h-full min-h-0">
+                    <ScrollArea className="flex-1 min-h-0">
                         <div className="p-4 space-y-4">
 
                             <div className="bg-muted/30 p-4 rounded-xl border space-y-4">
@@ -272,7 +334,7 @@ const TaskDialog = ({ open, onOpenChange, task }: TaskDialogProps) => {
                                     <div className="flex items-center justify-between">
                                         <Label className="flex items-center gap-2">
                                             {t('pickup_address') || 'Pickup Address'}
-                                            {form.getFieldValue('pickup_lat') && (
+                                            {sanitizeCoord(form.getFieldValue('pickup_lat')) !== null && (
                                                 <Badge variant="secondary" className="h-4 text-[8px] bg-green-500/10 text-green-600 border-green-500/20 px-1 font-black">
                                                     GPS FIXED
                                                 </Badge>
@@ -283,8 +345,8 @@ const TaskDialog = ({ open, onOpenChange, task }: TaskDialogProps) => {
                                             hubs={hubs}
                                             t={t}
                                             onSelect={(hub) => {
-                                                const lat = hub.latitude !== null && hub.latitude !== undefined ? parseFloat(hub.latitude) : null;
-                                                const lng = hub.longitude !== null && hub.longitude !== undefined ? parseFloat(hub.longitude) : null;
+                                                const lat = sanitizeCoord(hub.latitude);
+                                                const lng = sanitizeCoord(hub.longitude);
                                                 
                                                 form.setFieldValue('pickup_address', hub.address || hub.name);
                                                 form.setFieldValue('pickup_lat', lat);
@@ -314,7 +376,7 @@ const TaskDialog = ({ open, onOpenChange, task }: TaskDialogProps) => {
                                     <div className="flex items-center justify-between">
                                         <Label className="flex items-center gap-2">
                                             {t('dropoff_address') || 'Drop-off Address'}
-                                            {form.getFieldValue('dropoff_lat') !== null && form.getFieldValue('dropoff_lat') !== undefined && (
+                                            {sanitizeCoord(form.getFieldValue('dropoff_lat')) !== null && (
                                                 <Badge variant="secondary" className="h-4 text-[8px] bg-green-500/10 text-green-600 border-green-500/20 px-1 font-black">
                                                     GPS FIXED
                                                 </Badge>
@@ -325,8 +387,8 @@ const TaskDialog = ({ open, onOpenChange, task }: TaskDialogProps) => {
                                             hubs={hubs}
                                             t={t}
                                             onSelect={(hub) => {
-                                                const lat = hub.latitude !== null && hub.latitude !== undefined ? parseFloat(hub.latitude) : null;
-                                                const lng = hub.longitude !== null && hub.longitude !== undefined ? parseFloat(hub.longitude) : null;
+                                                const lat = sanitizeCoord(hub.latitude);
+                                                const lng = sanitizeCoord(hub.longitude);
                                                 
                                                 form.setFieldValue('dropoff_address', hub.address || hub.name);
                                                 form.setFieldValue('dropoff_lat', lat);

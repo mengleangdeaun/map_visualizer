@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Truck, ClipboardList, MapPin, Activity, ShieldAlert } from 'lucide-react';
+import { Truck, ClipboardList, MapPin, Activity, ShieldAlert, Warehouse, Eye, EyeOff } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -10,6 +10,8 @@ interface MonitoringStatsProps {
     activeVehiclesCount: number;
     tasksCount: number;
     hubsCount: number;
+    showHubs?: boolean;
+    onToggleHubs?: () => void;
     className?: string;
 }
 
@@ -18,6 +20,8 @@ export const MonitoringStats = ({
     activeVehiclesCount,
     tasksCount,
     hubsCount,
+    showHubs = false,
+    onToggleHubs,
     className
 }: MonitoringStatsProps) => {
     const { t } = useTranslation('admin');
@@ -54,13 +58,26 @@ export const MonitoringStats = ({
                 </div>
 
                 {/* Hubs */}
-                <div className="flex items-center gap-2 px-4 py-1">
-                    <MapPin size={14} className="text-orange-500" />
+                <div 
+                    className={cn(
+                        "flex items-center gap-2 px-4 py-1 cursor-pointer hover:bg-muted/50 transition-colors group",
+                        !showHubs && "opacity-50 grayscale-[0.5]"
+                    )}
+                    onClick={onToggleHubs}
+                >
+                    <Warehouse size={14} className={cn("transition-colors", showHubs ? "text-orange-500" : "text-muted-foreground")} />
                     <div className="flex flex-col -space-y-0.5">
                         <span className="text-[8px] font-black text-muted-foreground uppercase tracking-tighter">
                             {t('hubs') || 'Hubs'}
                         </span>
-                        <span className="text-xs font-black">{hubsCount}</span>
+                        <div className="flex items-center gap-1.5">
+                            <span className="text-xs font-black">{hubsCount}</span>
+                            {showHubs ? (
+                                <Eye size={10} className="text-orange-500/70" />
+                            ) : (
+                                <EyeOff size={10} className="text-muted-foreground" />
+                            )}
+                        </div>
                     </div>
                 </div>
             </Card>

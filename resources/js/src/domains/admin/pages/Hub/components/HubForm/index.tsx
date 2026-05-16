@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, MapPin, ShieldCheck, Info } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const hubSchema = z.object({
     code: z.string().or(z.literal('')),
@@ -93,8 +94,8 @@ const HubForm = ({ open, onOpenChange, location }: HubFormProps) => {
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[550px] bg-card shadow-2xl overflow-y-auto max-h-[90vh]">
-                <DialogHeader>
+            <DialogContent className="sm:max-w-[550px] max-h-[90vh] h-fit gap-0 p-0 bg-background shadow-2xl grid grid-rows-[auto_1fr] overflow-hidden">
+                <DialogHeader className="p-4 border-b bg-background flex-shrink-0">
                     <div className="flex items-center gap-2 mb-1">
                         <div className="p-2 bg-primary/10 rounded-lg">
                             <MapPin className="size-5 text-primary" />
@@ -116,8 +117,10 @@ const HubForm = ({ open, onOpenChange, location }: HubFormProps) => {
                         e.stopPropagation();
                         form.handleSubmit();
                     }} 
-                    className="space-y-6 pt-4"
+                    className="flex flex-col min-h-0 overflow-hidden"
                 >
+                    <ScrollArea className="flex-1 min-h-0">
+                        <div className="p-4 space-y-6">
                     <div className="bg-accent/5 p-4 rounded-xl border space-y-4">
                         <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
                             <Info size={12} className="text-primary" />
@@ -240,9 +243,10 @@ const HubForm = ({ open, onOpenChange, location }: HubFormProps) => {
                                 )}
                             />
                         </div>
+                        </div>
                     </div>
-
-                    <DialogFooter className="pt-4 border-t">
+                </ScrollArea>
+                    <DialogFooter className="p-4 border-t bg-muted/5 flex-shrink-0">
                         <Button 
                             size="lg"
                             type="button" 

@@ -62,7 +62,7 @@ class LocationService
             $lat = (float) $data['latitude'];
             $lng = (float) $data['longitude'];
             // Using basic ST_GeomFromText to avoid SRID conflicts if column SRID is 0
-            $data['location'] = DB::raw("ST_GeomFromText('POINT($lng $lat)')");
+            $data['location'] = DB::raw("ST_GeomFromText('POINT($lng $lat)', 4326)");
             unset($data['latitude'], $data['longitude']);
         }
 
@@ -80,7 +80,7 @@ class LocationService
             $lat = (float) $data['latitude'];
             $lng = (float) $data['longitude'];
             // Using basic ST_GeomFromText to avoid SRID conflicts if column SRID is 0
-            $data['location'] = DB::raw("ST_GeomFromText('POINT($lng $lat)')");
+            $data['location'] = DB::raw("ST_GeomFromText('POINT($lng $lat)', 4326)");
             unset($data['latitude'], $data['longitude']);
         }
 

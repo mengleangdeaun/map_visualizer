@@ -10,6 +10,7 @@ import { FloatingRouteList } from '@/components/shared/map/FloatingRouteList';
 import { cn } from '@/lib/utils';
 
 import { UserLocationMarker } from '@/components/shared/map/UserLocationMarker';
+import { PickupMarker, DropoffMarker } from '@/components/shared/map/TaskMarkers';
 
 const StartMarkerIcon = () => (
     <div className="size-5 rounded-full bg-emerald-500 border-2 border-white shadow-md flex items-center justify-center">
@@ -126,46 +127,22 @@ const DemoMap = () => {
 
                         {/* Start Marker */}
                         {start && (
-                            <MapMarker longitude={start.lng} latitude={start.lat}>
-                                <MarkerContent>
-                                    <StartMarkerIcon />
-                                    <MarkerLabel position="top" className="mb-3">
-                                        <div className="flex items-center gap-1.5 bg-background/90 backdrop-blur-md px-2.5 py-1 rounded-full border border-emerald-500/20 shadow-[0_8px_30px_rgb(0,0,0,0.12)] animate-in fade-in slide-in-from-bottom-2 duration-300">
-                                            <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400">PICKUP</span>
-                                        </div>
-                                    </MarkerLabel>
-                                </MarkerContent>
-                                <MarkerPopup>
-                                    <div className="p-2">
-                                        <p className="font-bold">Start Point</p>
-                                        <p className="text-[10px] text-muted-foreground">
-                                            {start.lng.toFixed(4)}, {start.lat.toFixed(4)}
-                                        </p>
-                                    </div>
-                                </MarkerPopup>
-                            </MapMarker>
+                            <PickupMarker 
+                                longitude={start.lng} 
+                                latitude={start.lat}
+                                label="PICKUP"
+                                className="animate-in fade-in slide-in-from-bottom-2 duration-300"
+                            />
                         )}
 
                         {/* End Marker */}
                         {end && (
-                            <MapMarker longitude={end.lng} latitude={end.lat}>
-                                <MarkerContent>
-                                    <EndMarkerIcon />
-                                    <MarkerLabel position="top" className="mb-3">
-                                    <div className="flex items-center gap-1.5 bg-background/90 backdrop-blur-md px-2.5 py-1 rounded-full border border-red-500/20 shadow-[0_8px_30px_rgb(0,0,0,0.12)] animate-in fade-in slide-in-from-bottom-2 duration-300">
-                                        <span className="text-[10px] font-semibold text-red-700 dark:text-red-400">DESTINATION</span>
-                                    </div>
-                                    </MarkerLabel>
-                                </MarkerContent>
-                                <MarkerPopup>
-                                    <div className="p-2">
-                                        <p className="font-bold">Destination</p>
-                                        <p className="text-[10px] text-muted-foreground">
-                                            {end.lng.toFixed(4)}, {end.lat.toFixed(4)}
-                                        </p>
-                                    </div>
-                                </MarkerPopup>
-                            </MapMarker>
+                            <DropoffMarker 
+                                longitude={end.lng} 
+                                latitude={end.lat}
+                                label="DESTINATION"
+                                className="animate-in fade-in slide-in-from-bottom-2 duration-300"
+                            />
                         )}
 
                         {/* Route Lines */}

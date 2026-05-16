@@ -44,19 +44,19 @@ export const ConfirmModal = ({
             bg: 'bg-primary/10',
             icon: 'text-primary',
             border: 'border-primary/20',
-            button: 'bg-primary hover:bg-primary/90'
+            button: 'bg-primary hover:bg-primary/90 text-white'
         },
         destructive: {
             bg: 'bg-destructive/10',
             icon: 'text-destructive',
             border: 'border-destructive/20',
-            button: 'bg-destructive hover:bg-destructive/90'
+            button: 'bg-destructive hover:bg-destructive/90 text-white'
         },
         warning: {
             bg: 'bg-amber-500/10',
             icon: 'text-amber-500',
             border: 'border-amber-500/20',
-            button: 'bg-amber-500 hover:bg-amber-600'
+            button: 'bg-amber-500 hover:bg-amber-600 text-white'
         }
     };
 

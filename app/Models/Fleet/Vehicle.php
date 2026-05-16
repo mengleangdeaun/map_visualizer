@@ -20,6 +20,8 @@ class Vehicle extends Model
         'image_url',
         'is_active',
         'max_speed_kmh',
+        'last_location',
+        'last_telemetry_at',
     ];
 
     protected $appends = ['latitude', 'longitude'];

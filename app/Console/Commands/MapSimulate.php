@@ -12,7 +12,7 @@ class MapSimulate extends Command
      *
      * @var string
      */
-    protected $signature = 'map:simulate';
+    protected $signature = 'map:simulate {--vehicle=} {--company=}';
 
     /**
      * The console command description.
@@ -29,6 +29,9 @@ class MapSimulate extends Command
         $this->info("Starting UI Simulation...");
         $this->info("Broadcasting to '.vehicle.location.updated' via Reverb...");
         
+        $vehicleId = $this->option('vehicle') ?? "SIM-TEST-VEHICLE";
+        $companyId = $this->option('company');
+
         // Starting point: Phnom Penh
         $lat = 11.5650;
         $lng = 104.9281;
@@ -55,7 +58,8 @@ class MapSimulate extends Command
                 $lng,
                 $heading,
                 $speed,
-                "SIM-TEST-VEHICLE"
+                $vehicleId,
+                $companyId
             ));
 
             usleep(500000); // 0.5 second updates for smooth animation

@@ -9,7 +9,7 @@ import { Card } from '@/components/ui/card';
 import { MapLoading } from '@/components/shared/map/MapLoading';
 import { UserLocationMarker } from '@/components/shared/map/UserLocationMarker';
 import { useTranslation } from 'react-i18next';
-import { Truck, MapPin, Activity, ShieldAlert, ClipboardList, Navigation as NavigationIcon } from 'lucide-react';
+import { Truck, MapPin, Activity, ShieldAlert, ClipboardList, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { echo } from '@/lib/echo';
 import { Badge } from '@/components/ui/badge';
@@ -17,6 +17,9 @@ import { useAuthStore } from '@/domains/auth/store/useAuthStore';
 
 import { Task } from '@/domains/admin/pages/Tasks/services/taskService';
 import { MonitoringStats } from './MonitoringStats';
+import { MapSearch, SearchResult } from '@/components/shared/map/MapSearch';
+import { PickupMarker, DropoffMarker } from '@/components/shared/map/TaskMarkers';
+import { Button } from '@/components/ui/button';
 
 interface MonitoringMapProps {
     locations: Location[];
@@ -25,6 +28,10 @@ interface MonitoringMapProps {
     isLoading?: boolean;
     isFetching?: boolean;
     focusTarget?: { id: string; type: 'vehicle' | 'hub' | 'task'; center: [number, number] } | null;
+    onClick?: (e: any) => void;
+    pendingPickup?: { lat: number, lng: number } | null;
+    pendingDropoff?: { lat: number, lng: number } | null;
+    onCreateTask?: () => void;
 }
 
 export const MonitoringMap = React.memo(({ 
@@ -33,23 +40,73 @@ export const MonitoringMap = React.memo(({
     tasks,
     isLoading, 
     isFetching,
-    focusTarget
+    focusTarget,
+    onClick,
+    pendingPickup,
+    pendingDropoff,
+    onCreateTask
 }: MonitoringMapProps) => {
     const { t } = useTranslation(['admin', 'system']);
     const { user } = useAuthStore();
     const mapRef = React.useRef<any>(null);
     const [liveVehicles, setLiveVehicles] = useState<Vehicle[]>([]);
     
+    const googleKhmerStyle = useMemo<any>(() => {
+        const tiles = ['https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&hl=km'];
+        return {
+            light: {
+                version: 8,
+                sources: {
+                    'google-tiles': {
+                        type: 'raster',
+                        tiles,
+                        tileSize: 256,
+                        attribution: '&copy; Google',
+                    },
+                },
+                layers: [{ id: 'google-tiles', type: 'raster', source: 'google-tiles', minzoom: 0, maxzoom: 22 }],
+            },
+            dark: {
+                version: 8,
+                sources: {
+                    'google-tiles': {
+                        type: 'raster',
+                        tiles,
+                        tileSize: 256,
+                        attribution: '&copy; Google',
+                    },
+                },
+                layers: [
+                    {
+                        id: 'google-tiles',
+                        type: 'raster',
+                        source: 'google-tiles',
+                        minzoom: 0,
+                        maxzoom: 22,
+                        paint: {
+                            'raster-brightness-max': 0.6,
+                            'raster-brightness-min': 0,
+                            'raster-contrast': 0.2,
+                            'raster-hue-rotate': 180,
+                            'raster-saturation': -0.8,
+                        },
+                    },
+                ],
+            },
+        };
+    }, []);
+
     const [viewport, setViewport] = useState({
         center: [104.9282, 11.5564] as [number, number], // Default to Phnom Penh
         zoom: 12,
         bearing: 0,
-        pitch: 0,
+        pitch: 45,
     });
 
     const [selectedId, setSelectedId] = useState<string | null>(null);
-    const [selectedType, setSelectedType] = useState<'hub' | 'vehicle' | null>(null);
+    const [selectedType, setSelectedType] = useState<'hub' | 'vehicle' | 'task' | null>(null);
     const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+    const [showHubs, setShowHubs] = useState(false);
 
     // Handle focus target
     useEffect(() => {
@@ -66,10 +123,50 @@ export const MonitoringMap = React.memo(({
         }
     }, [focusTarget]);
 
-    // Synchronize props to live state
+    // 1. Synchronize props to live state
     useEffect(() => {
         setLiveVehicles(vehicles);
     }, [vehicles]);
+
+    // 2. Listen for real-time location updates
+    useEffect(() => {
+        if (!echo || !user) return;
+
+        const companyId = user.company_id;
+        const channelName = companyId ? `fleet.${companyId}` : 'telemetry.public';
+        const channel = companyId ? echo.private(channelName) : echo.channel(channelName);
+
+        console.log(`MonitoringMap: Subscribing to ${companyId ? 'PRIVATE' : 'PUBLIC'} channel:`, channelName);
+
+        channel.listen('.vehicle.location.updated', (event: any) => {
+            setLiveVehicles((prev) => {
+                const exists = prev.find(v => v.id === event.vehicle_id);
+                if (exists) {
+                    return prev.map((v) => 
+                        v.id === event.vehicle_id 
+                            ? { ...v, latitude: event.latitude, longitude: event.longitude, heading: event.heading, speed: event.speed } 
+                            : v
+                    );
+                }
+                
+                const newVehicle: any = {
+                    id: event.vehicle_id,
+                    plate_number: event.vehicle_id.includes('SIM') ? event.vehicle_id : 'NEW-UNIT',
+                    latitude: event.latitude,
+                    longitude: event.longitude,
+                    heading: event.heading,
+                    speed: event.speed,
+                    type: 'motorcycle',
+                    is_active: true
+                };
+                return [...prev, newVehicle];
+            });
+        });
+
+        return () => {
+            echo.leave(channelName);
+        };
+    }, [user?.company_id]);
 
     // Only auto-center on the very first load if nothing is focused
     useEffect(() => {
@@ -114,20 +211,57 @@ export const MonitoringMap = React.memo(({
                 ref={mapRef}
                 viewport={viewport} 
                 onViewportChange={setViewport}
+                onClick={onClick}
                 className="h-full w-full"
                 language="km"
+                styles={googleKhmerStyle}
             >
                 <MapControls 
                     position="top-right" 
-                    showLocate 
-                    showCompass
+                    showZoom 
+                    showCompass 
+                    showLocate
                     onLocate={(pos) => setUserLocation([pos.longitude, pos.latitude])}
                 />
 
                 <UserLocationMarker coordinates={userLocation} />
 
+                {pendingPickup && (
+                    <PickupMarker 
+                        longitude={pendingPickup.lng} 
+                        latitude={pendingPickup.lat}
+                        label={t('admin:new_pickup') || "New Pickup"}
+                        className="animate-in zoom-in duration-300"
+                    />
+                )}
+
+                {pendingDropoff && (
+                    <DropoffMarker 
+                        longitude={pendingDropoff.lng} 
+                        latitude={pendingDropoff.lat}
+                        label={t('admin:new_destination') || "New Destination"}
+                        className="animate-in zoom-in duration-300"
+                    >
+                        {pendingPickup && (
+                             <MarkerLabel position="top" className="mb-10 pointer-events-auto">
+                                <Button 
+                                    size="sm" 
+                                    className="rounded-full py-4 px-3 shadow-2xl bg-primary hover:bg-primary/90 text-white font-bold animate-in zoom-in slide-in-from-bottom-2 duration-500"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onCreateTask?.();
+                                    }}
+                                >
+                                    <Plus className="mr-1.5 size-3.5" strokeWidth={3} />
+                                    {t('admin:create_task_now') || 'Create Task Now'}
+                                </Button>
+                            </MarkerLabel>
+                        )}
+                    </DropoffMarker>
+                )}
+
                 {/* Render Hubs */}
-                {locations.map((location) => (
+                {showHubs && locations.map((location) => (
                     <HubMarker 
                         key={location.id} 
                         location={location}
@@ -158,68 +292,30 @@ export const MonitoringMap = React.memo(({
                     
                     return (
                         <React.Fragment key={task.id}>
-                            {/* Pickup Hero Marker */}
                             {task.pickup_lat && task.pickup_lng && (
-                                <MapMarker 
+                                <PickupMarker 
                                     longitude={task.pickup_lng} 
                                     latitude={task.pickup_lat}
+                                    isFocused={isFocused}
+                                    label={`P: ${task.title.substring(0, 10)}`}
                                     onClick={() => {
                                         setSelectedId(task.id);
                                         setSelectedType('task');
                                     }}
-                                >
-                                    <MarkerContent>
-                                        <div className={cn(
-                                            "relative group flex flex-col items-center gap-0.5 transition-all duration-300",
-                                            isFocused ? "scale-110 z-50" : "scale-100"
-                                        )}>
-                                            {/* Pulsing Rings */}
-                                            <div className="absolute inset-0 flex items-center justify-center">
-                                                <div className="absolute size-6 bg-blue-500/30 rounded-full animate-ping" />
-                                                <div className="absolute size-8 bg-blue-500/10 rounded-full animate-pulse" />
-                                            </div>
-                                            
-                                            {/* Marker Pin */}
-                                            <div className="relative p-1.5 bg-blue-600 text-white rounded-lg shadow-lg border-2 border-white transition-transform hover:scale-110">
-                                                <MapPin size={12} strokeWidth={3} />
-                                            </div>
-                                            
-                                            {/* Hero Label */}
-                                            <div className="bg-blue-600 text-[8px] font-black text-white px-1.5 py-0.5 rounded-full shadow-md border border-white/20 whitespace-nowrap uppercase tracking-tighter">
-                                                P: {task.title.substring(0, 10)}
-                                            </div>
-                                        </div>
-                                    </MarkerContent>
-                                </MapMarker>
+                                />
                             )}
 
-                            {/* Dropoff Hero Marker */}
                             {task.dropoff_lat && task.dropoff_lng && (
-                                <MapMarker 
+                                <DropoffMarker 
                                     longitude={task.dropoff_lng} 
                                     latitude={task.dropoff_lat}
+                                    isFocused={isFocused}
+                                    label={`D: ${task.contact_name || 'DEST'}`}
                                     onClick={() => {
                                         setSelectedId(task.id);
                                         setSelectedType('task');
                                     }}
-                                >
-                                    <MarkerContent>
-                                        <div className={cn(
-                                            "relative group flex flex-col items-center gap-0.5 transition-all duration-300",
-                                            isFocused ? "scale-110 z-50" : "scale-100"
-                                        )}>
-                                            {/* Marker Pin */}
-                                            <div className="relative p-1.5 bg-destructive text-white rounded-lg shadow-lg border-2 border-white transition-transform hover:scale-110">
-                                                <NavigationIcon size={12} strokeWidth={3} />
-                                            </div>
-                                            
-                                            {/* Hero Label */}
-                                            <div className="bg-destructive text-[8px] font-black text-white px-1.5 py-0.5 rounded-full shadow-md border border-white/20 whitespace-nowrap uppercase tracking-tighter">
-                                                D: {task.contact_name || 'DEST'}
-                                            </div>
-                                        </div>
-                                    </MarkerContent>
-                                </MapMarker>
+                                />
                             )}
 
                             {/* Route Line */}
@@ -228,9 +324,9 @@ export const MonitoringMap = React.memo(({
                                     id={`task-route-${task.id}`}
                                     from={[task.pickup_lng, task.pickup_lat]}
                                     to={[task.dropoff_lng, task.dropoff_lat]}
-                                    color={isFocused ? "#2563eb" : "#94a3b8"}
+                                    color={isFocused ? "#10b981" : "#10b981"}
                                     width={isFocused ? 4 : 2}
-                                    opacity={isFocused ? 0.8 : 0.3}
+                                    opacity={isFocused ? 0.8 : 0.25}
                                     dashArray={isFocused ? undefined : [3, 2]}
                                     animate={task.status === 'in_progress'}
                                 />
@@ -246,7 +342,24 @@ export const MonitoringMap = React.memo(({
                 activeVehiclesCount={activeVehiclesCount}
                 tasksCount={tasks.length}
                 hubsCount={locations.length}
+                showHubs={showHubs}
+                onToggleHubs={() => setShowHubs(!showHubs)}
             />
+
+            <div className="absolute top-3 left-1/2 -translate-x-1/2 w-full max-w-md px-4 z-20">
+                <MapSearch 
+                    onSelect={(result) => {
+                        if (mapRef.current) {
+                            mapRef.current.flyTo({
+                                center: result.coordinates,
+                                zoom: 15,
+                                essential: true
+                            });
+                        }
+                    }}
+                    placeholder={t('admin:search_locations') || "Search locations..."}
+                />
+            </div>
         </div>
     );
 });

@@ -1,11 +1,12 @@
 import React from 'react';
 import { MapMarker, MarkerContent, MarkerPopup, MarkerLabel } from '@/components/ui/map';
-import { MapPin, Navigation, Edit, Trash2 } from 'lucide-react';
+import { Warehouse, Edit, Trash2, MapPin, Navigation } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Location } from '@/domains/fleet/services/locationService';
 import { useTranslation } from 'react-i18next';
+import { PushPin, MapLabel } from '@/components/shared/map/BaseMarker';
 
 interface HubMarkerProps {
     location: Location;
@@ -42,29 +43,20 @@ export const HubMarker = ({
         >
             <MarkerContent>
                 <div className="relative group/marker cursor-pointer">
-                    {isSelected && (
-                        <div className="absolute inset-0 -m-2 rounded-full bg-primary/20 animate-ping opacity-75" />
-                    )}
-                    <div
-                        className={cn(
-                            'relative size-7 rounded-lg border-2 border-white shadow-xl flex items-center justify-center transition-all duration-300 group-hover/marker:scale-110',
-                            typeColors[location.type as keyof typeof typeColors] || 'bg-primary',
-                            isSelected && 'ring-4 ring-primary/30 scale-110 shadow-primary/20',
-                        )}
+                    <PushPin 
+                        color={typeColors[location.type as keyof typeof typeColors] || 'bg-primary'}
+                        isFocused={isSelected}
                     >
-                        <MapPin className="size-4 text-white" />
-                    </div>
+                        <Warehouse className="size-4 text-white" strokeWidth={2} />
+                    </PushPin>
                     
                     <MarkerLabel
                         position="top"
-                        className={cn(
-                            'transition-all duration-300 pointer-events-none whitespace-nowrap',
-                            isSelected
-                                ? 'opacity-100 -translate-y-1 dark:bg-white font-bold text-primary bg-card shadow-xl px-2 py-0.5 rounded-md border border-primary/20 scale-110'
-                                : 'opacity-0 translate-y-2 group-hover/marker:opacity-100 group-hover/marker:translate-y-0 text-[10px] font-bold text-foreground bg-card/90 backdrop-blur-sm px-1.5 py-0.5 rounded shadow-sm border border-border',
-                        )}
+                        className="mb-1"
                     >
-                        {location.name}
+                        <MapLabel isFocused={isSelected}>
+                            {location.name}
+                        </MapLabel>
                     </MarkerLabel>
                 </div>
             </MarkerContent>

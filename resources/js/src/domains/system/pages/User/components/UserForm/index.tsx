@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
 import { useLocations } from '../../../Location/hooks/useLocations';
 import { SearchableSelect } from '@/components/shared/SearchableSelect';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const getUserSchema = (isEditing: boolean, isPlatformStaff?: boolean) => z.object({
     company_id: isPlatformStaff ? z.string().optional() : z.string().min(1, 'field_required'),
@@ -169,8 +170,8 @@ const UserForm = ({ open, onOpenChange, user, isPlatformStaff }: UserFormProps) 
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[600px] bg-card shadow-2xl overflow-y-auto max-h-[90vh]">
-                <DialogHeader>
+            <DialogContent className="sm:max-w-[600px] max-h-[90vh] h-fit gap-0 p-0 bg-background shadow-2xl grid grid-rows-[auto_1fr] overflow-hidden">
+                <DialogHeader className="p-4 border-b bg-background flex-shrink-0">
                     <div className="flex items-center gap-2 mb-1">
                         <div className="p-2 bg-primary/10 rounded-lg">
                             <ShieldCheck className="size-5 text-primary" />
@@ -192,8 +193,10 @@ const UserForm = ({ open, onOpenChange, user, isPlatformStaff }: UserFormProps) 
                         e.stopPropagation();
                         form.handleSubmit();
                     }} 
-                    className="space-y-6 pt-4"
+                    className="flex flex-col min-h-0 overflow-hidden"
                 >
+                    <ScrollArea className="flex-1 min-h-0">
+                        <div className="p-4 space-y-6">
                     <div className="flex gap-8">
                         <form.Field
                             name="profile_url"
@@ -428,31 +431,35 @@ const UserForm = ({ open, onOpenChange, user, isPlatformStaff }: UserFormProps) 
                         </div>
                     </div>
 
-                    <DialogFooter>
+                        </div>
+                    </ScrollArea>
+
+                    <DialogFooter className="p-4 border-t bg-muted/5 flex-shrink-0">
                         <form.Subscribe
                             selector={(state) => [state.canSubmit, state.isSubmitting]}
                             children={([canSubmit, isSubmitting]) => (
-                                <div className="flex flex-col items-end gap-2">
-                                    <div className="flex items-center gap-3">
-                                        <Button 
-                                            size="lg"
-                                            type="button" variant="ghost" onClick={() => onOpenChange(false)}>
-                                            {t('cancel')}
-                                        </Button>
-                                        <Button 
-                                            size="lg"
-                                            type="submit" 
-                                            className="px-8 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20"
-                                            disabled={!canSubmit || isLoading || isSubmitting}
-                                        >
-                                            {isLoading || isSubmitting ? (
-                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                            ) : (
-                                                <ShieldCheck className="mr-2 h-4 w-4" />
-                                            )}
-                                            {isEditing ? t('save_changes') : t('create_user')}
-                                        </Button>
-                                    </div>
+                                <div className="flex items-center justify-end gap-3 w-full">
+                                    <Button 
+                                        size="lg"
+                                        type="button" 
+                                        variant="ghost" 
+                                        onClick={() => onOpenChange(false)}
+                                    >
+                                        {t('cancel')}
+                                    </Button>
+                                    <Button 
+                                        size="lg"
+                                        type="submit" 
+                                        className="px-8 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20"
+                                        disabled={!canSubmit || isLoading || isSubmitting}
+                                    >
+                                        {isLoading || isSubmitting ? (
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        ) : (
+                                            <ShieldCheck className="mr-2 h-4 w-4" />
+                                        )}
+                                        {isEditing ? t('save_changes') : t('create_user')}
+                                    </Button>
                                 </div>
                             )}
                         />

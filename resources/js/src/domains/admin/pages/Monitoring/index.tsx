@@ -11,6 +11,10 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/componen
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/domains/auth/store/useAuthStore';
 import { echo } from '@/lib/echo';
+import TaskDialog from '@/domains/admin/pages/Tasks/components/TaskDialog';
+import { MousePointer2, Plus, X, Flag } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
 const MonitoringPage = () => {
     const { t } = useTranslation(['admin', 'system']);
@@ -18,9 +22,33 @@ const MonitoringPage = () => {
     const { user } = useAuthStore();
     const [focusTarget, setFocusTarget] = React.useState<{ id: string; type: 'vehicle' | 'hub' | 'task'; center: [number, number] } | null>(null);
 
+    // Task Creation State
+    const [pendingPickup, setPendingPickup] = React.useState<{ lat: number, lng: number } | null>(null);
+    const [pendingDropoff, setPendingDropoff] = React.useState<{ lat: number, lng: number } | null>(null);
+    const [isCreateDialogOpen, setIsCreateDialogOpen] = React.useState(false);
+    const [selectionMode, setSelectionMode] = React.useState<'none' | 'pickup' | 'dropoff'>('none');
+
     const handleFocusTarget = React.useCallback((target: { id: string; type: 'vehicle' | 'hub' | 'task'; center: [number, number] }) => {
         setFocusTarget({ ...target });
     }, []);
+
+    const handleMapClick = React.useCallback((e: any) => {
+        if (selectionMode === 'none') return;
+
+        const { lng, lat } = e.lngLat;
+        if (selectionMode === 'pickup') {
+            setPendingPickup({ lat, lng });
+            setSelectionMode('dropoff');
+        } else if (selectionMode === 'dropoff') {
+            setPendingDropoff({ lat, lng });
+        }
+    }, [selectionMode]);
+
+    const resetSelection = () => {
+        setPendingPickup(null);
+        setPendingDropoff(null);
+        setSelectionMode('none');
+    };
 
     // Fetch Hubs (All for map)
     const { 
@@ -75,18 +103,19 @@ const MonitoringPage = () => {
             });
         }
 
-        if (companyIds.size === 0) return;
+        if (companyIds.size === 0) {
+            console.warn('MonitoringPage: No company IDs found to listen to');
+            return;
+        }
 
         const activeChannelNames: string[] = [];
 
         companyIds.forEach(id => {
             const channelName = `fleet.${id}`;
             activeChannelNames.push(channelName);
+            console.log('MonitoringPage: Subscribing to company channel', channelName);
             
             echo.private(channelName)
-                .listen('.vehicle.location.updated', (e: any) => {
-                    queryClient.invalidateQueries({ queryKey: ['admin', 'vehicles'] });
-                })
                 .listen('.task.updated', (e: any) => {
                     queryClient.invalidateQueries({ queryKey: ['tasks'] });
                 });
@@ -118,7 +147,44 @@ const MonitoringPage = () => {
                             isLoading={isHubsLoading || isVehiclesLoading || isTasksLoading}
                             isFetching={isHubsFetching || isVehiclesFetching || isTasksFetching}
                             focusTarget={focusTarget}
+                            onClick={handleMapClick}
+                            pendingPickup={pendingPickup}
+                            pendingDropoff={pendingDropoff}
+                            onCreateTask={() => setIsCreateDialogOpen(true)}
                         />
+
+                        {/* Interactive Selection Overlays */}
+                        {selectionMode !== 'none' && (
+                            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 z-30">
+                                <div className="bg-background/90 backdrop-blur-md px-6 py-3 rounded-2xl border shadow-2xl flex items-center gap-4 animate-in slide-in-from-bottom-4 duration-500 ring-1 ring-primary/20">
+                                    <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center">
+                                        {selectionMode === 'pickup' ? <MousePointer2 className="size-4 text-primary" /> : <Flag className="size-4 text-destructive" />}
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-bold">
+                                            {selectionMode === 'pickup' ? t('admin:click_to_set_pickup') || 'Click to set Pickup' : t('admin:click_to_set_dropoff') || 'Click to set Destination'}
+                                        </span>
+                                        <span className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Interactive Mode</span>
+                                    </div>
+                                    <Button size="icon-sm" variant="ghost" onClick={resetSelection} className="ml-2 hover:bg-destructive/10 hover:text-destructive">
+                                        <X size={14} />
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
+
+
+                        {/* Quick Action Button to Start Selection */}
+                        {selectionMode === 'none' && !pendingPickup && (
+                            <Button 
+                                variant="secondary"
+                                className="absolute top-3 py-4 px-3 right-14 z-30 bg-background/80 backdrop-blur-md hover:bg-primary hover:text-white transition-all overflow-hidden"
+                                onClick={() => setSelectionMode('pickup')}
+                            >
+                                <Plus className="size-4" />
+                                {t('admin:create_by_map') || 'Create by Map'}
+                            </Button>
+                        )}
                     </div>
                 </ResizablePanel>
                 
@@ -130,6 +196,21 @@ const MonitoringPage = () => {
                     </div>
                 </ResizablePanel>
             </ResizablePanelGroup>
+            <TaskDialog 
+                open={isCreateDialogOpen}
+                onOpenChange={(open) => {
+                    setIsCreateDialogOpen(open);
+                    if (!open) resetSelection();
+                }}
+                initialValues={{
+                    pickup_lat: pendingPickup?.lat,
+                    pickup_lng: pendingPickup?.lng,
+                    dropoff_lat: pendingDropoff?.lat,
+                    dropoff_lng: pendingDropoff?.lng,
+                    pickup_address: pendingPickup ? `${pendingPickup.lat.toFixed(6)}, ${pendingPickup.lng.toFixed(6)}` : '',
+                    dropoff_address: pendingDropoff ? `${pendingDropoff.lat.toFixed(6)}, ${pendingDropoff.lng.toFixed(6)}` : '',
+                }}
+            />
         </div>
     );
 };

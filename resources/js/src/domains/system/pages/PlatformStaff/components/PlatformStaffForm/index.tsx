@@ -13,6 +13,7 @@ import LogoUpload from '@/components/shared/system/LogoUpload';
 import { Loader2, ShieldCheck, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const getStaffSchema = (isEditing: boolean) => z.object({
     role: z.enum(['super_admin', 'system_staff']),
@@ -128,8 +129,8 @@ const PlatformStaffForm = ({ open, onOpenChange, user }: PlatformStaffFormProps)
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[600px] bg-card shadow-2xl overflow-y-auto max-h-[90vh]">
-                <DialogHeader>
+            <DialogContent className="sm:max-w-[600px] max-h-[90vh] h-fit gap-0 p-0 bg-background shadow-2xl grid grid-rows-[auto_1fr] overflow-hidden">
+                <DialogHeader className="p-4 border-b bg-background flex-shrink-0">
                     <div className="flex items-center gap-2 mb-1">
                         <div className="p-2 bg-primary/10 rounded-lg">
                             <ShieldCheck className="size-5 text-primary" />
@@ -151,8 +152,10 @@ const PlatformStaffForm = ({ open, onOpenChange, user }: PlatformStaffFormProps)
                         e.stopPropagation();
                         form.handleSubmit();
                     }} 
-                    className="space-y-6 pt-4"
+                    className="flex flex-col min-h-0 overflow-hidden"
                 >
+                    <ScrollArea className="flex-1 min-h-0">
+                        <div className="p-4 space-y-6">
                     <div className="flex gap-8">
                         <form.Field
                             name="profile_url"
@@ -315,10 +318,16 @@ const PlatformStaffForm = ({ open, onOpenChange, user }: PlatformStaffFormProps)
                         </div>
                     </div>
 
-                    <DialogFooter className="pt-4">
+                        </div>
+                    </ScrollArea>
+
+                    <DialogFooter className="p-4 border-t bg-muted/5 flex-shrink-0">
                         <Button 
                             size="lg"
-                            type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+                            type="button" 
+                            variant="ghost" 
+                            onClick={() => onOpenChange(false)}
+                        >
                             {t('cancel')}
                         </Button>
                         <form.Subscribe

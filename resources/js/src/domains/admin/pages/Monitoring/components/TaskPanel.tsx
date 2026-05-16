@@ -12,6 +12,7 @@ import { useUpdateTask, useTasks } from '@/domains/admin/pages/Tasks/hooks/useTa
 import { TaskStatus } from '@/domains/admin/pages/Tasks/services/taskService';
 import { getTaskStatusColor } from '@/domains/admin/pages/Tasks/utils/taskStatus';
 import TaskDialog from '@/domains/admin/pages/Tasks/components/TaskDialog';
+import { ConfirmModal } from '@/components/shared/system/ConfirmModal';
 
 interface TaskPanelProps {
     onFocusTarget?: (target: { id: string; type: 'vehicle' | 'hub' | 'task'; center: [number, number] }) => void;
@@ -22,6 +23,8 @@ export const TaskPanel = ({ onFocusTarget }: TaskPanelProps) => {
     const [search, setSearch] = useState('');
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [selectedTask, setSelectedTask] = useState<any>(null);
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const [taskToCancel, setTaskToCancel] = useState<any>(null);
 
     const { data: tasksData, isLoading } = useTasks({ 
         search, 
@@ -53,16 +56,22 @@ export const TaskPanel = ({ onFocusTarget }: TaskPanelProps) => {
         setIsDialogOpen(true);
     };
 
-    const handleCancelTask = async (e: React.MouseEvent, task: any) => {
+    const handleCancelTask = (e: React.MouseEvent, task: any) => {
         e.stopPropagation();
-        if (confirm(t('confirm_cancel_task', 'Are you sure you want to cancel this task?'))) {
-            try {
-                await updateMutation.mutateAsync({ 
-                    id: task.id, 
-                    data: { ...task, status: 'cancelled' } 
-                });
-            } catch (error) {}
-        }
+        setTaskToCancel(task);
+        setIsConfirmOpen(true);
+    };
+
+    const confirmCancelTask = async () => {
+        if (!taskToCancel) return;
+        try {
+            await updateMutation.mutateAsync({ 
+                id: taskToCancel.id, 
+                data: { ...taskToCancel, status: 'cancelled' } 
+            });
+            setIsConfirmOpen(false);
+            setTaskToCancel(null);
+        } catch (error) {}
     };
 
 
@@ -198,6 +207,16 @@ export const TaskPanel = ({ onFocusTarget }: TaskPanelProps) => {
                 open={isDialogOpen}
                 onOpenChange={setIsDialogOpen}
                 task={selectedTask}
+            />
+
+            <ConfirmModal 
+                isOpen={isConfirmOpen}
+                onClose={() => setIsConfirmOpen(false)}
+                onConfirm={confirmCancelTask}
+                title={t('confirm_cancel_task_title') || 'Cancel Task'}
+                description={t('confirm_cancel_task_description') || 'Are you sure you want to cancel this task? This action cannot be undone.'}
+                confirmText={t('cancel_task', 'Cancel Task')}
+                variant="destructive"
             />
         </Card>
     );

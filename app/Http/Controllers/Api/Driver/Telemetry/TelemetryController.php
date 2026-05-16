@@ -46,9 +46,11 @@ class TelemetryController extends Controller
 
         // Update the vehicle's current position if assigned
         if ($vehicle) {
+            $lat = (float) $validated['latitude'];
+            $lng = (float) $validated['longitude'];
+
             $vehicle->update([
-                'latitude' => $validated['latitude'],
-                'longitude' => $validated['longitude'],
+                'last_location' => DB::raw("ST_GeomFromText('POINT($lng $lat)', 4326)"),
                 'is_active' => true,
                 'last_telemetry_at' => now(),
             ]);

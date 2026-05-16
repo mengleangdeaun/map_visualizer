@@ -127,12 +127,18 @@ class TaskService
      */
     protected function updateSpatialData(string $id, $pLat, $pLng, $dLat, $dLng): void
     {
+        // Sanitize inputs to ensure they are floats
+        $pLat = $pLat !== null ? (float)$pLat : null;
+        $pLng = $pLng !== null ? (float)$pLng : null;
+        $dLat = $dLat !== null ? (float)$dLat : null;
+        $dLng = $dLng !== null ? (float)$dLng : null;
+
         $pickupSql = ($pLat !== null && $pLng !== null && $pLat != 0) 
-            ? "ST_SetSRID(ST_MakePoint(" . (float)$pLng . ", " . (float)$pLat . "), 4326)" 
+            ? "ST_SetSRID(ST_MakePoint($pLng, $pLat), 4326)" 
             : "NULL";
             
         $dropoffSql = ($dLat !== null && $dLng !== null && $dLat != 0) 
-            ? "ST_SetSRID(ST_MakePoint(" . (float)$dLng . ", " . (float)$dLat . "), 4326)" 
+            ? "ST_SetSRID(ST_MakePoint($dLng, $dLat), 4326)" 
             : "NULL";
 
         DB::statement("UPDATE tasks SET pickup_location = $pickupSql, dropoff_location = $dropoffSql WHERE id = ?", [$id]);

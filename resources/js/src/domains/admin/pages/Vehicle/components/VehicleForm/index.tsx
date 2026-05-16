@@ -88,14 +88,14 @@ const VehicleForm = ({ open, onOpenChange, vehicle }: VehicleFormProps) => {
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[600px] h-[90vh] gap-0 p-0 bg-background shadow-2xl flex flex-col overflow-hidden">
+            <DialogContent className="sm:max-w-[600px] max-h-[90vh] h-fit gap-0 p-0 bg-background shadow-2xl grid grid-rows-[auto_1fr] overflow-hidden">
                 <DialogHeader className="p-4 border-b bg-background flex-shrink-0 ">
                     <div className="flex items-center gap-2">
                         <div className="p-2 bg-primary/10 rounded-lg">
                             <Truck className="size-5 text-primary" />
                         </div>
                         <div>
-                            <DialogTitle className="text-xl font-bold text-primary">
+                            <DialogTitle className="text-lg font-bold text-primary">
                                 {isEditing ? t('edit_vehicle') : t('add_new_vehicle') || 'Add New Vehicle'}
                             </DialogTitle>
                             <DialogDescription>
