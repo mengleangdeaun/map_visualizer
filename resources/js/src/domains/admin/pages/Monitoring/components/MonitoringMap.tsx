@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Map, MapControls, MapMarker, MarkerContent, MarkerLabel, MapRoute } from '@/components/ui/map';
+import { Map, MapControls, MapMarker, MarkerContent, MarkerLabel } from '@/components/ui/map';
+import { RoadRoute } from '@/components/shared/map/RoadRoute';
 import { Location } from '@/domains/fleet/services/locationService';
 import { Vehicle } from '@/domains/admin/services/vehicleService';
 import { HubMarker } from '@/domains/system/pages/Location/components/HubMarker/HubMarker';
@@ -8,12 +9,14 @@ import { Card } from '@/components/ui/card';
 import { MapLoading } from '@/components/shared/map/MapLoading';
 import { UserLocationMarker } from '@/components/shared/map/UserLocationMarker';
 import { useTranslation } from 'react-i18next';
-import { Truck, MapPin, Activity, ShieldAlert, ClipboardList } from 'lucide-react';
+import { Truck, MapPin, Activity, ShieldAlert, ClipboardList, Navigation as NavigationIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { echo } from '@/lib/echo';
+import { Badge } from '@/components/ui/badge';
 import { useAuthStore } from '@/domains/auth/store/useAuthStore';
 
-import { Task } from '@/domains/admin/tasks/services/taskService';
+import { Task } from '@/domains/admin/pages/Tasks/services/taskService';
+import { MonitoringStats } from './MonitoringStats';
 
 interface MonitoringMapProps {
     locations: Location[];
@@ -24,7 +27,7 @@ interface MonitoringMapProps {
     focusTarget?: { id: string; type: 'vehicle' | 'hub' | 'task'; center: [number, number] } | null;
 }
 
-export const MonitoringMap = ({ 
+export const MonitoringMap = React.memo(({ 
     locations, 
     vehicles, 
     tasks,
@@ -68,8 +71,10 @@ export const MonitoringMap = ({
         setLiveVehicles(vehicles);
     }, [vehicles]);
 
-    // Initial centering
+    // Only auto-center on the very first load if nothing is focused
     useEffect(() => {
+        if (focusTarget) return;
+        
         if (liveVehicles.length > 0) {
             const first = liveVehicles.find(v => v.latitude && v.longitude);
             if (first) {
@@ -148,129 +153,100 @@ export const MonitoringMap = ({
                 ))}
 
                 {/* Render Tasks */}
-                {tasks.map((task) => (
-                    <React.Fragment key={task.id}>
-                        {/* Pickup Marker */}
-                        {task.pickup_lat && task.pickup_lng && (
-                            <MapMarker 
-                                longitude={task.pickup_lng} 
-                                latitude={task.pickup_lat}
-                                onClick={() => setSelectedId(task.id)}
-                            >
-                                <MarkerContent>
-                                    <div className="relative group cursor-pointer">
-                                        <div className="absolute -inset-2 bg-blue-500/20 rounded-full animate-ping opacity-20" />
-                                        <div className="p-1.5 bg-blue-600 text-white rounded-md shadow-lg border-2 border-white transition-transform group-hover:scale-110">
-                                            <MapPin size={12} />
+                {tasks.map((task) => {
+                    const isFocused = selectedType === 'task' && selectedId === task.id;
+                    
+                    return (
+                        <React.Fragment key={task.id}>
+                            {/* Pickup Hero Marker */}
+                            {task.pickup_lat && task.pickup_lng && (
+                                <MapMarker 
+                                    longitude={task.pickup_lng} 
+                                    latitude={task.pickup_lat}
+                                    onClick={() => {
+                                        setSelectedId(task.id);
+                                        setSelectedType('task');
+                                    }}
+                                >
+                                    <MarkerContent>
+                                        <div className={cn(
+                                            "relative group flex flex-col items-center gap-0.5 transition-all duration-300",
+                                            isFocused ? "scale-110 z-50" : "scale-100"
+                                        )}>
+                                            {/* Pulsing Rings */}
+                                            <div className="absolute inset-0 flex items-center justify-center">
+                                                <div className="absolute size-6 bg-blue-500/30 rounded-full animate-ping" />
+                                                <div className="absolute size-8 bg-blue-500/10 rounded-full animate-pulse" />
+                                            </div>
+                                            
+                                            {/* Marker Pin */}
+                                            <div className="relative p-1.5 bg-blue-600 text-white rounded-lg shadow-lg border-2 border-white transition-transform hover:scale-110">
+                                                <MapPin size={12} strokeWidth={3} />
+                                            </div>
+                                            
+                                            {/* Hero Label */}
+                                            <div className="bg-blue-600 text-[8px] font-black text-white px-1.5 py-0.5 rounded-full shadow-md border border-white/20 whitespace-nowrap uppercase tracking-tighter">
+                                                P: {task.title.substring(0, 10)}
+                                            </div>
                                         </div>
-                                    </div>
-                                </MarkerContent>
-                                <MarkerLabel position="bottom">
-                                    <span className="bg-blue-600 text-white px-1.5 py-0.5 rounded text-[8px] font-bold uppercase shadow-sm">
-                                        P: {task.title.substring(0, 10)}
-                                    </span>
-                                </MarkerLabel>
-                            </MapMarker>
-                        )}
+                                    </MarkerContent>
+                                </MapMarker>
+                            )}
 
-                        {/* Dropoff Marker */}
-                        {task.dropoff_lat && task.dropoff_lng && (
-                            <MapMarker 
-                                longitude={task.dropoff_lng} 
-                                latitude={task.dropoff_lat}
-                                onClick={() => setSelectedId(task.id)}
-                            >
-                                <MarkerContent>
-                                    <div className="relative group cursor-pointer">
-                                        <div className="p-1.5 bg-destructive text-white rounded-md shadow-lg border-2 border-white transition-transform group-hover:scale-110">
-                                            <MapPin size={12} />
+                            {/* Dropoff Hero Marker */}
+                            {task.dropoff_lat && task.dropoff_lng && (
+                                <MapMarker 
+                                    longitude={task.dropoff_lng} 
+                                    latitude={task.dropoff_lat}
+                                    onClick={() => {
+                                        setSelectedId(task.id);
+                                        setSelectedType('task');
+                                    }}
+                                >
+                                    <MarkerContent>
+                                        <div className={cn(
+                                            "relative group flex flex-col items-center gap-0.5 transition-all duration-300",
+                                            isFocused ? "scale-110 z-50" : "scale-100"
+                                        )}>
+                                            {/* Marker Pin */}
+                                            <div className="relative p-1.5 bg-destructive text-white rounded-lg shadow-lg border-2 border-white transition-transform hover:scale-110">
+                                                <NavigationIcon size={12} strokeWidth={3} />
+                                            </div>
+                                            
+                                            {/* Hero Label */}
+                                            <div className="bg-destructive text-[8px] font-black text-white px-1.5 py-0.5 rounded-full shadow-md border border-white/20 whitespace-nowrap uppercase tracking-tighter">
+                                                D: {task.contact_name || 'DEST'}
+                                            </div>
                                         </div>
-                                    </div>
-                                </MarkerContent>
-                                <MarkerLabel position="bottom">
-                                    <span className="bg-destructive text-white px-1.5 py-0.5 rounded text-[8px] font-bold uppercase shadow-sm">
-                                        D: {task.receiver_name || task.id.substring(0, 4)}
-                                    </span>
-                                </MarkerLabel>
-                            </MapMarker>
-                        )}
+                                    </MarkerContent>
+                                </MapMarker>
+                            )}
 
-                        {/* Route Line */}
-                        {task.pickup_lat && task.pickup_lng && task.dropoff_lat && task.dropoff_lng && (
-                            <MapRoute 
-                                id={`task-route-${task.id}`}
-                                coordinates={[
-                                    [task.pickup_lng, task.pickup_lat],
-                                    [task.dropoff_lng, task.dropoff_lat]
-                                ]}
-                                color="#2563eb"
-                                width={2}
-                                opacity={0.4}
-                                dashArray={[3, 2]}
-                                animate={task.status === 'in_progress'}
-                            />
-                        )}
-                    </React.Fragment>
-                ))}
+                            {/* Route Line */}
+                            {task.pickup_lat && task.pickup_lng && task.dropoff_lat && task.dropoff_lng && (
+                                <RoadRoute 
+                                    id={`task-route-${task.id}`}
+                                    from={[task.pickup_lng, task.pickup_lat]}
+                                    to={[task.dropoff_lng, task.dropoff_lat]}
+                                    color={isFocused ? "#2563eb" : "#94a3b8"}
+                                    width={isFocused ? 4 : 2}
+                                    opacity={isFocused ? 0.8 : 0.3}
+                                    dashArray={isFocused ? undefined : [3, 2]}
+                                    animate={task.status === 'in_progress'}
+                                />
+                            )}
+                        </React.Fragment>
+                    );
+                })}
             </Map>
 
-            {/* Floating Stats Panel */}
-            <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
-                <Card className="bg-background/80 backdrop-blur-md shadow-xl p-3 flex items-center gap-4 transition-all hover:bg-background">
-                    <div className="flex items-center gap-2 pr-4 border-r">
-                        <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                            <Truck size={18} />
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider leading-none mb-1">
-                                {t('admin:vehicles')}
-                            </span>
-                            <div className="flex items-center gap-1.5">
-                                <span className="text-sm font-black">{activeVehiclesCount}</span>
-                                <span className="text-[9px] font-bold text-green-500 bg-green-500/10 px-1 rounded animate-pulse">LIVE</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-2 pr-4 border-r">
-                        <div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500">
-                            <ClipboardList size={18} />
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider leading-none mb-1">
-                                {t('admin:tasks') || 'Tasks'}
-                            </span>
-                            <span className="text-sm font-black">{tasks.length}</span>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                        <div className="h-8 w-8 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-500">
-                            <MapPin size={18} />
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider leading-none mb-1">
-                                {t('admin:hubs')}
-                            </span>
-                            <span className="text-sm font-black">{locations.length}</span>
-                        </div>
-                    </div>
-                </Card>
-
-                {/* Secondary indicators */}
-                <div className="flex gap-2">
-                    <div className="bg-background/80 backdrop-blur-md border rounded-lg px-2.5 py-1.5 shadow-md flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground border-l-4 border-l-green-500">
-                        <Activity size={12} className="text-green-500" />
-                        System Optimal
-                    </div>
-                    {vehicles.length > activeVehiclesCount && (
-                        <div className="bg-background/80 backdrop-blur-md border rounded-lg px-2.5 py-1.5 shadow-md flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground border-l-4 border-l-destructive">
-                            <ShieldAlert size={12} className="text-destructive" />
-                            {vehicles.length - activeVehiclesCount} Offline
-                        </div>
-                    )}
-                </div>
-            </div>
+            <MonitoringStats 
+                className="absolute top-3 left-3 z-10"
+                vehiclesCount={vehicles.length}
+                activeVehiclesCount={activeVehiclesCount}
+                tasksCount={tasks.length}
+                hubsCount={locations.length}
+            />
         </div>
     );
-};
+});

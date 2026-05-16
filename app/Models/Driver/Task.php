@@ -3,8 +3,6 @@
 namespace App\Models\Driver;
 
 use App\Models\Fleet\Vehicle;
-
-use App\Models\Customer\Customer;
 use App\Models\System\Company;
 use App\Models\User\User;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -19,14 +17,11 @@ class Task extends Model
         'company_id',
         'vehicle_id',
         'driver_id',
-        'customer_id',
-        'source',
-        'external_order_id',
         'title',
         'description',
         'status',
-        'receiver_name',
-        'receiver_phone',
+        'contact_name',
+        'contact_phone',
         'pickup_location',
         'dropoff_location',
         'pickup_address',
@@ -107,13 +102,5 @@ class Task extends Model
     public function driver()
     {
         return $this->belongsTo(User::class, 'driver_id');
-    }
-
-    /**
-     * Get the customer associated with the task.
-     */
-    public function customer()
-    {
-        return $this->belongsTo(Customer::class);
     }
 }

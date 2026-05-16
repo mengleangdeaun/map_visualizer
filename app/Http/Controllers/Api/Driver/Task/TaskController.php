@@ -22,7 +22,7 @@ class TaskController extends Controller
         // Let's assume tasks have a driver_id or we filter by vehicle assigned to the driver.
         // For simplicity and strictness, let's filter by driver_id if it exists, or vehicle_id.
         
-        $query = Task::with(['customer', 'vehicle'])
+        $query = Task::with(['vehicle'])
             ->where(function($q) use ($user) {
                 $q->where('driver_id', $user->id)
                   ->orWhereHas('vehicle', function($vq) use ($user) {
@@ -55,7 +55,7 @@ class TaskController extends Controller
 
         return response()->json([
             'message' => "Task status updated to {$validated['status']}",
-            'data' => $task->load(['customer', 'vehicle'])
+            'data' => $task->load(['vehicle'])
         ]);
     }
 }

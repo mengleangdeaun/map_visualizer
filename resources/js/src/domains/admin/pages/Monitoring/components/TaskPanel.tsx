@@ -8,9 +8,10 @@ import { Plus, Search, Filter, ClipboardList, MapPin, User, Clock, MoreVertical,
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { useUpdateTask, useTasks } from '@/domains/admin/tasks/hooks/useTasks';
-import { TaskStatus } from '@/domains/admin/tasks/services/taskService';
-import TaskDialog from '@/domains/admin/tasks/components/TaskDialog';
+import { useUpdateTask, useTasks } from '@/domains/admin/pages/Tasks/hooks/useTasks';
+import { TaskStatus } from '@/domains/admin/pages/Tasks/services/taskService';
+import { getTaskStatusColor } from '@/domains/admin/pages/Tasks/utils/taskStatus';
+import TaskDialog from '@/domains/admin/pages/Tasks/components/TaskDialog';
 
 interface TaskPanelProps {
     onFocusTarget?: (target: { id: string; type: 'vehicle' | 'hub' | 'task'; center: [number, number] }) => void;
@@ -24,7 +25,8 @@ export const TaskPanel = ({ onFocusTarget }: TaskPanelProps) => {
 
     const { data: tasksData, isLoading } = useTasks({ 
         search, 
-        per_page: 50 
+        per_page: 50,
+        status: 'active' // Fetch active tasks only
     });
 
     const updateMutation = useUpdateTask();
@@ -63,19 +65,9 @@ export const TaskPanel = ({ onFocusTarget }: TaskPanelProps) => {
         }
     };
 
-    const getStatusColor = (status: TaskStatus) => {
-        switch (status) {
-            case 'pending': return 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20';
-            case 'assigned': return 'bg-blue-500/10 text-blue-600 border-blue-500/20';
-            case 'in_progress': return 'bg-purple-500/10 text-purple-600 border-purple-500/20';
-            case 'completed': return 'bg-green-500/10 text-green-600 border-green-500/20';
-            case 'cancelled': return 'bg-red-500/10 text-red-600 border-red-500/20';
-            default: return 'bg-muted text-muted-foreground';
-        }
-    };
 
     return (
-        <Card className="h-full flex flex-col border-none shadow-none bg-transparent">
+        <Card className="h-full flex flex-col border-none shadow-none bg-transparent min-h-0">
             <div className="p-4 pt-0 border-b space-y-4">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -104,7 +96,7 @@ export const TaskPanel = ({ onFocusTarget }: TaskPanelProps) => {
                 </div>
             </div>
 
-            <ScrollArea className="flex-1">
+            <ScrollArea className="flex-1 h-full min-h-0">
                 <div className="p-4 space-y-3 pt-0">
                     {isLoading ? (
                         Array.from({ length: 5 }).map((_, i) => (
@@ -132,18 +124,13 @@ export const TaskPanel = ({ onFocusTarget }: TaskPanelProps) => {
                                         <div className="space-y-0.5 min-w-0">
                                             <div className="flex items-center gap-2">
                                                 <span className="text-[10px] font-mono font-bold text-muted-foreground/60">
-                                                    {task.source === 'external' ? (task.external_order_id || task.id.substring(0, 8)) : task.id.substring(0, 8)}
+                                                    {task.id.substring(0, 8)}
                                                 </span>
-                                                {task.source === 'external' && (
-                                                    <Badge variant="outline" className="h-4 text-[8px] px-1 bg-blue-500/5 text-blue-600 border-blue-500/20">
-                                                        {t('external') || 'External'}
-                                                    </Badge>
-                                                )}
                                             </div>
                                             <h3 className="font-bold text-xs truncate leading-tight">{task.title}</h3>
                                         </div>
                                         <div className="flex flex-col items-end gap-1">
-                                            <Badge variant="outline" className={cn("text-[9px] h-5 capitalize", getStatusColor(task.status))}>
+                                            <Badge variant="outline" className={cn("text-[9px] h-5 capitalize", getTaskStatusColor(task.status))}>
                                                 {t(`status_${task.status}`) || task.status.replace('_', ' ')}
                                             </Badge>
                                             
@@ -183,12 +170,12 @@ export const TaskPanel = ({ onFocusTarget }: TaskPanelProps) => {
                                     <div className="space-y-1.5 pt-1">
                                         <div className="flex items-center gap-2 text-muted-foreground">
                                             <MapPin className="size-3 shrink-0 text-primary/60" />
-                                            <span className="text-[10px] truncate">{task.dropoff_address || t('no_address')}</span>
+                                            <span className="text-[10px] w-36 !truncate">{task.dropoff_address || t('no_address')}</span>
                                         </div>
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2 text-muted-foreground">
                                                 <User className="size-3 shrink-0" />
-                                                <span className="text-[10px] font-medium truncate">{task.customer?.name || t('walk_in_customer')}</span>
+                                                <span className="text-[10px] font-medium truncate">{task.contact_name || '-'}</span>
                                             </div>
                                             <div className="flex items-center gap-1.5">
                                                 {task.vehicle && (

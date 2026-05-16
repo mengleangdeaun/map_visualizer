@@ -6,6 +6,7 @@ import { useAuthStore } from '../../store/useAuthStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Mail, Lock, ShieldCheck, Map as MapIcon } from 'lucide-react';
 import { toast } from 'sonner';
@@ -45,43 +46,43 @@ const LoginPage = () => {
     };
 
     return (
-        <div className="min-h-screen w-full flex items-center justify-center bg-[#0a0a0a] relative overflow-hidden">
+        <div className="min-h-screen w-full flex items-center justify-center bg-card relative overflow-hidden">
             {/* Background Decorations */}
             <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/20 blur-[120px] rounded-full animate-pulse" />
             <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary/10 blur-[120px] rounded-full" />
             
             <div className="relative z-10 w-full max-w-md px-4">
                 <div className="flex flex-col items-center mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                    <h1 className="text-3xl font-black tracking-tighter text-white uppercase italic">
-                        MAP<span className="text-primary">CN</span>
+                    <h1 className="text-3xl font-black tracking-tighter uppercase">
+                        SCCG
                     </h1>
                     <p className="text-muted-foreground text-sm font-medium mt-1">
-                        Logistics & Fleet Visualizer
+                        Logistics & Fleet Management
                     </p>
                 </div>
 
-                <Card className="border-white/5 bg-white/5 backdrop-blur-2xl shadow-2xl animate-in fade-in zoom-in-95 duration-500">
+                <Card className="backdrop-blur-2xl shadow-xl animate-in fade-in zoom-in-95 duration-500">
                     <CardHeader className="space-y-1">
-                        <CardTitle className="text-2xl font-bold text-white text-center">
+                        <CardTitle className="text-2xl font-bold  text-center">
                             {t('sign_in')}
                         </CardTitle>
-                        <CardDescription className="text-center text-white/50">
+                        <CardDescription className="text-center text-muted-foreground/70">
                             {t('please_enter_your_details')}
                         </CardDescription>
                     </CardHeader>
                     <form onSubmit={handleLogin}>
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="email" className="text-white/70 text-xs font-semibold uppercase tracking-wider">
+                                <Label htmlFor="email" className=" text-xs font-semibold uppercase tracking-wider">
                                     {t('email')}
                                 </Label>
                                 <div className="relative group">
-                                    <Mail className="absolute left-3 top-2 size-4 text-white/30 group-focus-within:text-primary transition-colors" />
+                                    <Mail className="absolute left-3 top-2 size-4  group-focus-within:text-primary transition-colors" />
                                     <Input 
                                         id="email" 
                                         type="email" 
                                         placeholder={t('email_placeholder')} 
-                                        className="bg-white/5 border-white/10 text-white pl-10 focus:border-primary/50 focus:ring-primary/20 transition-all"
+                                        className="pl-10 focus:border-primary/50 focus:ring-primary/20 transition-all"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
                                         required
@@ -90,7 +91,7 @@ const LoginPage = () => {
                             </div>
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between">
-                                    <Label htmlFor="password" className="text-white/70 text-xs font-semibold uppercase tracking-wider">
+                                    <Label htmlFor="password" className=" text-xs font-semibold uppercase tracking-wider">
                                         {t('password')}
                                     </Label>
                                     <button 
@@ -102,12 +103,12 @@ const LoginPage = () => {
                                     </button>
                                 </div>
                                 <div className="relative group">
-                                    <Lock className="absolute left-3 top-2 size-4 text-white/30 group-focus-within:text-primary transition-colors" />
+                                    <Lock className="absolute left-3 top-2 size-4  group-focus-within:text-primary transition-colors" />
                                     <Input 
                                         id="password" 
                                         type="password" 
                                         placeholder={t('password_placeholder')}
-                                        className="bg-white/5 border-white/10 text-white pl-10 focus:border-primary/50 focus:ring-primary/20 transition-all"
+                                        className="pl-10 focus:border-primary/50 focus:ring-primary/20 transition-all"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         required
@@ -115,14 +116,13 @@ const LoginPage = () => {
                                 </div>
                             </div>
                             <div className="flex items-center space-x-2 pt-2">
-                                <input
-                                    type="checkbox"
+                                <Checkbox
                                     id="remember"
-                                    className="rounded border-white/10 bg-white/5 text-primary focus:ring-primary/20 h-4 w-4 transition-all"
+                                    className=" h-4 w-4 transition-all"
                                     checked={remember}
-                                    onChange={(e) => setRemember(e.target.checked)}
+                                    onCheckedChange={(value) => setRemember(value)}
                                 />
-                                <label htmlFor="remember" className="text-xs font-medium text-white/50 cursor-pointer select-none">
+                                <label htmlFor="remember" className="text-xs font-medium  cursor-pointer select-none">
                                     {t('remember_me')}
                                 </label>
                             </div>
@@ -144,8 +144,8 @@ const LoginPage = () => {
                     </form>
                 </Card>
                 
-                <p className="mt-8 text-center text-white/20 text-[10px] font-bold uppercase tracking-[0.2em]">
-                    &copy; 2026 MAPCN Systems &bull; Built with Pride
+                <p className="mt-8 text-center text-white/20 text-[12px] font-semibold uppercase tracking-wide">
+                    &copy; 2026 SCCG &bull; All rights reserved!
                 </p>
             </div>
         </div>

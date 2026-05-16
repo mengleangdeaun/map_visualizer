@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useForm } from '@tanstack/react-form';
 import { z } from 'zod';
-import { Task } from '@/domains/admin/tasks/services/taskService';
-import { useCreateTask, useUpdateTask } from '@/domains/admin/tasks/hooks/useTasks';
+import { Task } from '@/domains/admin/pages/Tasks/services/taskService';
+import { useCreateTask, useUpdateTask } from '@/domains/admin/pages/Tasks/hooks/useTasks';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,8 +12,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, ClipboardList, User, MapPin, Phone, Calendar, Info, Truck, Plus, Navigation, Check, ChevronsUpDown } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { SearchableSelect } from '@/components/shared/SearchableSelect';
-import CustomerDialog from '@/domains/admin/pages/Customer/components/CustomerDialog';
-import { useCustomers } from '@/domains/admin/hooks/useCustomers';
 import { useVehicles } from '@/domains/admin/hooks/useVehicles';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useHubs } from '@/domains/admin/hooks/useHubs';
@@ -21,29 +19,28 @@ import { parseGoogleMapsUrl } from '@/lib/maps';
 import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { DateTimePicker } from '@/components/shared/system/DateTimePicker';
 
 const taskSchema = z.object({
     title: z.string().min(1, 'field_required'),
-    customer_id: z.string().nullable().optional(),
     vehicle_id: z.string().nullable().optional(),
-    source: z.enum(['manual', 'external']),
-    external_order_id: z.string().nullable().optional(),
     description: z.string().nullable().optional(),
-    status: z.enum(['pending', 'assigned', 'in_progress', 'completed', 'cancelled']),
-    receiver_name: z.string().nullable().optional(),
-    receiver_phone: z.string().nullable().optional(),
+    status: z.enum(['pending', 'assigned', 'in_progress', 'completed', 'cancelled', 'archived']),
+    contact_name: z.string().nullable().optional(),
+    contact_phone: z.string().nullable().optional(),
     pickup_address: z.string().nullable().optional(),
     dropoff_address: z.string().nullable().optional(),
     pickup_lat: z.number().nullable().optional(),
     pickup_lng: z.number().nullable().optional(),
     dropoff_lat: z.number().nullable().optional(),
     dropoff_lng: z.number().nullable().optional(),
+    scheduled_at: z.string().nullable().optional(),
 });
 
 interface TaskDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    task?: Task;
+    task?: Task | null;
 }
 
 /**
@@ -90,35 +87,30 @@ const HubSelector = ({ onSelect, label, hubs, t }: { onSelect: (hub: any) => voi
 
 const TaskDialog = ({ open, onOpenChange, task }: TaskDialogProps) => {
     const { t } = useTranslation('admin');
-    const { data: customers, isLoading: isLoadingCustomers } = useCustomers();
     const { data: vehiclesData, isLoading: isLoadingVehicles } = useVehicles();
     const { data: hubsData } = useHubs();
     const createMutation = useCreateTask();
     const updateMutation = useUpdateTask();
 
     const isEditing = !!task;
-    const [mode, setMode] = useState<'manual' | 'external'>(task?.source || 'manual');
-    const [isCustomerDialogOpen, setIsCustomerDialogOpen] = useState(false);
 
     const hubs = hubsData?.data || [];
 
     const form = useForm({
         defaultValues: {
             title: task?.title || '',
-            customer_id: task?.customer_id || null,
             vehicle_id: task?.vehicle_id || null,
-            source: task?.source || 'manual',
-            external_order_id: task?.external_order_id || null,
             description: task?.description || '',
             status: task?.status || 'assigned',
-            receiver_name: task?.receiver_name || '',
-            receiver_phone: task?.receiver_phone || '',
+            contact_name: task?.contact_name || '',
+            contact_phone: task?.contact_phone || '',
             pickup_address: task?.pickup_address || '',
             dropoff_address: task?.dropoff_address || '',
             pickup_lat: task?.pickup_lat || null,
             pickup_lng: task?.pickup_lng || null,
             dropoff_lat: task?.dropoff_lat || null,
             dropoff_lng: task?.dropoff_lng || null,
+            scheduled_at: task?.scheduled_at || null,
         },
         onSubmit: async ({ value }) => {
             try {
@@ -135,7 +127,6 @@ const TaskDialog = ({ open, onOpenChange, task }: TaskDialogProps) => {
     useEffect(() => {
         if (open) {
             form.reset();
-            setMode(task?.source || 'manual');
         }
     }, [open, task]);
 
@@ -171,19 +162,6 @@ const TaskDialog = ({ open, onOpenChange, task }: TaskDialogProps) => {
                     </div>
                 </DialogHeader>
 
-                {!isEditing && (
-                    <div className="px-4 py-2 border-b bg-muted/30">
-                        <Tabs value={mode} onValueChange={(v) => {
-                            setMode(v as any);
-                            form.setFieldValue('source', v as any);
-                        }}>
-                            <TabsList className="grid w-full grid-cols-2">
-                                <TabsTrigger value="manual">{t('manual_entry') || 'Manual Entry'}</TabsTrigger>
-                                <TabsTrigger value="external">{t('import_from_order') || 'Import from Order'}</TabsTrigger>
-                            </TabsList>
-                        </Tabs>
-                    </div>
-                )}
 
                 <form 
                     onSubmit={(e) => {
@@ -191,33 +169,10 @@ const TaskDialog = ({ open, onOpenChange, task }: TaskDialogProps) => {
                         e.stopPropagation();
                         form.handleSubmit();
                     }} 
-                    className="flex-1 flex flex-col min-h-0 overflow-hidden"
+                    className="flex-1 flex flex-col h-full min-h-0 overflow-hidden"
                 >
-                    <ScrollArea className="flex-1 min-h-0">
+                    <ScrollArea className="flex-1 h-full min-h-0">
                         <div className="p-4 space-y-4">
-                            {mode === 'external' && !isEditing && (
-                                <div className="bg-blue-500/5 p-4 rounded-xl border border-blue-500/10 space-y-4">
-                                    <Label className="text-[10px] font-bold text-blue-600 uppercase tracking-wide flex items-center gap-2">
-                                        <Info size={12} className="text-blue-500" />
-                                        {t('order_system_integration','Order System Integration')}
-                                    </Label>
-                                    <div className="space-y-2">
-                                        <Label>{t('external_order_id') || 'External Order ID'}</Label>
-                                        <div className="flex gap-2">
-                                            <Input 
-                                                placeholder="ORD-12345" 
-                                                className="bg-background"
-                                                value={form.getFieldValue('external_order_id') || ''}
-                                                onChange={(e) => form.setFieldValue('external_order_id', e.target.value)}
-                                            />
-                                            <Button type="button" variant="secondary">{t('fetch') || 'Fetch'}</Button>
-                                        </div>
-                                        <p className="text-[10px] text-muted-foreground italic">
-                                            {t('fetch_order_desc','Enter the order ID to auto-populate customer and location details.')}
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
 
                             <div className="bg-muted/30 p-4 rounded-xl border space-y-4">
                                 <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
@@ -254,6 +209,19 @@ const TaskDialog = ({ open, onOpenChange, task }: TaskDialogProps) => {
                                         </div>
                                     )}
                                 />
+                                <form.Field
+                                    name="scheduled_at"
+                                    children={(field) => (
+                                        <div className="space-y-2">
+                                            <Label htmlFor={field.name}>{t('scheduled_at') || 'Schedule At'}</Label>
+                                            <DateTimePicker
+                                                value={field.state.value}
+                                                onChange={field.handleChange}
+                                                placeholder={t('select_schedule_time', 'Select schedule time')}
+                                            />
+                                        </div>
+                                    )}
+                                />
                             </div>
 
                             <div className="bg-muted/30 p-4 rounded-xl border border-dashed space-y-4">
@@ -261,62 +229,26 @@ const TaskDialog = ({ open, onOpenChange, task }: TaskDialogProps) => {
                                     <User size={12} className="text-primary" />
                                     {t('contact_information','Contact Information')}
                                 </Label>
-                                <form.Field
-                                    name="customer_id"
-                                    children={(field) => (
-                                        <div className="space-y-2">
-                                            <div className="flex items-center justify-between">
-                                                <Label>{t('customer') || 'Customer'}</Label>
-                                                <Button 
-                                                    type="button" 
-                                                    variant="ghost" 
-                                                    size="sm" 
-                                                    className="h-7 text-[10px] gap-1 text-primary hover:text-primary hover:bg-primary/10 px-2"
-                                                    onClick={() => setIsCustomerDialogOpen(true)}
-                                                >
-                                                    <Plus className="size-3" />
-                                                    {t('new_customer') || 'New Customer'}
-                                                </Button>
-                                            </div>
-                                            <SearchableSelect
-                                                options={customers?.data || []}
-                                                value={field.state.value}
-                                                onChange={field.handleChange}
-                                                isLoading={isLoadingCustomers}
-                                                placeholder={t('select_customer')}
-                                                getOptionValue={(c) => c.id}
-                                                getOptionLabel={(c) => c.name}
-                                                getOptionSearchTerms={(c) => [c.name, c.phone]}
-                                                renderOption={(c) => (
-                                                    <div className="flex flex-col">
-                                                        <span className="font-bold text-sm">{c.name}</span>
-                                                        <span className="text-[10px] text-muted-foreground">{c.phone}</span>
-                                                    </div>
-                                                )}
-                                            />
-                                        </div>
-                                    )}
-                                />
                                 <div className="grid grid-cols-2 gap-4">
                                     <form.Field
-                                        name="receiver_name"
+                                        name="contact_name"
                                         children={(field) => (
                                             <div className="space-y-2">
-                                                <Label>{t('receiver_name') || 'Receiver Name'}</Label>
+                                                <Label>{t('contact_name') || 'Contact Name'}</Label>
                                                 <Input
                                                     value={field.state.value || ''}
                                                     onChange={(e) => field.handleChange(e.target.value)}
-                                                    placeholder="John Doe"
+                                                    placeholder="e.g. John Doe"
                                                     className="bg-background"
                                                 />
                                             </div>
                                         )}
                                     />
                                     <form.Field
-                                        name="receiver_phone"
+                                        name="contact_phone"
                                         children={(field) => (
                                             <div className="space-y-2">
-                                                <Label>{t('receiver_phone') || 'Receiver Phone'}</Label>
+                                                <Label>{t('contact_phone') || 'Contact Phone'}</Label>
                                                 <Input
                                                     value={field.state.value || ''}
                                                     onChange={(e) => field.handleChange(e.target.value)}
@@ -509,20 +441,6 @@ const TaskDialog = ({ open, onOpenChange, task }: TaskDialogProps) => {
                 </form>
             </DialogContent>
 
-            <CustomerDialog 
-                open={isCustomerDialogOpen}
-                onOpenChange={setIsCustomerDialogOpen}
-                onSuccess={(newCustomer) => {
-                    form.setFieldValue('customer_id', newCustomer.id);
-                    if (!form.getFieldValue('receiver_name')) {
-                        form.setFieldValue('receiver_name', newCustomer.name);
-                        form.setFieldValue('receiver_phone', newCustomer.phone);
-                    }
-                    if (!form.getFieldValue('dropoff_address')) {
-                        form.setFieldValue('dropoff_address', newCustomer.default_address || '');
-                    }
-                }}
-            />
         </Dialog>
     );
 };

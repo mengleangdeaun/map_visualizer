@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { taskService, Task } from '@/domains/admin/tasks/services/taskService';
+import { taskService, Task } from '@/domains/admin/pages/Tasks/services/taskService';
 import { toast } from 'sonner';
 
 export const useTasks = (params: any = {}) => {

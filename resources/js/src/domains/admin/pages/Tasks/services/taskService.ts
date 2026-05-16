@@ -1,21 +1,17 @@
 import api from '@/lib/api';
 
-export type TaskStatus = 'pending' | 'assigned' | 'in_progress' | 'completed' | 'cancelled';
-export type TaskSource = 'manual' | 'external';
+export type TaskStatus = 'pending' | 'assigned' | 'in_progress' | 'completed' | 'cancelled' | 'archived';
 
 export interface Task {
     id: string;
     company_id: string;
     vehicle_id: string | null;
     driver_id: string | null;
-    customer_id: string | null;
-    source: TaskSource;
-    external_order_id: string | null;
     title: string;
     description: string | null;
     status: TaskStatus;
-    receiver_name: string | null;
-    receiver_phone: string | null;
+    contact_name: string | null;
+    contact_phone: string | null;
     pickup_lat: number | null;
     pickup_lng: number | null;
     dropoff_lat: number | null;
@@ -28,7 +24,6 @@ export interface Task {
     updated_at: string;
     vehicle?: { plate_number: string };
     driver?: { name: string };
-    customer?: { name: string; phone: string };
 }
 
 export interface PaginatedTasks {

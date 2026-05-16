@@ -40,7 +40,7 @@ class TaskUpdated implements ShouldBroadcastNow
     public function broadcastWith()
     {
         return [
-            'task' => $this->task->load(['customer', 'vehicle']),
+            'task' => $this->task->load(['vehicle', 'driver']),
         ];
     }
 }

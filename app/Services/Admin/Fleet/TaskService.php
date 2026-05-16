@@ -19,7 +19,7 @@ class TaskService
             ->selectRaw('ST_X(pickup_location::geometry) as pickup_lng')
             ->selectRaw('ST_Y(dropoff_location::geometry) as dropoff_lat')
             ->selectRaw('ST_X(dropoff_location::geometry) as dropoff_lng')
-            ->with(['company', 'vehicle', 'driver', 'customer'])
+            ->with(['company', 'vehicle', 'driver'])
             ->findOrFail($id);
     }
 
@@ -40,14 +40,20 @@ class TaskService
             ->selectRaw('ST_X(pickup_location::geometry) as pickup_lng')
             ->selectRaw('ST_Y(dropoff_location::geometry) as dropoff_lat')
             ->selectRaw('ST_X(dropoff_location::geometry) as dropoff_lng')
-            ->with(['vehicle', 'driver', 'customer']);
+            ->with(['vehicle', 'driver']);
 
         if ($companyId) {
             $query->where('company_id', $companyId);
         }
 
         if ($status) {
-            $query->where('status', $status);
+            if ($status === 'active') {
+                $query->whereNotIn('status', ['completed', 'cancelled', 'archived']);
+            } else {
+                $query->where('status', $status);
+            }
+        } else {
+            $query->where('status', '!=', 'archived');
         }
 
         if ($vehicleId) {
@@ -55,8 +61,7 @@ class TaskService
         }
 
         if ($search) {
-            $query->where('title', 'LIKE', "%{$search}%")
-                  ->orWhere('external_order_id', 'LIKE', "%{$search}%");
+            $query->where('title', 'LIKE', "%{$search}%");
         }
 
         return $query->latest()->paginate($perPage);
@@ -65,21 +70,17 @@ class TaskService
     /**
      * Create a new task.
      */
+    /**
+     * Create a new task.
+     */
     public function create(array $data): Task
     {
-        if (isset($data['pickup_lat']) && isset($data['pickup_lng'])) {
-            $lat = (float) $data['pickup_lat'];
-            $lng = (float) $data['pickup_lng'];
-            $data['pickup_location'] = DB::raw("ST_GeomFromText('POINT($lng $lat)', 4326)");
-            unset($data['pickup_lat'], $data['pickup_lng']);
-        }
+        $pickupLat = $data['pickup_lat'] ?? null;
+        $pickupLng = $data['pickup_lng'] ?? null;
+        $dropoffLat = $data['dropoff_lat'] ?? null;
+        $dropoffLng = $data['dropoff_lng'] ?? null;
 
-        if (isset($data['dropoff_lat']) && isset($data['dropoff_lng'])) {
-            $lat = (float) $data['dropoff_lat'];
-            $lng = (float) $data['dropoff_lng'];
-            $data['dropoff_location'] = DB::raw("ST_GeomFromText('POINT($lng $lat)', 4326)");
-            unset($data['dropoff_lat'], $data['dropoff_lng']);
-        }
+        unset($data['pickup_lat'], $data['pickup_lng'], $data['dropoff_lat'], $data['dropoff_lng']);
 
         // Auto-resolve driver from vehicle if not provided
         if (isset($data['vehicle_id']) && !isset($data['driver_id'])) {
@@ -90,6 +91,8 @@ class TaskService
         }
 
         $task = Task::create($data);
+        $this->updateSpatialData($task->id, $pickupLat, $pickupLng, $dropoffLat, $dropoffLng);
+        
         return $this->findById($task->id);
     }
 
@@ -98,19 +101,12 @@ class TaskService
      */
     public function update(Task $task, array $data): Task
     {
-        if (isset($data['pickup_lat']) && isset($data['pickup_lng'])) {
-            $lat = (float) $data['pickup_lat'];
-            $lng = (float) $data['pickup_lng'];
-            $data['pickup_location'] = DB::raw("ST_GeomFromText('POINT($lng $lat)', 4326)");
-            unset($data['pickup_lat'], $data['pickup_lng']);
-        }
+        $pickupLat = $data['pickup_lat'] ?? null;
+        $pickupLng = $data['pickup_lng'] ?? null;
+        $dropoffLat = $data['dropoff_lat'] ?? null;
+        $dropoffLng = $data['dropoff_lng'] ?? null;
 
-        if (isset($data['dropoff_lat']) && isset($data['dropoff_lng'])) {
-            $lat = (float) $data['dropoff_lat'];
-            $lng = (float) $data['dropoff_lng'];
-            $data['dropoff_location'] = DB::raw("ST_GeomFromText('POINT($lng $lat)', 4326)");
-            unset($data['dropoff_lat'], $data['dropoff_lng']);
-        }
+        unset($data['pickup_lat'], $data['pickup_lng'], $data['dropoff_lat'], $data['dropoff_lng']);
 
         // Auto-resolve driver from vehicle if reassigned and driver not explicitly changed
         if (isset($data['vehicle_id']) && !isset($data['driver_id'])) {
@@ -121,7 +117,25 @@ class TaskService
         }
 
         $task->update($data);
+        $this->updateSpatialData($task->id, $pickupLat, $pickupLng, $dropoffLat, $dropoffLng);
+
         return $this->findById($task->id);
+    }
+
+    /**
+     * Internal helper to update spatial columns via direct SQL.
+     */
+    protected function updateSpatialData(string $id, $pLat, $pLng, $dLat, $dLng): void
+    {
+        $pickupSql = ($pLat !== null && $pLng !== null && $pLat != 0) 
+            ? "ST_SetSRID(ST_MakePoint(" . (float)$pLng . ", " . (float)$pLat . "), 4326)" 
+            : "NULL";
+            
+        $dropoffSql = ($dLat !== null && $dLng !== null && $dLat != 0) 
+            ? "ST_SetSRID(ST_MakePoint(" . (float)$dLng . ", " . (float)$dLat . "), 4326)" 
+            : "NULL";
+
+        DB::statement("UPDATE tasks SET pickup_location = $pickupSql, dropoff_location = $dropoffSql WHERE id = ?", [$id]);
     }
 
     /**

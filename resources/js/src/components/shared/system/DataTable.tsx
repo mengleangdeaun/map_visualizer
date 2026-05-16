@@ -54,6 +54,8 @@ interface DataTableProps<TData, TValue> {
     onPageSizeChange?: (size: number) => void;
     onEmptyAction?: () => void;
     emptyActionLabel?: string;
+    onRowSelectionChange?: (selection: any) => void;
+    rowSelection?: any;
 }
 
 export function DataTable<TData, TValue>({
@@ -71,6 +73,8 @@ export function DataTable<TData, TValue>({
     onPageSizeChange,
     onEmptyAction,
     emptyActionLabel,
+    onRowSelectionChange,
+    rowSelection = {},
 }: DataTableProps<TData, TValue>) {
     const { t } = useTranslation('system');
     const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -80,11 +84,13 @@ export function DataTable<TData, TValue>({
         columns,
         getCoreRowModel: getCoreRowModel(),
         onSortingChange: setSorting,
+        onRowSelectionChange: onRowSelectionChange,
         getSortedRowModel: getSortedRowModel(),
         getFilteredRowModel: getFilteredRowModel(),
         state: {
             sorting,
             globalFilter: searchQuery,
+            rowSelection,
         },
     });
 
