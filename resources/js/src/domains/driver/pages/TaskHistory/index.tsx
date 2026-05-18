@@ -120,7 +120,7 @@ const TaskHistoryPage = () => {
 
     return (
         <PullToRefresh onRefresh={async () => { await refetch(); }}>
-            <div className="p-4 flex flex-col gap-4 max-w-md mx-auto animate-in fade-in duration-500 h-[calc(100vh-140px)]">
+            <div className="p-3 flex flex-col gap-4 max-w-md mx-auto animate-in fade-in duration-500 h-[calc(100vh-140px)]">
                 
                 {/* Visual active filters alert strip */}
                 {hasActiveFilters && (
@@ -173,7 +173,7 @@ const TaskHistoryPage = () => {
                     /* High Performance Virtualized Scroll Container */
                     <div 
                         ref={parentRef} 
-                        className="flex-1 overflow-y-auto w-full pr-1 select-none scrollbar-thin"
+                        className="flex-1 overflow-y-auto w-full px-1 select-none"
                     >
                         <div
                             style={{

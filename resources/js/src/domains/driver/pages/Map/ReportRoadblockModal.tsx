@@ -53,7 +53,7 @@ export const ReportRoadblockModal: React.FC<ReportRoadblockModalProps> = ({
                     <select
                         value={reportType}
                         onChange={(e) => setReportType(e.target.value as any)}
-                        className="w-full h-11 rounded-xl bg-muted/50 border border-border/50 px-3 text-sm focus:outline-none"
+                        className="w-full h-10 rounded-xl bg-muted/50 border border-border/50 px-3 text-sm focus:outline-none"
                     >
                         <option value="blockage">Road Blocked / Construction</option>
                         <option value="accident">Traffic Accident</option>
@@ -80,14 +80,14 @@ export const ReportRoadblockModal: React.FC<ReportRoadblockModalProps> = ({
                     <Button
                         onClick={onClose}
                         variant="outline"
-                        className="flex-1 h-11 rounded-2xl font-bold"
+                        className="flex-1 h-10 rounded-xl font-bold"
                     >
                         Cancel
                     </Button>
                     <Button
                         onClick={handlePublish}
                         disabled={!reportDescription.trim() || isPending}
-                        className="flex-1 h-11 rounded-2xl font-bold bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        className="flex-1 h-10 rounded-xl font-bold bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
                         {isPending ? "Submitting..." : "Publish Warning"}
                     </Button>

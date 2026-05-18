@@ -1,34 +1,33 @@
-import { useEffect, useCallback, useRef } from 'react';
+import { useCallback } from 'react';
 import { useAuthStore } from '@/domains/auth/store/useAuthStore';
 import { pwaToast as toast } from '../store/usePwaToastStore';
 import { driverTaskService } from '../services/driverTaskService';
 import { useLocationStore } from '../store/useLocationStore';
 
+const MIN_UPDATE_INTERVAL = 5000; // 5 seconds
+
 export const useLocationService = () => {
     const { user } = useAuthStore();
     const state = useLocationStore();
-    const { setTrackingState } = state;
+    const { setTrackingState, watchId } = state;
 
-    const watchId = useRef<number | null>(null);
-    const lastUpdateRef = useRef<number>(0);
-    const MIN_UPDATE_INTERVAL = 5000; // 5 seconds
-
-    const updateServerLocation = useCallback(async (pos: GeolocationPosition) => {
+    const updateServerLocation = useCallback(async (pos: GeolocationPosition, currentLastUpdate: number) => {
         const now = Date.now();
-        if (now - lastUpdateRef.current < MIN_UPDATE_INTERVAL) return;
+        if (now - currentLastUpdate < MIN_UPDATE_INTERVAL) return;
 
         try {
             await driverTaskService.reportLocation(
                 pos.coords.latitude,
                 pos.coords.longitude,
-                pos.coords.speed || 0
+                pos.coords.speed || 0,
+                pos.coords.heading
             );
             
-            lastUpdateRef.current = now;
+            setTrackingState({ lastUpdate: now });
         } catch (err) {
             console.error('Failed to update location on server', err);
         }
-    }, []);
+    }, [setTrackingState]);
 
     const startTracking = useCallback(() => {
         if (!('geolocation' in navigator)) {
@@ -36,9 +35,15 @@ export const useLocationService = () => {
             return;
         }
 
+        // If a geolocation watcher is already active, don't spin up another duplicate watcher
+        if (watchId !== null) {
+            setTrackingState({ isTracking: true, error: null });
+            return;
+        }
+
         setTrackingState({ isTracking: true, error: null });
 
-        watchId.current = navigator.geolocation.watchPosition(
+        const newWatchId = navigator.geolocation.watchPosition(
             (pos) => {
                 setTrackingState({
                     latitude: pos.coords.latitude,
@@ -46,11 +51,21 @@ export const useLocationService = () => {
                     heading: pos.coords.heading,
                     speed: pos.coords.speed,
                 });
-                updateServerLocation(pos);
+                
+                // Get the absolute freshest lastUpdate directly from the store to avoid stale closure updates
+                const latestLastUpdate = useLocationStore.getState().lastUpdate;
+                updateServerLocation(pos, latestLastUpdate);
             },
             (err) => {
                 setTrackingState({ error: err.message, isTracking: false });
                 toast.error(`Location error: ${err.message}`);
+                
+                // Clear the watcher if it has failed
+                const activeWatchId = useLocationStore.getState().watchId;
+                if (activeWatchId !== null) {
+                    navigator.geolocation.clearWatch(activeWatchId);
+                    setTrackingState({ watchId: null });
+                }
             },
             {
                 enableHighAccuracy: true,
@@ -58,23 +73,16 @@ export const useLocationService = () => {
                 timeout: 5000,
             }
         );
-    }, [updateServerLocation, setTrackingState]);
+
+        setTrackingState({ watchId: newWatchId });
+    }, [updateServerLocation, setTrackingState, watchId]);
 
     const stopTracking = useCallback(() => {
-        if (watchId.current !== null) {
-            navigator.geolocation.clearWatch(watchId.current);
-            watchId.current = null;
+        if (watchId !== null) {
+            navigator.geolocation.clearWatch(watchId);
         }
-        setTrackingState({ isTracking: false });
-    }, [setTrackingState]);
-
-    useEffect(() => {
-        return () => {
-            if (watchId.current !== null) {
-                navigator.geolocation.clearWatch(watchId.current);
-            }
-        };
-    }, []);
+        setTrackingState({ isTracking: false, watchId: null });
+    }, [setTrackingState, watchId]);
 
     return {
         ...state,

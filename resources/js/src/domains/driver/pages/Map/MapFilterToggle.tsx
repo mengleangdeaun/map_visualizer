@@ -15,33 +15,44 @@ export const MapFilterToggle: React.FC<MapFilterToggleProps> = ({
     const { t } = useTranslation(['delivery', 'driver']);
 
     return (
-        <div className="absolute top-4 left-4 right-4 z-30 flex justify-center">
-            <div className="flex h-11 items-center bg-background/85 backdrop-blur-md border border-border/50 rounded-full shadow-lg max-w-sm w-full">
+        <div className="absolute top-4 left-4 right-4 z-30 flex justify-center pointer-events-none">
+            <div className="relative flex h-11 items-center bg-card border border-border rounded-full shadow-md max-w-sm w-full p-1 select-none pointer-events-auto">
+                {/* Flat Active Pill Indicator (Slides smoothly) */}
+                <div 
+                    className={cn(
+                        "absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full bg-primary shadow-sm transition-all duration-300 ease-out z-0",
+                        activeFilter === 'deliveries' ? "left-1 translate-x-0" : "left-1 translate-x-full"
+                    )}
+                />
+
+                {/* Tab 1: Deliveries */}
                 <button
                     onClick={() => onChange('deliveries')}
                     className={cn(
-                        "flex-1 h-full rounded-full text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200 active:scale-95",
+                        "flex-1 h-full rounded-full text-xs uppercase tracking-wider font-extrabold flex items-center justify-center gap-2 transition-colors duration-300 z-10 focus:outline-none active:scale-95",
                         activeFilter === 'deliveries' 
-                            ? "bg-primary text-primary-foreground shadow-sm" 
+                            ? "text-primary-foreground" 
                             : "text-muted-foreground hover:text-foreground"
                     )}
-                    style={{ minHeight: '40px' }} // Target touch minimum size
+                    style={{ minHeight: '36px' }}
                 >
-                    <Package size={16} />
-                    {t('delivery:deliveries')}
+                    <Package size={14} />
+                    <span>{t('delivery:deliveries')}</span>
                 </button>
+
+                {/* Tab 2: Tasks */}
                 <button
                     onClick={() => onChange('tasks')}
                     className={cn(
-                        "flex-1 h-full rounded-full text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200 active:scale-95",
+                        "flex-1 h-full rounded-full text-xs uppercase tracking-wider font-extrabold flex items-center justify-center gap-2 transition-colors duration-300 z-10 focus:outline-none active:scale-95",
                         activeFilter === 'tasks' 
-                            ? "bg-primary text-primary-foreground shadow-sm" 
+                            ? "text-primary-foreground" 
                             : "text-muted-foreground hover:text-foreground"
                     )}
-                    style={{ minHeight: '40px' }}
+                    style={{ minHeight: '36px' }}
                 >
-                    <ClipboardList size={16} />
-                    {t('delivery:tasks')}
+                    <ClipboardList size={14} />
+                    <span>{t('delivery:tasks')}</span>
                 </button>
             </div>
         </div>

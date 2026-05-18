@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 interface MapDetailDrawerProps {
+    isOpen: boolean;
     selectedItem: any;
     selectedType: 'delivery' | 'task' | 'roadblock' | null;
     onDismiss: () => void;
@@ -24,6 +25,7 @@ interface MapDetailDrawerProps {
 }
 
 export const MapDetailDrawer: React.FC<MapDetailDrawerProps> = ({
+    isOpen,
     selectedItem,
     selectedType,
     onDismiss,
@@ -39,17 +41,17 @@ export const MapDetailDrawer: React.FC<MapDetailDrawerProps> = ({
 
     return (
         <div className={cn(
-            "fixed bottom-[72px] left-0 right-0 z-40 transition-all duration-300 ease-out transform",
-            selectedItem ? "translate-y-0" : "translate-y-full"
+            "fixed bottom-[72px] left-0 right-0 z-40 transition-all duration-350 ease-out transform",
+            isOpen ? "translate-y-0" : "translate-y-full pointer-events-none"
         )}>
-            <div className="mx-auto max-w-md w-full bg-background/85 backdrop-blur-md border-t border-x border-border/50 rounded-t-3xl shadow-[0_-8px_30px_rgb(0,0,0,0.12)] p-6 space-y-0">
+            <div className="mx-auto max-w-md w-full bg-background/95 backdrop-blur-md border-t border-x border-border/50 rounded-t-3xl shadow-[0_-8px_30px_rgb(0,0,0,0.12)] p-6 space-y-0">
                 {/* Clickable pull bar indicator to close */}
                 <button 
                     onClick={onDismiss}
                     className="w-16 h-4 mx-auto -mt-3 mb-2 flex items-center justify-center group focus:outline-none"
                     title="Dismiss details drawer"
                 >
-                    <div className="w-12 h-1.5 bg-muted rounded-full group-hover:bg-muted-foreground/50 group-active:scale-95 transition-all duration-150" />
+                    <div className="w-12 h-1 bg-gray-400 dark:bg-gray-600 rounded-full group-hover:bg-muted-foreground/50 group-active:scale-95 transition-all duration-150" />
                 </button>
 
                 {/* A. Display Stop / Delivery context */}
@@ -66,8 +68,8 @@ export const MapDetailDrawer: React.FC<MapDetailDrawerProps> = ({
                             </div>
                             <a 
                                 href={`tel:${selectedItem.delivery.order.customer.phone}`}
-                                className="w-11 h-11 rounded-full bg-primary/10 text-primary flex items-center justify-center active:scale-95 transition-all animate-pulse"
-                                style={{ minHeight: '44px', minWidth: '44px' }}
+                                className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center active:scale-95 transition-all animate-pulse"
+                                style={{ minHeight: '40px', minWidth: '40px' }}
                             >
                                 <Phone size={18} />
                             </a>
@@ -89,7 +91,7 @@ export const MapDetailDrawer: React.FC<MapDetailDrawerProps> = ({
                         <div className="flex gap-2">
                             <Button 
                                 onClick={() => navigate({ to: '/driver/route/stop/$id', params: { id: String(selectedItem.id) } })}
-                                className="flex-1 h-12 rounded-2xl flex items-center justify-center gap-2 font-bold transition-all"
+                                className="flex-1 h-10 rounded-xl flex items-center justify-center gap-2 font-bold transition-all"
                             >
                                 <Navigation size={16} />
                                 <span>{t('delivery:select_stop')}</span>
@@ -99,7 +101,7 @@ export const MapDetailDrawer: React.FC<MapDetailDrawerProps> = ({
                                 href={`https://www.google.com/maps/dir/?api=1&destination=${selectedItem.delivery.lat},${selectedItem.delivery.lng}&travelmode=driving`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="h-12 px-4 rounded-2xl bg-muted/50 border border-border/50 text-foreground flex items-center justify-center gap-2 font-bold hover:bg-muted active:scale-95 transition-all text-xs"
+                                className="h-10 px-4 rounded-xl bg-muted/50 border border-border/50 text-foreground flex items-center justify-center gap-2 font-bold hover:bg-muted active:scale-95 transition-all text-xs"
                             >
                                 <MapPin size={16} className="text-green-500" />
                                 <span>Navigate</span>
@@ -121,8 +123,8 @@ export const MapDetailDrawer: React.FC<MapDetailDrawerProps> = ({
                             {selectedItem.phone && (
                                 <a 
                                     href={`tel:${selectedItem.phone}`}
-                                    className="w-11 h-11 rounded-full bg-primary/10 text-primary flex items-center justify-center active:scale-95 transition-all animate-pulse"
-                                    style={{ minHeight: '44px', minWidth: '44px' }}
+                                    className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center active:scale-95 transition-all animate-pulse"
+                                    style={{ minHeight: '40px', minWidth: '40px' }}
                                 >
                                     <Phone size={18} />
                                 </a>
@@ -140,7 +142,7 @@ export const MapDetailDrawer: React.FC<MapDetailDrawerProps> = ({
                                         <Button 
                                             onClick={() => onStartTaskNavigation?.(selectedItem)}
                                             disabled={isTaskInProgress}
-                                            className="w-full h-12 rounded-2xl flex items-center justify-center gap-2 font-bold bg-emerald-500 hover:bg-emerald-600 text-white transition-all shadow-lg shadow-emerald-500/10 active:scale-[0.98]"
+                                            className="w-full h-10 rounded-xl flex items-center justify-center gap-2 font-bold bg-emerald-500 hover:bg-emerald-600 text-white transition-all shadow-lg shadow-emerald-500/10 active:scale-[0.98]"
                                         >
                                             <Navigation size={16} className="animate-pulse" />
                                             <span>{isTaskInProgress ? "Starting Navigation..." : "Start Errand Route"}</span>
@@ -148,7 +150,7 @@ export const MapDetailDrawer: React.FC<MapDetailDrawerProps> = ({
                                     ) : (
                                         <Button 
                                             onClick={() => onSelectTaskRoute?.(selectedItem)}
-                                            className="w-full h-12 rounded-2xl flex items-center justify-center gap-2 font-bold bg-primary hover:bg-primary/90 text-white transition-all shadow-lg shadow-primary/10 active:scale-[0.98]"
+                                            className="w-full h-10 rounded-xl flex items-center justify-center gap-2 font-bold bg-primary hover:bg-primary/90 text-white transition-all shadow-lg shadow-primary/10 active:scale-[0.98]"
                                         >
                                             <Compass size={16} />
                                             <span>Select Custom Route</span>
@@ -160,7 +162,7 @@ export const MapDetailDrawer: React.FC<MapDetailDrawerProps> = ({
                             <div className="flex gap-2">
                                 <Button 
                                     onClick={() => navigate({ to: '/driver/tasks' })}
-                                    className="flex-1 h-12 rounded-2xl flex items-center justify-center gap-2 font-bold bg-orange-500 hover:bg-orange-600 text-white transition-all"
+                                    className="flex-1 h-10 rounded-xl flex items-center justify-center gap-2 font-bold bg-orange-500 hover:bg-orange-600 text-white transition-all"
                                 >
                                     <span>Manage Task</span>
                                 </Button>
@@ -169,7 +171,7 @@ export const MapDetailDrawer: React.FC<MapDetailDrawerProps> = ({
                                     href={`https://www.google.com/maps/dir/?api=1&destination=${selectedItem.dropoff_lat || selectedItem.pickup_lat || 11.5641},${selectedItem.dropoff_lng || selectedItem.pickup_lng || 104.8836}&travelmode=driving`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="h-12 px-4 rounded-2xl bg-muted/50 border border-border/50 text-foreground flex items-center justify-center gap-2 font-bold hover:bg-muted active:scale-95 transition-all text-xs"
+                                    className="h-10 px-4 rounded-xl bg-muted/50 border border-border/50 text-foreground flex items-center justify-center gap-2 font-bold hover:bg-muted active:scale-95 transition-all text-xs"
                                 >
                                     <MapPin size={16} className="text-green-500" />
                                     <span>Navigate</span>
@@ -203,7 +205,7 @@ export const MapDetailDrawer: React.FC<MapDetailDrawerProps> = ({
                         <Button 
                             onClick={onDismiss}
                             variant="outline"
-                            className="w-full h-11 rounded-2xl font-bold"
+                            className="w-full h-10 rounded-xl font-bold"
                         >
                             Dismiss Details
                         </Button>

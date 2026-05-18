@@ -7,6 +7,8 @@ export interface LocationState {
     speed: number | null;
     error: string | null;
     isTracking: boolean;
+    watchId: number | null;
+    lastUpdate: number;
 }
 
 interface LocationStore extends LocationState {
@@ -21,6 +23,8 @@ export const useLocationStore = create<LocationStore>((set) => ({
     speed: null,
     error: null,
     isTracking: false,
+    watchId: null,
+    lastUpdate: 0,
     setTrackingState: (state) => set((s) => ({ ...s, ...state })),
     resetTrackingState: () => set({
         latitude: null,
@@ -29,5 +33,7 @@ export const useLocationStore = create<LocationStore>((set) => ({
         speed: null,
         error: null,
         isTracking: false,
+        watchId: null,
+        lastUpdate: 0,
     }),
 }));

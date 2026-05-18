@@ -59,7 +59,7 @@ export const MapHeaderMenu: React.FC<MapHeaderMenuProps> = ({
                     
                     {/* SECTION A: MAP STYLE STYLE */}
                     <div className="space-y-1.5">
-                        <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest px-2.5">
+                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wide px-2.5">
                             Map Layout Style
                         </span>
                         <div className="space-y-1">
@@ -107,7 +107,7 @@ export const MapHeaderMenu: React.FC<MapHeaderMenuProps> = ({
 
                     {/* SECTION B: TOOLS & ACTIONS */}
                     <div className="space-y-2">
-                        <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest px-2.5">
+                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wide px-2.5">
                             Driver Map Tools
                         </span>
 

@@ -74,9 +74,18 @@ class TaskController extends Controller
 
         broadcast(new \App\Events\TaskUpdated($task));
 
+        $updatedTask = Task::query()
+            ->select('*')
+            ->selectRaw('ST_Y(pickup_location::geometry) as pickup_lat')
+            ->selectRaw('ST_X(pickup_location::geometry) as pickup_lng')
+            ->selectRaw('ST_Y(dropoff_location::geometry) as dropoff_lat')
+            ->selectRaw('ST_X(dropoff_location::geometry) as dropoff_lng')
+            ->with(['vehicle'])
+            ->find($task->id);
+
         return response()->json([
             'message' => "Task status updated to {$validated['status']}",
-            'data' => $task->load(['vehicle'])
+            'data' => $updatedTask
         ]);
     }
 }

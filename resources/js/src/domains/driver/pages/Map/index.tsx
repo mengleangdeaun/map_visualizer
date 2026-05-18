@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Map, MapControls, MapMarker, MarkerContent, MapRoute } from '@/components/ui/map';
 import { UserLocationMarker } from '@/components/shared/map/UserLocationMarker';
+import { RoadRoute } from '@/components/shared/map/RoadRoute';
 import { useAuthStore } from '@/domains/auth/store/useAuthStore';
 import { useHeaderStore } from '../../store/useHeaderStore';
 import { useLocationStore } from '../../store/useLocationStore';
@@ -27,7 +28,13 @@ import { MapDetailDrawer } from './MapDetailDrawer';
 import { ReportRoadblockModal } from './ReportRoadblockModal';
 import { MapHeaderMenu } from './MapHeaderMenu';
 
-import { useUpdateTaskStatus } from '../../hooks/useDriverTasks';
+// Import newly modularized components under Map/components
+import { LockedPlacementPin } from './components/LockedPlacementPin';
+import { AlternatePathsList } from './components/AlternatePathsList';
+import { FloatingErrandTrigger } from './components/FloatingErrandTrigger';
+import { ActiveNavigationOverlay } from './components/ActiveNavigationOverlay';
+
+import { useDriverTasks, useUpdateTaskStatus } from '../../hooks/useDriverTasks';
 
 interface RoadblockAlert {
     id: string;
@@ -55,6 +62,7 @@ const DriverMapPage = () => {
     // Bottom drawer selection state
     const [selectedItem, setSelectedItem] = useState<any>(null);
     const [selectedType, setSelectedType] = useState<'delivery' | 'task' | 'roadblock' | null>(null);
+    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
     // Report roadblock state
     const [showReportModal, setShowReportModal] = useState(false);
@@ -86,6 +94,8 @@ const DriverMapPage = () => {
     // Active navigation states for Errand Tasks
     const [activeNavTask, setActiveNavTask] = useState<any | null>(null);
     const [activeNavRoute, setActiveNavRoute] = useState<any | null>(null);
+    const [activeNavLeg, setActiveNavLeg] = useState<'pickup' | 'dropoff'>('pickup');
+    const [planningLeg2Route, setPlanningLeg2Route] = useState<any | null>(null);
 
     const googleKhmerStyle = useMemo(() => ({
         version: 8 as const,
@@ -151,6 +161,26 @@ const DriverMapPage = () => {
         }
     }, [userLat, userLng]);
 
+    // Proximity watcher: automatically transition from Leg 1 (Pickup) to Leg 2 (Drop-off) when within 50m of Pickup
+    useEffect(() => {
+        if (activeNavTask && activeNavLeg === 'pickup' && activeNavTask.pickup_lat && activeNavTask.pickup_lng && userLat && userLng) {
+            const R = 6371; // Earth's radius in km
+            const dLat = (activeNavTask.pickup_lat - userLat) * Math.PI / 180;
+            const dLon = (activeNavTask.pickup_lng - userLng) * Math.PI / 180;
+            const a = 
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(userLat * Math.PI / 180) * Math.cos(activeNavTask.pickup_lat * Math.PI / 180) * 
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            const distance = R * c;
+
+            // If within 50 meters, trigger automatic transition
+            if (distance <= 0.05) {
+                handleArriveAtPickup();
+            }
+        }
+    }, [userLat, userLng, activeNavTask, activeNavLeg]);
+
     // Query active route stops (deliveries)
     const { data: routeData } = useQuery({
         queryKey: ['driver', 'route', 'active'],
@@ -161,13 +191,7 @@ const DriverMapPage = () => {
     });
 
     // Query active tasks (errands)
-    const { data: tasksData } = useQuery({
-        queryKey: ['driver', 'tasks'],
-        queryFn: async () => {
-            const { data } = await api.get('/driver/tasks');
-            return data.data;
-        }
-    });
+    const { data: tasksData } = useDriverTasks();
 
     // Query active roadblocks (road alerts in last 24h)
     const { data: roadblocksData } = useQuery<RoadblockAlert[]>({
@@ -206,7 +230,7 @@ const DriverMapPage = () => {
 
     // Extract markers list
     const deliveries = useMemo(() => routeData?.stops || [], [routeData]);
-    const tasks = useMemo(() => tasksData || [], [tasksData]);
+    const tasks = useMemo(() => tasksData?.data || [], [tasksData]);
     const roadblocks = useMemo(() => roadblocksData || [], [roadblocksData]);
 
     // Echo listener for real-time roadblocks
@@ -259,9 +283,44 @@ const DriverMapPage = () => {
     }, []);
 
     const handleSelectTaskRoute = async (task: any) => {
-        // If task is not started, navigate to Pickup first if available, otherwise Drop-off.
-        // If task is in_progress, navigate directly to Drop-off.
-        const usePickup = task.status === 'assigned' && task.pickup_lng && task.pickup_lat;
+        // Calculate distance in kilometers using the Haversine formula
+        const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+            const R = 6371; // Earth's radius in km
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = 
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        };
+
+        // Determine destination:
+        // If task is not started, route to Pickup first.
+        // If task is in_progress, route to Pickup first if the driver is still further than 50 meters from it,
+        // otherwise route directly to Drop-off.
+        let usePickup = false;
+        if (task.pickup_lng && task.pickup_lat) {
+            if (task.status === 'assigned' || task.status === 'pending') {
+                usePickup = true;
+            } else if (task.status === 'in_progress') {
+                const startPoint: [number, number] = (userLng && userLat) 
+                    ? [userLng, userLat] 
+                    : (userLocation || viewport.center);
+                
+                const distanceToPickup = calculateDistance(
+                    startPoint[1], startPoint[0], 
+                    task.pickup_lat, task.pickup_lng
+                );
+                
+                // If the driver is more than 50 meters away, route to pickup first
+                if (distanceToPickup > 0.05) {
+                    usePickup = true;
+                }
+            }
+        }
+
         const destLng = usePickup ? task.pickup_lng : (task.dropoff_lng || task.pickup_lng);
         const destLat = usePickup ? task.pickup_lat : (task.dropoff_lat || task.pickup_lat);
         
@@ -292,12 +351,33 @@ const DriverMapPage = () => {
                 }));
                 setCustomRoutes(routesList);
                 setSelectedCustomRouteIndex(0);
+
+                // Dynamically fetch Leg 2 (Pickup -> Drop-off) if we are routing to Pickup
+                let leg2Route = null;
+                if (usePickup && task.dropoff_lng && task.dropoff_lat) {
+                    try {
+                        const response2 = await fetch(`https://router.project-osrm.org/route/v1/driving/${task.pickup_lng},${task.pickup_lat};${task.dropoff_lng},${task.dropoff_lat}?overview=full&geometries=geojson`);
+                        const data2 = await response2.json();
+                        if (data2.code === 'Ok' && data2.routes?.length > 0) {
+                            leg2Route = {
+                                coordinates: data2.routes[0].geometry.coordinates,
+                                distance: data2.routes[0].distance,
+                                duration: data2.routes[0].duration
+                            };
+                        }
+                    } catch (e2) {
+                        console.error("OSRM planning Leg 2 route failure:", e2);
+                    }
+                }
+                setPlanningLeg2Route(leg2Route);
             } else {
                 toast.error("Could not trace route to this errand destination.");
+                setPlanningLeg2Route(null);
             }
         } catch (err) {
             console.error("Task OSRM route planning failure:", err);
             toast.error("Routing server error. Please try again.");
+            setPlanningLeg2Route(null);
         } finally {
             setIsRoutingLoading(false);
         }
@@ -314,11 +394,18 @@ const DriverMapPage = () => {
             onSuccess: (updatedTask) => {
                 setActiveNavTask(updatedTask);
                 setActiveNavRoute(selectedRoute);
+                
+                // Initialize the active navigation leg (defaults to pickup if coordinates exist)
+                const hasPickup = !!(updatedTask.pickup_lat && updatedTask.pickup_lng);
+                setActiveNavLeg(hasPickup ? 'pickup' : 'dropoff');
+                setPlanningLeg2Route(null);
+
                 setRoutePlanningMode(false);
                 setCustomRoutes([]);
                 setCustomRouteDestination(null);
                 setSelectedItem(null);
                 setSelectedType(null);
+                setIsDrawerOpen(false);
                 queryClient.invalidateQueries({ queryKey: ['driver', 'tasks'] });
             }
         });
@@ -335,6 +422,44 @@ const DriverMapPage = () => {
                 queryClient.invalidateQueries({ queryKey: ['driver', 'tasks'] });
             }
         });
+    };
+
+    const handleArriveAtPickup = async () => {
+        if (!activeNavTask) return;
+        
+        toast.success("Arrived at Pickup! Routing to Drop-off location...");
+        setActiveNavLeg('dropoff');
+
+        const destLng = activeNavTask.dropoff_lng || activeNavTask.pickup_lng;
+        const destLat = activeNavTask.dropoff_lat || activeNavTask.pickup_lat;
+
+        if (!destLat || !destLng) {
+            toast.error("Errand Task has no valid drop-off coordinates.");
+            return;
+        }
+
+        const startPoint: [number, number] = (userLng && userLat) 
+            ? [userLng, userLat] 
+            : (userLocation || viewport.center);
+
+        try {
+            const response = await fetch(`https://router.project-osrm.org/route/v1/driving/${startPoint[0]},${startPoint[1]};${destLng},${destLat}?overview=full&geometries=geojson`);
+            const data = await response.json();
+            
+            if (data.code === 'Ok' && data.routes?.length > 0) {
+                const selectedRoute = {
+                    coordinates: data.routes[0].geometry.coordinates,
+                    distance: data.routes[0].distance,
+                    duration: data.routes[0].duration
+                };
+                setActiveNavRoute(selectedRoute);
+            } else {
+                toast.error("Failed to fetch route to Drop-off.");
+            }
+        } catch (err) {
+            console.error("OSRM drop-off routing failure:", err);
+            toast.error("Error fetching route to Drop-off.");
+        }
     };
 
     const recenterToUser = () => {
@@ -440,6 +565,7 @@ const DriverMapPage = () => {
                                     isInteracting.current = true;
                                     setSelectedItem(stop);
                                     setSelectedType('delivery');
+                                    setIsDrawerOpen(true);
                                 }}
                             >
                                 <MarkerContent>
@@ -477,6 +603,7 @@ const DriverMapPage = () => {
                                         isInteracting.current = true;
                                         setSelectedItem(task);
                                         setSelectedType('task');
+                                        setIsDrawerOpen(true);
                                     }}
                                 >
                                     <MarkerContent>
@@ -507,6 +634,7 @@ const DriverMapPage = () => {
                                         isInteracting.current = true;
                                         setSelectedItem(task);
                                         setSelectedType('task');
+                                        setIsDrawerOpen(true);
                                     }}
                                 >
                                     <MarkerContent>
@@ -532,11 +660,9 @@ const DriverMapPage = () => {
 
                     {/* 2B-2. Connect Selected Task's Pickup and Drop-off with Errand Connection Line */}
                     {activeFilter === 'tasks' && selectedType === 'task' && selectedItem?.pickup_lng && selectedItem?.pickup_lat && selectedItem?.dropoff_lng && selectedItem?.dropoff_lat && (
-                        <MapRoute 
-                            coordinates={[
-                                [selectedItem.pickup_lng, selectedItem.pickup_lat],
-                                [selectedItem.dropoff_lng, selectedItem.dropoff_lat]
-                            ]}
+                        <RoadRoute 
+                            from={[selectedItem.pickup_lng, selectedItem.pickup_lat]}
+                            to={[selectedItem.dropoff_lng, selectedItem.dropoff_lat]}
                             color="#3b82f6"
                             width={3.5}
                         />
@@ -556,6 +682,7 @@ const DriverMapPage = () => {
                                     isInteracting.current = true;
                                     setSelectedItem(rb);
                                     setSelectedType('roadblock');
+                                    setIsDrawerOpen(true);
                                 }}
                             >
                                 <MarkerContent>
@@ -573,12 +700,25 @@ const DriverMapPage = () => {
                     })}
                     {/* 2D. Render custom route planning OSRM paths */}
                     {routePlanningMode && customRoutes.length > 0 && (
-                        <MapRoute 
-                            coordinates={customRoutes[selectedCustomRouteIndex].coordinates}
-                            color="#0ea5e9"
-                            width={5}
-                            animate
-                        />
+                        <>
+                            {/* Leg 1: Current Location -> Pickup */}
+                            <MapRoute 
+                                id="planning-leg-1"
+                                coordinates={customRoutes[selectedCustomRouteIndex].coordinates}
+                                color="#0ea5e9"
+                                width={5}
+                            />
+                            {/* Leg 2: Pickup -> Drop-off */}
+                            {planningLeg2Route && (
+                                <MapRoute 
+                                    id="planning-leg-2"
+                                    coordinates={planningLeg2Route.coordinates}
+                                    color="#2563eb"
+                                    width={4}
+                                    opacity={0.95}
+                                />
+                            )}
+                        </>
                     )}
 
                     {/* 2E. Render custom route planning destination marker */}
@@ -601,7 +741,6 @@ const DriverMapPage = () => {
                             coordinates={activeNavRoute.coordinates}
                             color="#10b981"
                             width={6}
-                            animate
                         />
                     )}
                 </Map>
@@ -610,7 +749,7 @@ const DriverMapPage = () => {
                 {pinPlacementMode && (
                     <div className="absolute top-4 left-4 right-4 z-30 max-w-sm mx-auto bg-card/95 backdrop-blur-md border border-border/50 rounded-2xl p-4 shadow-xl flex items-center justify-between gap-3 animate-in slide-in-from-top-6 duration-300">
                         <div className="flex gap-2.5 items-start">
-                            <div className="w-8 h-8 rounded-full bg-destructive/10 text-destructive flex items-center justify-center shrink-0 mt-0.5">
+                            <div className="w-8 h-8 rounded-full bg-destructive/10 text-destructive flex items-center justify-center shrink-0">
                                 <AlertTriangle size={16} className="animate-pulse" />
                             </div>
                             <div className="flex flex-col gap-0.5 min-w-0">
@@ -630,16 +769,7 @@ const DriverMapPage = () => {
                 )}
 
                 {/* Roadblock Placement Mode: Dead-Center Hovering Locked Pin */}
-                {pinPlacementMode && (
-                    <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-20">
-                        <div className="relative flex flex-col items-center">
-                            <div className="w-12 h-12 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center border-[3px] border-white shadow-2xl animate-bounce pointer-events-none select-none">
-                                <AlertTriangle size={22} className="animate-pulse" />
-                            </div>
-                            <div className="w-3 h-3 bg-white rotate-45 -mt-1.5 shadow-md border-r border-b border-white" />
-                        </div>
-                    </div>
-                )}
+                <LockedPlacementPin visible={pinPlacementMode} />
 
                 {/* 3. Floating Filter Toggle Segment (Top Floating, h-11) */}
                 {!pinPlacementMode && (
@@ -654,51 +784,21 @@ const DriverMapPage = () => {
                 )}
 
                 {/* 3B. Glassmorphic OSRM Alternative Route options list */}
-                {!pinPlacementMode && routePlanningMode && customRoutes.length > 0 && (
-                    <div className="absolute top-[72px] left-4 right-4 z-30 max-w-sm mx-auto bg-background/85 backdrop-blur-md border border-border/50 rounded-2xl p-4 shadow-xl space-y-3 animate-in slide-in-from-top duration-250">
-                        <div className="flex justify-between items-center border-b border-border/50 pb-2">
-                            <h4 className="font-bold text-sm text-foreground flex items-center gap-1.5">
-                                <Navigation size={14} className="text-primary animate-pulse" />
-                                Alternate Paths
-                            </h4>
-                            <button 
-                                onClick={() => {
-                                    setCustomRoutes([]);
-                                    setCustomRouteDestination(null);
-                                }}
-                                className="w-6 h-6 rounded-lg bg-muted flex items-center justify-center hover:bg-muted/80 text-muted-foreground transition-all"
-                            >
-                                <X size={14} />
-                            </button>
-                        </div>
-                        <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                            {customRoutes.map((route, idx) => (
-                                <button
-                                    key={idx}
-                                    onClick={() => setSelectedCustomRouteIndex(idx)}
-                                    className={cn(
-                                        "w-full text-left p-3 rounded-xl border transition-all flex justify-between items-center gap-2",
-                                        idx === selectedCustomRouteIndex 
-                                            ? "bg-primary/10 border-primary text-primary shadow-sm" 
-                                            : "bg-muted/30 border-border/50 hover:bg-muted/50 text-muted-foreground"
-                                    )}
-                                >
-                                    <div className="flex flex-col">
-                                        <span className="font-black text-xs text-foreground">
-                                            Route #{idx + 1} {idx === 0 && "(Fastest)"}
-                                        </span>
-                                        <span className="text-[10px] font-semibold text-muted-foreground">
-                                            {(route.distance / 1000).toFixed(2)} km
-                                        </span>
-                                    </div>
-                                    <span className="font-bold text-xs text-foreground">
-                                        {Math.round(route.duration / 60)} mins
-                                    </span>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                )}
+                <AlternatePathsList 
+                    visible={!pinPlacementMode && routePlanningMode}
+                    routes={customRoutes}
+                    selectedIndex={selectedCustomRouteIndex}
+                    onSelect={setSelectedCustomRouteIndex}
+                    onClose={() => {
+                        setCustomRoutes([]);
+                        setCustomRouteDestination(null);
+                        setRoutePlanningMode(false);
+                        setPlanningLeg2Route(null);
+                        setIsDrawerOpen(false);
+                        setSelectedItem(null);
+                        setSelectedType(null);
+                    }}
+                />
 
                 {/* Roadblock Placement Mode: Confirm Hazard Location Bottom Button */}
                 {pinPlacementMode && (
@@ -724,74 +824,46 @@ const DriverMapPage = () => {
                 {!pinPlacementMode && (
                     <button
                         onClick={recenterToUser}
-                        className="absolute bottom-[88px] right-4 z-10 w-11 h-11 bg-background/85 backdrop-blur-md border border-border/50 text-foreground flex items-center justify-center rounded-full shadow-lg active:scale-90 transition-all duration-150"
+                        className="absolute bottom-[30px] right-4 z-10 w-10 h-10 bg-background/85 backdrop-blur-md border border-border/50 text-foreground flex items-center justify-center rounded-full shadow-lg active:scale-90 transition-all duration-150"
                         title="Recenter GPS Position"
                     >
                         <Compass size={20} className="text-primary animate-spin-slow" />
                     </button>
                 )}
 
-                {/* 4B. Active navigation Live Driving Action Bar overlay */}
-                {!pinPlacementMode && activeNavTask && activeNavRoute && (
-                    <div className="absolute top-4 left-4 right-4 z-30 max-w-sm mx-auto bg-card/95 backdrop-blur-md border border-emerald-500/25 rounded-2xl p-4 shadow-xl space-y-3.5 animate-in slide-in-from-top-6 duration-300">
-                        <div className="flex justify-between items-center pb-2 border-b border-border/50">
-                            <div className="flex items-center gap-2">
-                                <span className="relative flex h-2.5 w-2.5">
-                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-                                </span>
-                                <h4 className="font-black text-xs text-foreground uppercase tracking-wider">
-                                    Active Navigation
-                                </h4>
-                            </div>
-                            <button 
-                                onClick={() => {
-                                    setActiveNavTask(null);
-                                    setActiveNavRoute(null);
-                                }}
-                                className="text-[10px] font-black uppercase tracking-wider text-muted-foreground hover:text-foreground px-2.5 py-1 rounded-xl bg-muted transition-all active:scale-95"
-                            >
-                                Stop
-                            </button>
-                        </div>
-                        
-                        <div className="flex items-center justify-between gap-3 bg-muted/20 p-3.5 rounded-xl border border-border/30">
-                            <div className="flex flex-col min-w-0">
-                                <span className="font-extrabold text-sm text-foreground truncate">
-                                    {activeNavTask.title}
-                                </span>
-                                <span className="text-[10px] text-muted-foreground font-black uppercase tracking-wider mt-0.5">
-                                    {(activeNavRoute.distance / 1000).toFixed(2)} km remaining
-                                </span>
-                            </div>
-                            <div className="text-right shrink-0">
-                                <span className="block font-black text-base text-emerald-500 leading-none">
-                                    {Math.round(activeNavRoute.duration / 60)} mins
-                                </span>
-                                <span className="text-[8px] uppercase tracking-widest text-muted-foreground font-black mt-1 block">
-                                    Est. Time
-                                </span>
-                            </div>
-                        </div>
+                {/* Floating Re-open Drawer Button during Errand route planning */}
+                <FloatingErrandTrigger 
+                    visible={!pinPlacementMode && routePlanningMode && !isDrawerOpen && !!selectedItem}
+                    onClick={() => setIsDrawerOpen(true)}
+                />
 
-                        <button
-                            onClick={() => handleCompleteTask(activeNavTask.id)}
-                            disabled={updateTaskStatusMutation.isPending}
-                            className="w-full h-11 rounded-xl bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all shadow-lg shadow-emerald-500/10"
-                        >
-                            {updateTaskStatusMutation.isPending ? "Completing..." : "Complete Errand"}
-                        </button>
-                    </div>
-                )}
+                {/* 4B. Active navigation Live Driving Action Bar overlay */}
+                <ActiveNavigationOverlay 
+                    task={activeNavTask}
+                    route={activeNavRoute}
+                    leg={activeNavLeg}
+                    isPending={updateTaskStatusMutation.isPending}
+                    onArriveAtPickup={handleArriveAtPickup}
+                    onCompleteTask={handleCompleteTask}
+                    onStop={() => {
+                        setActiveNavTask(null);
+                        setActiveNavRoute(null);
+                    }}
+                />
             </div>
 
             {/* 5. Glassmorphic Sliding Drawer Overlay */}
             <MapDetailDrawer 
+                isOpen={isDrawerOpen}
                 selectedItem={selectedItem} 
                 selectedType={selectedType} 
                 onDismiss={() => {
-                    setSelectedItem(null);
-                    setSelectedType(null);
+                    setIsDrawerOpen(false);
+                    // Only clear the selection fully if we are not in active route planning mode
+                    if (!routePlanningMode) {
+                        setSelectedItem(null);
+                        setSelectedType(null);
+                    }
                 }} 
                 onSelectTaskRoute={handleSelectTaskRoute}
                 onStartTaskNavigation={handleStartTaskNavigation}

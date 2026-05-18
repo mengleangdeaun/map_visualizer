@@ -47,7 +47,7 @@ export const BottomSheet = ({ isOpen, onClose, children, className }: BottomShee
             >
                 {/* Drag Handle Bar Indicator */}
                 <div className="absolute top-2 left-1/2 -translate-x-1/2 cursor-pointer py-1.5 px-4" onClick={onClose}>
-                    <div className="h-1.5 w-12 rounded-full bg-muted-foreground/20 hover:bg-muted-foreground/45 transition-colors" />
+                    <div className="h-1 w-12 rounded-full bg-gray-400 dark:bg-gray-600 hover:bg-muted-foreground/45 transition-colors" />
                 </div>
 
                 {children}

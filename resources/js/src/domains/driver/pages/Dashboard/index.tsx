@@ -43,13 +43,7 @@ const DriverDashboard = () => {
         ]);
     };
 
-    // Auto-resume tracking if shift is active in DB but frontend tracking is off on mount
-    useEffect(() => {
-        if (activeVehicle && !isTracking && !error) {
-            // Optional auto-start tracking if they already have an active checked-in vehicle
-            startTracking();
-        }
-    }, [activeVehicle, startTracking]);
+
 
     const handleStartShift = () => {
         if (activeVehicle) {

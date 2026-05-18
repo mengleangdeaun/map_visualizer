@@ -19,26 +19,41 @@ export const useUpdateTaskStatus = () => {
             // Cancel any outgoing refetches so they don't overwrite our optimistic update
             await queryClient.cancelQueries({ queryKey: ['driver', 'tasks'] });
 
-            // Snapshot the previous value
-            const previousTasks = queryClient.getQueryData(['driver', 'tasks']);
+            // Snapshot the previous values for all matching queries
+            const previousQueries = queryClient.getQueriesData({ queryKey: ['driver', 'tasks'] });
 
-            // Optimistically update to the new value
+            // Optimistically update to the new value in all matching queries
             queryClient.setQueriesData({ queryKey: ['driver', 'tasks'] }, (old: any) => {
                 if (!old) return old;
-                return {
-                    ...old,
-                    data: old.data.map((task: any) => 
+
+                // Handle paginated response: { data: Task[] }
+                if (typeof old === 'object' && 'data' in old && Array.isArray(old.data)) {
+                    return {
+                        ...old,
+                        data: old.data.map((task: any) => 
+                            task.id === taskId ? { ...task, status } : task
+                        )
+                    };
+                }
+
+                // Handle raw list response: Task[]
+                if (Array.isArray(old)) {
+                    return old.map((task: any) => 
                         task.id === taskId ? { ...task, status } : task
-                    )
-                };
+                    );
+                }
+
+                return old;
             });
 
-            // Return context with rollback snapshot
-            return { previousTasks };
+            // Return context with rollback snapshots
+            return { previousQueries };
         },
         onError: (error: any, variables, context: any) => {
-            if (context?.previousTasks) {
-                queryClient.setQueryData(['driver', 'tasks'], context.previousTasks);
+            if (context?.previousQueries) {
+                context.previousQueries.forEach(([queryKey, oldData]: any) => {
+                    queryClient.setQueryData(queryKey, oldData);
+                });
             }
             toast.error(error.response?.data?.message || 'Failed to update task status');
         },

@@ -25,11 +25,12 @@ export const driverTaskService = {
     /**
      * Report current location
      */
-    reportLocation: async (latitude: number, longitude: number, speed?: number): Promise<void> => {
+    reportLocation: async (latitude: number, longitude: number, speed?: number, heading?: number | null): Promise<void> => {
         await api.patch('/driver/location', {
             latitude,
             longitude,
-            speed
+            speed,
+            heading
         });
     }
 };
