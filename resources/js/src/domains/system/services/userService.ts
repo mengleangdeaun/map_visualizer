@@ -9,6 +9,8 @@ export interface User {
     phone: string;
     email: string | null;
     telegram_user_id: string | null;
+    telegram_chat_id: string | null;
+    telegram_topic_id: string | null;
     base_hub_id: string | null;
     status: 'active' | 'suspended' | 'inactive';
     operational_status: 'offline' | 'online' | 'busy';

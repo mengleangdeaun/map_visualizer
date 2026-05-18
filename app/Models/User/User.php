@@ -3,6 +3,7 @@
 namespace App\Models\User;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Traits\HasAuditFields;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -13,7 +14,7 @@ use Illuminate\Support\Facades\Storage;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, HasUlids;
+    use HasApiTokens, HasFactory, Notifiable, HasUlids, HasAuditFields;
 
     /**
      * The attributes that should be appended to the model's array form.
@@ -40,6 +41,10 @@ class User extends Authenticatable
         'operational_status',
         'profile_url',
         'permissions',
+        'telegram_chat_id',
+        'telegram_topic_id',
+        'created_by',
+        'updated_by',
     ];
 
     /**
@@ -86,5 +91,21 @@ class User extends Authenticatable
     public function hub()
     {
         return $this->belongsTo(\App\Models\Fleet\Location::class, 'base_hub_id');
+    }
+
+    /**
+     * Get the shifts for this driver.
+     */
+    public function shifts()
+    {
+        return $this->hasMany(\App\Models\Fleet\VehicleShift::class, 'driver_id');
+    }
+
+    /**
+     * Get the active shift for this driver.
+     */
+    public function activeShift()
+    {
+        return $this->hasOne(\App\Models\Fleet\VehicleShift::class, 'driver_id')->whereNull('ended_at');
     }
 }

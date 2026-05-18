@@ -2,13 +2,14 @@
 
 namespace App\Models\Customer;
 
+use App\Traits\HasAuditFields;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Customer extends Model
 {
-    use HasFactory, HasUlids;
+    use HasFactory, HasUlids, HasAuditFields;
 
     protected $fillable = [
         'company_id',
@@ -19,6 +20,8 @@ class Customer extends Model
         'default_location',
         'total_orders',
         'profile_url',
+        'created_by',
+        'updated_by',
     ];
 
     /**

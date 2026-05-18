@@ -16,21 +16,42 @@ class TaskController extends Controller
     {
         $user = $request->user();
         
-        // A driver is assigned to a task via their current vehicle.
-        // Or directly if we add driver_id to tasks (Enterprise standard usually uses driver_id for direct assignment).
-        
-        // Let's assume tasks have a driver_id or we filter by vehicle assigned to the driver.
-        // For simplicity and strictness, let's filter by driver_id if it exists, or vehicle_id.
-        
-        $query = Task::with(['vehicle'])
+        $query = Task::query()
+            ->select('*')
+            ->selectRaw('ST_Y(pickup_location::geometry) as pickup_lat')
+            ->selectRaw('ST_X(pickup_location::geometry) as pickup_lng')
+            ->selectRaw('ST_Y(dropoff_location::geometry) as dropoff_lat')
+            ->selectRaw('ST_X(dropoff_location::geometry) as dropoff_lng')
+            ->with(['vehicle'])
             ->where(function($q) use ($user) {
                 $q->where('driver_id', $user->id)
                   ->orWhereHas('vehicle', function($vq) use ($user) {
                       $vq->where('driver_id', $user->id);
                   });
-            })
-            ->whereIn('status', ['assigned', 'in_progress', 'pending'])
-            ->orderBy('created_at', 'desc');
+            });
+
+        // 1. History or Active Status Filter
+        if ($request->filled('status') && $request->input('status') !== 'all') {
+            $query->where('status', $request->input('status'));
+        } else {
+            if ($request->boolean('history') || $request->input('history') === 'true') {
+                $query->whereIn('status', ['completed', 'cancelled']);
+            } else {
+                $query->whereIn('status', ['assigned', 'in_progress', 'pending']);
+            }
+        }
+
+        // 2. Priority Filter
+        if ($request->filled('priority') && $request->input('priority') !== 'all') {
+            $query->where('priority', $request->input('priority'));
+        }
+
+        // 3. Date Filter (Formats standard Y-m-d)
+        if ($request->filled('date')) {
+            $query->whereDate('scheduled_at', $request->input('date'));
+        }
+
+        $query->orderBy('created_at', 'desc');
 
         return response()->json($query->paginate(20));
     }

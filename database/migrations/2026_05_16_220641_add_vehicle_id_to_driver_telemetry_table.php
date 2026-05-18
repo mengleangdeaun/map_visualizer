@@ -11,17 +11,21 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('driver_telemetry', function (Blueprint $table) {
-            $table->ulid('vehicle_id')->nullable()->after('driver_id');
-            $table->foreign('vehicle_id')->references('id')->on('vehicles')->onDelete('set null');
-        });
+        if (!Schema::hasColumn('driver_telemetry', 'vehicle_id')) {
+            Schema::table('driver_telemetry', function (Blueprint $table) {
+                $table->ulid('vehicle_id')->nullable()->after('driver_id');
+                $table->foreign('vehicle_id')->references('id')->on('vehicles')->onDelete('set null');
+            });
+        }
     }
 
     public function down(): void
     {
-        Schema::table('driver_telemetry', function (Blueprint $table) {
-            $table->dropForeign(['vehicle_id']);
-            $table->dropColumn('vehicle_id');
-        });
+        if (Schema::hasColumn('driver_telemetry', 'vehicle_id')) {
+            Schema::table('driver_telemetry', function (Blueprint $table) {
+                $table->dropForeign(['vehicle_id']);
+                $table->dropColumn('vehicle_id');
+            });
+        }
     }
 };

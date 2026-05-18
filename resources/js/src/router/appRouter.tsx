@@ -59,10 +59,15 @@ const systemSettingsRoute = createRoute({ getParentRoute: () => mainLayoutRoute,
 const systemExchangeRatesRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'system/exchange-rates', component: lazyRouteComponent(() => import('../domains/system/pages/ExchangeRate/index')) });
 const systemHubsRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'system/hubs', component: lazyRouteComponent(() => import('../domains/system/pages/Location/index')) });
 const systemStaffRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'system/staff', component: lazyRouteComponent(() => import('../domains/system/pages/PlatformStaff/index')) });
+const systemTelegramBotRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'system/telegram-bot', component: lazyRouteComponent(() => import('../domains/system/pages/TelegramBot/index')) });
 
 const adminDashboardRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'admin', component: lazyRouteComponent(() => import('../domains/admin/pages/Index')) });
 const driverDashboardRoute = createRoute({ getParentRoute: () => driverLayoutRoute, path: 'driver', component: lazyRouteComponent(() => import('../domains/driver/pages/Dashboard/index')) });
 const driverTasksRoute = createRoute({ getParentRoute: () => driverLayoutRoute, path: 'driver/tasks', component: lazyRouteComponent(() => import('../domains/driver/pages/Tasks/index')) });
+const driverNotificationsRoute = createRoute({ getParentRoute: () => driverLayoutRoute, path: 'driver/notifications', component: lazyRouteComponent(() => import('../domains/driver/pages/Notification/index')) });
+const driverProfileRoute = createRoute({ getParentRoute: () => driverLayoutRoute, path: 'driver/profile', component: lazyRouteComponent(() => import('../domains/driver/pages/Profile/index')) });
+const driverSettingsRoute = createRoute({ getParentRoute: () => driverLayoutRoute, path: 'driver/settings', component: lazyRouteComponent(() => import('../domains/driver/pages/Settings/index')) });
+const driverTaskHistoryRoute = createRoute({ getParentRoute: () => driverLayoutRoute, path: 'driver/task-history', component: lazyRouteComponent(() => import('../domains/driver/pages/TaskHistory/index')) });
 const landingPageRoute = createRoute({ getParentRoute: () => rootRoute, path: '/', component: lazyRouteComponent(() => import('../domains/system/pages/Landing/index')) });
 const adminVehiclesRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'admin/fleet/vehicles', component: lazyRouteComponent(() => import('../domains/admin/pages/Vehicle/index')) });
 const adminHubsRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'admin/fleet/hubs', component: lazyRouteComponent(() => import('../domains/admin/pages/Hub/index')) });
@@ -84,6 +89,7 @@ const routeTree = rootRoute.addChildren([
         systemDashboardRoute,
         systemCompaniesRoute,
         systemUsersRoute,
+        systemTelegramBotRoute,
         systemSettingsRoute,
         systemExchangeRatesRoute,
         systemHubsRoute,
@@ -109,6 +115,10 @@ const routeTree = rootRoute.addChildren([
     driverLayoutRoute.addChildren([
         driverDashboardRoute,
         driverTasksRoute,
+        driverNotificationsRoute,
+        driverProfileRoute,
+        driverSettingsRoute,
+        driverTaskHistoryRoute,
     ]),
 ]);
 

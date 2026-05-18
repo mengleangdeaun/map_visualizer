@@ -205,8 +205,6 @@ export const MonitoringMap = React.memo(({
 
     return (
         <div className="relative h-full w-full group/map">
-            {isFetching && <MapLoading message={t('admin:updating_realtime') || "Updating real-time data..."} />}
-            
             <Map 
                 ref={mapRef}
                 viewport={viewport} 

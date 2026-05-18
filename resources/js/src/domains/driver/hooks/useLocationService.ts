@@ -1,27 +1,13 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { useAuthStore } from '@/domains/auth/store/useAuthStore';
-import { toast } from 'sonner';
+import { pwaToast as toast } from '../store/usePwaToastStore';
 import { driverTaskService } from '../services/driverTaskService';
-
-interface LocationState {
-    latitude: number | null;
-    longitude: number | null;
-    heading: number | null;
-    speed: number | null;
-    error: string | null;
-    isTracking: boolean;
-}
+import { useLocationStore } from '../store/useLocationStore';
 
 export const useLocationService = () => {
     const { user } = useAuthStore();
-    const [state, setState] = useState<LocationState>({
-        latitude: null,
-        longitude: null,
-        heading: null,
-        speed: null,
-        error: null,
-        isTracking: false,
-    });
+    const state = useLocationStore();
+    const { setTrackingState } = state;
 
     const watchId = useRef<number | null>(null);
     const lastUpdateRef = useRef<number>(0);
@@ -46,25 +32,24 @@ export const useLocationService = () => {
 
     const startTracking = useCallback(() => {
         if (!('geolocation' in navigator)) {
-            setState(s => ({ ...s, error: 'Geolocation not supported' }));
+            setTrackingState({ error: 'Geolocation not supported' });
             return;
         }
 
-        setState(s => ({ ...s, isTracking: true, error: null }));
+        setTrackingState({ isTracking: true, error: null });
 
         watchId.current = navigator.geolocation.watchPosition(
             (pos) => {
-                setState(s => ({
-                    ...s,
+                setTrackingState({
                     latitude: pos.coords.latitude,
                     longitude: pos.coords.longitude,
                     heading: pos.coords.heading,
                     speed: pos.coords.speed,
-                }));
+                });
                 updateServerLocation(pos);
             },
             (err) => {
-                setState(s => ({ ...s, error: err.message, isTracking: false }));
+                setTrackingState({ error: err.message, isTracking: false });
                 toast.error(`Location error: ${err.message}`);
             },
             {
@@ -73,15 +58,15 @@ export const useLocationService = () => {
                 timeout: 5000,
             }
         );
-    }, [updateServerLocation]);
+    }, [updateServerLocation, setTrackingState]);
 
     const stopTracking = useCallback(() => {
         if (watchId.current !== null) {
             navigator.geolocation.clearWatch(watchId.current);
             watchId.current = null;
         }
-        setState(s => ({ ...s, isTracking: false }));
-    }, []);
+        setTrackingState({ isTracking: false });
+    }, [setTrackingState]);
 
     useEffect(() => {
         return () => {

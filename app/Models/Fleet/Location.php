@@ -3,13 +3,14 @@
 namespace App\Models\Fleet;
 
 use App\Models\System\Company;
+use App\Traits\HasAuditFields;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Location extends Model
 {
-    use HasFactory, HasUlids;
+    use HasFactory, HasUlids, HasAuditFields;
     
     protected $appends = ['latitude', 'longitude'];
 
@@ -25,6 +26,8 @@ class Location extends Model
         'type',
         'location',
         'geofence',
+        'created_by',
+        'updated_by',
     ];
 
     /**

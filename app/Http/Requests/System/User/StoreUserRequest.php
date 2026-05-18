@@ -21,6 +21,8 @@ class StoreUserRequest extends FormRequest
             'email' => 'nullable|email|max:255',
             'password' => 'required|string|min:8',
             'telegram_user_id' => 'nullable|string|max:255',
+            'telegram_chat_id' => 'nullable|string|max:255',
+            'telegram_topic_id' => 'nullable|string|max:255',
             'base_hub_id' => 'nullable|exists:locations,id',
             'status' => 'required|string|in:active,suspended,inactive',
             'profile' => 'nullable|file|image|max:2048',

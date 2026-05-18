@@ -1,5 +1,5 @@
 import { MenuItem } from '@/types/nav';
-import { Building, LayoutGrid, Map as MapIcon, Settings, User as UserIcon, Banknote, ShieldCheck } from 'lucide-react';
+import { Building, LayoutGrid, Map as MapIcon, Settings, User as UserIcon, Banknote, ShieldCheck, Send } from 'lucide-react';
 
 export const systemNav: MenuItem[] = [
     {
@@ -19,6 +19,12 @@ export const systemNav: MenuItem[] = [
         title: 'user_management',
         icon: UserIcon,
         path: '/system/users'
+    },
+    {
+        id: 'telegram_bot',
+        title: 'telegram_bot',
+        icon: Send,
+        path: '/system/telegram-bot'
     },
     {
         id: 'platform_team',

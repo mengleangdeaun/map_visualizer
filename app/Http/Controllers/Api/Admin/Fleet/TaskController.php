@@ -54,6 +54,7 @@ class TaskController extends Controller
             'pickup_address' => 'nullable|string',
             'dropoff_address' => 'nullable|string',
             'scheduled_at' => 'nullable|date',
+            'priority' => 'nullable|string|in:low,normal,high,urgent',
         ]);
 
         if ($request->user()->company_id) {
@@ -101,6 +102,7 @@ class TaskController extends Controller
             'pickup_address' => 'nullable|string',
             'dropoff_address' => 'nullable|string',
             'scheduled_at' => 'nullable|date',
+            'priority' => 'nullable|string|in:low,normal,high,urgent',
         ]);
 
         $task = $this->taskService->update($task, $validated);

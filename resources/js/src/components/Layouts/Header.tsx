@@ -292,7 +292,6 @@ const Header = () => {
                                         <div className="truncate">
                                             <h4 className="text-sm font-bold flex items-center gap-2">
                                                 {user?.name}
-                                                <span className="text-[10px] bg-success/10 text-success px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">{user?.role}</span>
                                             </h4>
                                             <p className="text-[11px] text-muted-foreground truncate">{user?.email}</p>
                                         </div>

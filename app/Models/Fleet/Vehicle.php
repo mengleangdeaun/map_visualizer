@@ -2,13 +2,14 @@
  
 namespace App\Models\Fleet;
  
+use App\Traits\HasAuditFields;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
  
 class Vehicle extends Model
 {
-    use HasFactory, HasUlids;
+    use HasFactory, HasUlids, HasAuditFields;
  
     protected $fillable = [
         'company_id',
@@ -22,6 +23,8 @@ class Vehicle extends Model
         'max_speed_kmh',
         'last_location',
         'last_telemetry_at',
+        'created_by',
+        'updated_by',
     ];
 
     protected $appends = ['latitude', 'longitude'];
@@ -69,5 +72,21 @@ class Vehicle extends Model
     public function driver()
     {
         return $this->belongsTo(\App\Models\User\User::class, 'driver_id');
+    }
+
+    /**
+     * Get the shifts for this vehicle.
+     */
+    public function shifts()
+    {
+        return $this->hasMany(VehicleShift::class);
+    }
+
+    /**
+     * Get the active shift for this vehicle.
+     */
+    public function activeShift()
+    {
+        return $this->hasOne(VehicleShift::class)->whereNull('ended_at');
     }
 }

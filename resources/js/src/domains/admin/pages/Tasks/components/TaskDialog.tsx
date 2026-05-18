@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, ClipboardList, User, MapPin, Phone, Calendar, Info, Truck, Plus, Navigation, Check, ChevronsUpDown } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { SearchableSelect } from '@/components/shared/SearchableSelect';
-import { useVehicles } from '@/domains/admin/hooks/useVehicles';
+import { useDrivers } from '@/domains/admin/hooks/useDrivers';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useHubs } from '@/domains/admin/hooks/useHubs';
 import { parseGoogleMapsUrl } from '@/lib/maps';
@@ -23,7 +23,7 @@ import { DateTimePicker } from '@/components/shared/system/DateTimePicker';
 
 const taskSchema = z.object({
     title: z.string().min(1, 'field_required'),
-    vehicle_id: z.string().nullable().optional(),
+    driver_id: z.string().nullable().optional(),
     description: z.string().nullable().optional(),
     status: z.enum(['pending', 'assigned', 'in_progress', 'completed', 'cancelled', 'archived']),
     contact_name: z.string().nullable().optional(),
@@ -35,6 +35,7 @@ const taskSchema = z.object({
     dropoff_lat: z.number().nullable().optional(),
     dropoff_lng: z.number().nullable().optional(),
     scheduled_at: z.string().nullable().optional(),
+    priority: z.enum(['low', 'normal', 'high', 'urgent']).optional(),
 });
 
 interface TaskDialogProps {
@@ -95,19 +96,29 @@ const HubSelector = ({ onSelect, label, hubs, t }: { onSelect: (hub: any) => voi
 
 const TaskDialog = ({ open, onOpenChange, task, initialValues }: TaskDialogProps) => {
     const { t } = useTranslation('admin');
-    const { data: vehiclesData, isLoading: isLoadingVehicles } = useVehicles();
+    const { data: driversData, isLoading: isLoadingDrivers } = useDrivers();
     const { data: hubsData } = useHubs();
     const createMutation = useCreateTask();
     const updateMutation = useUpdateTask();
 
     const isEditing = !!task;
+    const isLoading = createMutation.isPending || updateMutation.isPending;
 
     const hubs = hubsData?.data || [];
+
+    const validateField = (name: string, value: any) => {
+        const result = taskSchema.safeParse({ ...form.state.values, [name]: value });
+        if (!result.success) {
+            const error = result.error.issues.find(issue => issue.path.includes(name));
+            return error ? t(error.message) : undefined;
+        }
+        return undefined;
+    };
 
     const form = useForm({
         defaultValues: {
             title: task?.title || '',
-            vehicle_id: task?.vehicle_id || null,
+            driver_id: task?.driver_id || null,
             description: task?.description || '',
             status: task?.status || 'assigned',
             contact_name: task?.contact_name || '',
@@ -119,6 +130,7 @@ const TaskDialog = ({ open, onOpenChange, task, initialValues }: TaskDialogProps
             dropoff_lat: task?.dropoff_lat || initialValues?.dropoff_lat || null,
             dropoff_lng: task?.dropoff_lng || initialValues?.dropoff_lng || null,
             scheduled_at: task?.scheduled_at || null,
+            priority: task?.priority || 'normal',
         },
         onSubmit: async ({ value }) => {
             try {
@@ -144,6 +156,7 @@ const TaskDialog = ({ open, onOpenChange, task, initialValues }: TaskDialogProps
     useEffect(() => {
         if (open) {
             form.reset();
+            setTimeout(() => form.validate('change'), 0);
         }
     }, [open, task, initialValues]);
 
@@ -203,7 +216,6 @@ const TaskDialog = ({ open, onOpenChange, task, initialValues }: TaskDialogProps
         return null;
     };
 
-    const isLoading = createMutation.isPending || updateMutation.isPending;
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -243,16 +255,23 @@ const TaskDialog = ({ open, onOpenChange, task, initialValues }: TaskDialogProps
                                 </Label>
                                 <form.Field
                                     name="title"
+                                    validators={{ onChange: ({ value }) => validateField('title', value) }}
                                     children={(field) => (
                                         <div className="space-y-2">
                                             <Label htmlFor={field.name}>{t('title') || 'Task Title'}</Label>
                                             <Input
                                                 id={field.name}
                                                 value={field.state.value}
+                                                onBlur={field.handleBlur}
                                                 onChange={(e) => field.handleChange(e.target.value)}
                                                 placeholder="Delivery to Riverside..."
                                                 className="bg-background"
                                             />
+                                            {field.state.meta.isTouched && field.state.meta.errors.length > 0 && (
+                                                <p className="text-xs text-destructive">
+                                                    {field.state.meta.errors.map((error: any) => t(error?.message ?? error)).join(', ')}
+                                                </p>
+                                            )}
                                         </div>
                                     )}
                                 />
@@ -268,6 +287,39 @@ const TaskDialog = ({ open, onOpenChange, task, initialValues }: TaskDialogProps
                                                 placeholder="Special instructions..."
                                                 className="bg-background"
                                             />
+                                        </div>
+                                    )}
+                                />
+                                <form.Field
+                                    name="priority"
+                                    children={(field) => (
+                                        <div className="space-y-2">
+                                            <Label htmlFor={field.name}>{t('priority', 'Priority')}</Label>
+                                            <div className="grid grid-cols-4 gap-2">
+                                                {[
+                                                    { value: 'low', label: t('priority_low', 'Low'), color: 'bg-blue-500/10 text-blue-600 border-blue-500/20 hover:bg-blue-500/20', ring: 'ring-blue-500/30' },
+                                                    { value: 'normal', label: t('priority_normal', 'Normal'), color: 'bg-slate-500/10 text-slate-600 border-slate-500/20 hover:bg-slate-500/20', ring: 'ring-slate-500/30' },
+                                                    { value: 'high', label: t('priority_high', 'High'), color: 'bg-amber-500/10 text-amber-600 border-amber-500/20 hover:bg-amber-500/20', ring: 'ring-amber-500/30' },
+                                                    { value: 'urgent', label: t('priority_urgent', 'Urgent'), color: 'bg-red-500/10 text-red-600 border-red-500/20 hover:bg-red-500/20', ring: 'ring-red-500/40' }
+                                                ].map((option) => {
+                                                    const isSelected = (field.state.value || 'normal') === option.value;
+                                                    return (
+                                                        <Button
+                                                            key={option.value}
+                                                            type="button"
+                                                            variant="outline"
+                                                            onClick={() => field.handleChange(option.value as any)}
+                                                            className={`text-xs font-bold transition-all px-3 py-1.5 h-auto ${
+                                                                isSelected 
+                                                                ? `${option.color} ring-2 ${option.ring} scale-[1.02] border-transparent` 
+                                                                : 'bg-background hover:bg-muted text-muted-foreground'
+                                                            }`}
+                                                        >
+                                                            {option.label}
+                                                        </Button>
+                                                    );
+                                                })}
+                                            </div>
                                         </div>
                                     )}
                                 />
@@ -416,32 +468,32 @@ const TaskDialog = ({ open, onOpenChange, task, initialValues }: TaskDialogProps
 
                             <div className="bg-muted/30 p-4 rounded-xl border border-dashed space-y-4">
                                 <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-                                    <Truck size={12} className="text-primary" />
+                                    <User size={12} className="text-primary" />
                                     {t('dispatching','Dispatching')}
                                 </Label>
                                 <form.Field
-                                    name="vehicle_id"
+                                    name="driver_id"
                                     children={(field) => (
                                         <div className="space-y-2">
-                                            <Label>{t('assign_vehicle') || 'Assign Vehicle'}</Label>
+                                            <Label>{t('assign_driver') || 'Assign Driver'}</Label>
                                             <SearchableSelect
-                                                options={vehiclesData?.data || []}
+                                                options={driversData || []}
                                                 value={field.state.value}
                                                 onChange={field.handleChange}
-                                                isLoading={isLoadingVehicles}
-                                                placeholder={t('select_vehicle')}
-                                                getOptionValue={(v) => v.id}
-                                                getOptionLabel={(v) => v.plate_number}
-                                                renderOption={(v) => (
+                                                isLoading={isLoadingDrivers}
+                                                placeholder={t('select_driver')}
+                                                getOptionValue={(d) => d.id}
+                                                getOptionLabel={(d) => d.name}
+                                                renderOption={(d) => (
                                                     <div className="flex items-center gap-3">
                                                         <Avatar className="h-8 w-8">
                                                             <AvatarFallback className="bg-primary/5 text-primary text-[10px]">
-                                                                <Truck size={12} />
+                                                                <User size={12} />
                                                             </AvatarFallback>
                                                         </Avatar>
                                                         <div className="flex flex-col">
-                                                            <span className="font-bold text-sm">{v.plate_number}</span>
-                                                            <span className="text-[10px] text-muted-foreground uppercase">{v.type}</span>
+                                                            <span className="font-bold text-sm">{d.name}</span>
+                                                            <span className="text-[10px] text-muted-foreground">{d.email}</span>
                                                         </div>
                                                     </div>
                                                 )}

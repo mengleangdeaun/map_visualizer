@@ -2,8 +2,10 @@ import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDriverTasks, useUpdateTaskStatus } from '../../hooks/useDriverTasks';
 import { useAuthStore } from '@/domains/auth/store/useAuthStore';
+import { useHeaderStore } from '../../store/useHeaderStore';
 import { useQueryClient } from '@tanstack/react-query';
 import { echo } from '@/lib/echo';
+import { PullToRefresh } from '@/domains/driver/components/PullToRefresh';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
@@ -22,8 +24,18 @@ const TaskListPage = () => {
     const { t } = useTranslation(['driver', 'system']);
     const { user } = useAuthStore();
     const queryClient = useQueryClient();
-    const { data: tasksData, isLoading } = useDriverTasks();
+    const { data: tasksData, isLoading, refetch } = useDriverTasks();
     const updateStatusMutation = useUpdateTaskStatus();
+    const setHeader = useHeaderStore(s => s.setHeader);
+
+    useEffect(() => {
+        setHeader({ 
+            title: t('driver:tasks') || 'My Tasks',
+            showBackButton: true,
+            backTarget: '/driver'
+        });
+        return () => setHeader({});
+    }, [setHeader, t]);
 
     // Real-time listener for task updates/assignments
     useEffect(() => {
@@ -65,7 +77,8 @@ const TaskListPage = () => {
     const tasks = tasksData?.data || [];
 
     return (
-        <div className="p-4 flex flex-col gap-4 pb-20">
+        <PullToRefresh onRefresh={refetch}>
+            <div className="p-4 flex flex-col gap-4 pb-20">
             <div className="flex items-center justify-between px-1">
                 <h1 className="text-xl font-black tracking-tight">{t('driver:my_tasks') || 'My Tasks'}</h1>
                 <span className="text-[10px] font-bold bg-primary/10 text-primary px-2 py-1 rounded-full uppercase">
@@ -80,7 +93,7 @@ const TaskListPage = () => {
                 </Card>
             ) : (
                 tasks.map((task) => (
-                    <Card key={task.id} className="overflow-hidden border-none shadow-lg bg-card">
+                    <Card key={task.id} className="overflow-hidden gap-0 border-none shadow-lg bg-card p-0">
                         {/* Task Header */}
                         <div className="p-4 bg-muted/30 flex items-center justify-between border-b border-border/50">
                             <div className="flex items-center gap-2">
@@ -88,8 +101,19 @@ const TaskListPage = () => {
                                     "size-2 rounded-full",
                                     task.status === 'assigned' ? "bg-blue-500 animate-pulse" : "bg-green-500"
                                 )} />
-                                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                                     {task.id.substring(0, 8)} • {task.status}
+                                    {task.priority && (
+                                        <span className={cn(
+                                            "text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider",
+                                            task.priority === 'urgent' && "bg-destructive/10 text-destructive border border-destructive/20 animate-pulse",
+                                            task.priority === 'high' && "bg-amber-500/10 text-amber-600 border border-amber-500/20",
+                                            task.priority === 'normal' && "bg-slate-500/10 text-slate-600 border border-slate-500/20",
+                                            task.priority === 'low' && "bg-blue-500/10 text-blue-600 border border-blue-500/20"
+                                        )}>
+                                            {t(`admin:${task.priority}`) || task.priority}
+                                        </span>
+                                    )}
                                 </span>
                             </div>
                             <span className="text-[10px] font-bold text-muted-foreground">
@@ -101,7 +125,6 @@ const TaskListPage = () => {
                         <div className="p-4 space-y-4">
                             <div className="flex flex-col">
                                 <h3 className="font-black text-lg leading-tight">{task.title}</h3>
-                                <p className="text-[11px] text-muted-foreground font-medium">{task.customer?.name}</p>
                             </div>
 
                             <div className="space-y-3">
@@ -111,7 +134,20 @@ const TaskListPage = () => {
                                     </div>
                                     <div className="flex flex-col">
                                         <span className="text-[10px] font-black uppercase text-muted-foreground tracking-tighter">{t('driver:pickup') || 'Pickup'}</span>
-                                        <span className="text-xs font-bold leading-snug">{task.pickup_address}</span>
+                                        {task.pickup_lat && task.pickup_lng ? (
+                                            <a 
+                                                href={`https://www.google.com/maps/search/?api=1&query=${task.pickup_lat},${task.pickup_lng}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-xs font-bold leading-snug hover:text-primary hover:underline transition-colors flex items-center gap-1 group"
+                                                title="Open in Google Maps"
+                                            >
+                                                {task.pickup_address}
+                                                <span className="inline-block opacity-0 group-hover:opacity-100 transition-opacity text-[10px] text-primary">↗</span>
+                                            </a>
+                                        ) : (
+                                            <span className="text-xs font-bold leading-snug">{task.pickup_address}</span>
+                                        )}
                                     </div>
                                 </div>
 
@@ -121,10 +157,23 @@ const TaskListPage = () => {
                                     </div>
                                     <div className="flex flex-col">
                                         <span className="text-[10px] font-black uppercase text-muted-foreground tracking-tighter">{t('driver:dropoff') || 'Drop-off'}</span>
-                                        <span className="text-xs font-bold leading-snug">{task.dropoff_address}</span>
+                                        {task.dropoff_lat && task.dropoff_lng ? (
+                                            <a 
+                                                href={`https://www.google.com/maps/search/?api=1&query=${task.dropoff_lat},${task.dropoff_lng}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-xs font-bold leading-snug hover:text-primary hover:underline transition-colors flex items-center gap-1 group"
+                                                title="Open in Google Maps"
+                                            >
+                                                {task.dropoff_address}
+                                                <span className="inline-block opacity-0 group-hover:opacity-100 transition-opacity text-[10px] text-primary">↗</span>
+                                            </a>
+                                        ) : (
+                                            <span className="text-xs font-bold leading-snug">{task.dropoff_address}</span>
+                                        )}
                                         <div className="flex items-center gap-2 mt-1">
-                                            <span className="text-[11px] font-medium">{task.receiver_name}</span>
-                                            <span className="text-[11px] text-muted-foreground">• {task.receiver_phone}</span>
+                                            <span className="text-[11px] font-medium">{task.contact_name}</span>
+                                            <span className="text-[11px] text-muted-foreground">• {task.contact_phone}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -138,8 +187,8 @@ const TaskListPage = () => {
                                 size="sm" 
                                 className="flex-1 h-10 font-black uppercase text-[10px] tracking-widest gap-2"
                                 onClick={() => {
-                                    if (task.receiver_phone) {
-                                        window.location.href = `tel:${task.receiver_phone}`;
+                                    if (task.contact_phone) {
+                                        window.location.href = `tel:${task.contact_phone}`;
                                     }
                                 }}
                             >
@@ -156,7 +205,7 @@ const TaskListPage = () => {
                                 onClick={() => handleStatusChange(task.id, task.status)}
                                 disabled={updateStatusMutation.isPending}
                             >
-                                {updateStatusMutation.isPending ? (
+                                {(updateStatusMutation.isPending && updateStatusMutation.variables?.taskId === task.id) ? (
                                     <Clock className="size-4 animate-spin" />
                                 ) : (task.status === 'assigned' || task.status === 'pending') ? (
                                     <>
@@ -175,6 +224,7 @@ const TaskListPage = () => {
                 ))
             )}
         </div>
+        </PullToRefresh>
     );
 };
 

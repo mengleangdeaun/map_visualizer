@@ -1,5 +1,5 @@
 import api from '@/lib/api';
-import { Task } from '../../admin/services/taskService';
+import { Task } from '../../admin/pages/Tasks/services/taskService';
 import { PaginatedResponse } from '../../system/services/userService';
 
 export const driverTaskService = {

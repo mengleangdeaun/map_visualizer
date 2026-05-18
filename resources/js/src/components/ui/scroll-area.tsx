@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils"
 function ScrollArea({
   className,
   children,
-  ...props
+  ...props  
 }: React.ComponentProps<typeof ScrollAreaPrimitive.Root>) {
   return (
     <ScrollAreaPrimitive.Root

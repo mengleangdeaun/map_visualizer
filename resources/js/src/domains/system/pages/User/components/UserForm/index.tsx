@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import LogoUpload from '@/components/shared/system/LogoUpload';
-import { Loader2, ShieldCheck, MapPin } from 'lucide-react';
+import { Loader2, ShieldCheck, MapPin, Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
 import { useLocations } from '../../../Location/hooks/useLocations';
@@ -29,6 +29,8 @@ const getUserSchema = (isEditing: boolean, isPlatformStaff?: boolean) => z.objec
         : z.string().min(1, 'field_required').min(8, 'password_min_length'),
     status: z.enum(['active', 'suspended', 'inactive']),
     telegram_user_id: z.string().or(z.literal('')),
+    telegram_chat_id: z.string().or(z.literal('')),
+    telegram_topic_id: z.string().or(z.literal('')),
     base_hub_id: z.string().or(z.literal('')),
     profile_url: z.string().nullable(),
     permissions: z.record(z.string(), z.boolean()).optional(),
@@ -63,6 +65,8 @@ const UserForm = ({ open, onOpenChange, user, isPlatformStaff }: UserFormProps) 
             password: '',
             status: (user?.status || 'active') as 'active' | 'suspended' | 'inactive',
             telegram_user_id: user?.telegram_user_id || '',
+            telegram_chat_id: user?.telegram_chat_id || '',
+            telegram_topic_id: user?.telegram_topic_id || '',
             base_hub_id: user?.base_hub_id || '',
             profile_url: user?.profile_full_url || user?.profile_url || null,
             permissions: (user?.permissions as Record<string, boolean>) || {},
@@ -115,6 +119,10 @@ const UserForm = ({ open, onOpenChange, user, isPlatformStaff }: UserFormProps) 
     // Get companyId reactively for hub fetching
     const companyIdField = useField({ form, name: 'company_id' });
     const companyId = companyIdField.state.value;
+
+    // Get role reactively for driver-specific telegram inputs
+    const roleField = useField({ form, name: 'role' });
+    const currentRole = roleField.state.value;
     
     const { data: hubsData, isLoading: isLoadingHubs } = useLocations({ 
         company_id: companyId,
@@ -132,6 +140,8 @@ const UserForm = ({ open, onOpenChange, user, isPlatformStaff }: UserFormProps) 
                 password: '',
                 status: (user.status || 'active') as 'active' | 'suspended' | 'inactive',
                 telegram_user_id: user.telegram_user_id || '',
+                telegram_chat_id: user.telegram_chat_id || '',
+                telegram_topic_id: user.telegram_topic_id || '',
                 base_hub_id: user.base_hub_id || '',
                 profile_url: user.profile_full_url || user.profile_url || null,
                 permissions: (user.permissions as Record<string, boolean>) || {},
@@ -144,6 +154,8 @@ const UserForm = ({ open, onOpenChange, user, isPlatformStaff }: UserFormProps) 
                 password: '',
                 status: 'active',
                 telegram_user_id: '',
+                telegram_chat_id: '',
+                telegram_topic_id: '',
                 base_hub_id: '',
                 profile_url: null,
                 permissions: {},
@@ -430,6 +442,58 @@ const UserForm = ({ open, onOpenChange, user, isPlatformStaff }: UserFormProps) 
                             />
                         </div>
                     </div>
+
+                    {currentRole === 'driver' && (
+                        <div className="bg-primary/5 p-4 rounded-xl border border-primary/20 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <Label className="text-[10px] font-bold text-primary uppercase tracking-widest flex items-center gap-2">
+                                <Send size={12} className="text-primary animate-pulse" />
+                                {t('driver_telegram_routing', 'Driver Telegram Routing')}
+                            </Label>
+                            <p className="text-xs text-muted-foreground">
+                                Configure the Telegram group chat or specific topic thread where this driver receives instant job alerts.
+                            </p>
+                            
+                            <div className="grid grid-cols-2 gap-4">
+                                <form.Field
+                                    name="telegram_chat_id"
+                                    children={(field) => (
+                                        <div className="space-y-1.5">
+                                            <Label htmlFor={field.name}>{t('telegram_chat_id', 'Telegram Group/Chat ID')}</Label>
+                                            <Input
+                                                id={field.name}
+                                                value={field.state.value}
+                                                onChange={(e) => field.handleChange(e.target.value)}
+                                                placeholder="-100xxxxxxxxx"
+                                                className="bg-background"
+                                            />
+                                            <p className="text-[10px] text-muted-foreground leading-tight">
+                                                ID of the Telegram group chat (starting with -100).
+                                            </p>
+                                        </div>
+                                    )}
+                                />
+
+                                <form.Field
+                                    name="telegram_topic_id"
+                                    children={(field) => (
+                                        <div className="space-y-1.5">
+                                            <Label htmlFor={field.name}>{t('telegram_topic_id', 'Topic Thread ID (Optional)')}</Label>
+                                            <Input
+                                                id={field.name}
+                                                value={field.state.value}
+                                                onChange={(e) => field.handleChange(e.target.value)}
+                                                placeholder="e.g. 42"
+                                                className="bg-background"
+                                            />
+                                            <p className="text-[10px] text-muted-foreground leading-tight">
+                                                For Supergroups with topics, specify the message thread ID.
+                                            </p>
+                                        </div>
+                                    )}
+                                />
+                            </div>
+                        </div>
+                    )}
 
                         </div>
                     </ScrollArea>

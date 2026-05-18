@@ -90,10 +90,28 @@ class TaskService
             }
         }
 
+        // Auto-resolve vehicle from driver if not provided
+        if (isset($data['driver_id']) && !isset($data['vehicle_id'])) {
+            $driver = \App\Models\User\User::find($data['driver_id']);
+            if ($driver) {
+                $activeShift = \App\Models\Fleet\VehicleShift::where('driver_id', $driver->id)
+                    ->whereNull('ended_at')
+                    ->first();
+                if ($activeShift) {
+                    $data['vehicle_id'] = $activeShift->vehicle_id;
+                }
+            }
+        }
+
         $task = Task::create($data);
         $this->updateSpatialData($task->id, $pickupLat, $pickupLng, $dropoffLat, $dropoffLng);
         
-        return $this->findById($task->id);
+        $resolvedTask = $this->findById($task->id);
+        
+        // Trigger multi-channel notifications
+        app(\App\Services\Notification\NotificationService::class)->notifyNewTask($resolvedTask);
+        
+        return $resolvedTask;
     }
 
     /**
@@ -113,6 +131,19 @@ class TaskService
             $vehicle = \App\Models\Fleet\Vehicle::find($data['vehicle_id']);
             if ($vehicle && $vehicle->driver_id) {
                 $data['driver_id'] = $vehicle->driver_id;
+            }
+        }
+
+        // Auto-resolve vehicle from driver if reassigned and vehicle not explicitly changed
+        if (isset($data['driver_id']) && !isset($data['vehicle_id'])) {
+            $driver = \App\Models\User\User::find($data['driver_id']);
+            if ($driver) {
+                $activeShift = \App\Models\Fleet\VehicleShift::where('driver_id', $driver->id)
+                    ->whereNull('ended_at')
+                    ->first();
+                if ($activeShift) {
+                    $data['vehicle_id'] = $activeShift->vehicle_id;
+                }
             }
         }
 

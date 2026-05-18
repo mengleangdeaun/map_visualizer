@@ -10,6 +10,8 @@ export interface Company {
     logo_full_url: string | null;
     status: 'active' | 'inactive' | 'suspended';
     telegram_user_id: string | null;
+    telegram_settings?: any | null;
+    telegramSettings?: any | null;
     created_at: string;
     updated_at: string;
 }

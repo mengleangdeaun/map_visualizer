@@ -27,6 +27,10 @@ import TaskDialog from '@/domains/admin/pages/Tasks/components/TaskDialog';
 import { Task, TaskStatus } from '@/domains/admin/pages/Tasks/services/taskService';
 import { getTaskStatusColor } from '@/domains/admin/pages/Tasks/utils/taskStatus';
 import { useNavigate } from '@tanstack/react-router';
+import { useQueryClient } from '@tanstack/react-query';
+import { useAuthStore } from '@/domains/auth/store/useAuthStore';
+import { echo } from '@/lib/echo';
+import { toast } from 'sonner';
 import { formatDateTime } from '@/lib/dateUtils';
 import { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/shared/system/DataTable';
@@ -50,6 +54,35 @@ import {
 const TaskListPage = () => {
     const { t } = useTranslation(['admin', 'system']);
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
+    const { user } = useAuthStore();
+
+    // Listen to real-time task updates
+    useEffect(() => {
+        if (!user?.company_id) return;
+
+        const channelName = `fleet.${user.company_id}`;
+        
+        echo.private(channelName)
+            .listen('.task.updated', (e: any) => {
+                // Refresh task queries instantly in real-time!
+                queryClient.invalidateQueries({ queryKey: ['admin', 'tasks'] });
+                
+                // Show gorgeous toast notification
+                toast.success(
+                    <div className="flex flex-col gap-1">
+                        <span className="font-bold text-[10px] uppercase tracking-wider text-primary">Real-Time Update ⚡</span>
+                        <span className="text-xs font-semibold">
+                            Task "{e.task.title}" updated to status: <span className="uppercase text-primary font-bold">{e.task.status}</span>
+                        </span>
+                    </div>
+                );
+            });
+
+        return () => {
+            echo.leave(channelName);
+        };
+    }, [user?.company_id, queryClient]);
     
     // State
     const [searchInput, setSearchInput] = useState('');
@@ -265,10 +298,50 @@ const TaskListPage = () => {
             },
         },
         {
-            accessorKey: 'vehicle',
-            header: t('vehicle_driver'),
+            accessorKey: 'priority',
+            header: t('priority', 'Priority'),
+            cell: ({ row }) => {
+                const priority = row.original.priority || 'normal';
+                const colorMap = {
+                    low: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
+                    normal: 'bg-slate-500/10 text-slate-600 border-slate-500/20',
+                    high: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
+                    urgent: 'bg-red-500/10 text-red-600 border-red-500/20 animate-pulse font-black'
+                };
+                return (
+                    <Badge variant="outline" className={cn("capitalize px-2 py-0.5 text-[10px] font-bold border", colorMap[priority])}>
+                        {t(`priority_${priority}`, priority)}
+                    </Badge>
+                );
+            },
+        },
+        {
+            id: 'assignee',
+            header: t('assigned_driver_vehicle') || t('vehicle_driver'),
             cell: ({ row }) => {
                 const task = row.original;
+                if (task.driver) {
+                    return (
+                        <div className="flex items-center gap-3">
+                            <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                                <UserIcon className="size-4" />
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-sm font-bold">{task.driver.name}</span>
+                                {task.vehicle ? (
+                                    <span className="text-[10px] text-muted-foreground font-mono uppercase bg-muted px-1.5 py-0.5 rounded w-fit mt-0.5">
+                                        {task.vehicle.plate_number}
+                                    </span>
+                                ) : (
+                                    <span className="text-[9px] text-amber-500 font-bold uppercase tracking-wider mt-0.5">
+                                        {t('no_active_vehicle', { ns: 'driver' }) || 'No Active Vehicle'}
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    );
+                }
+                
                 if (task.vehicle) {
                     return (
                         <div className="flex items-center gap-3">
@@ -277,12 +350,15 @@ const TaskListPage = () => {
                             </div>
                             <div className="flex flex-col">
                                 <span className="text-sm font-bold">{task.vehicle.plate_number}</span>
-                                <span className="text-[10px] text-muted-foreground uppercase">{task.driver?.name || t('unassigned')}</span>
+                                <span className="text-[10px] text-muted-foreground italic uppercase">
+                                    {t('no_driver_assigned') || 'No Driver Assigned'}
+                                </span>
                             </div>
                         </div>
                     );
                 }
-                return <span className="text-xs text-muted-foreground italic">{t('not_dispatched')}</span>;
+
+                return <span className="text-xs text-muted-foreground italic">{t('unassigned')}</span>;
             },
         },
         {

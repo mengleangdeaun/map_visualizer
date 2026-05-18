@@ -2,6 +2,7 @@
 
 namespace App\Models\System;
 
+use App\Traits\HasAuditFields;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -10,7 +11,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class Company extends Model
 {
-    use HasFactory, HasUlids;
+    use HasFactory, HasUlids, HasAuditFields;
     
     protected $appends = ['logo_full_url'];
 
@@ -22,6 +23,8 @@ class Company extends Model
         'logo_url',
         'status',
         'telegram_user_id',
+        'created_by',
+        'updated_by',
     ];
 
     /**
@@ -41,5 +44,13 @@ class Company extends Model
     public function users()
     {
         return $this->hasMany(\App\Models\User\User::class);
+    }
+
+    /**
+     * Get the telegram settings for the company.
+     */
+    public function telegramSettings()
+    {
+        return $this->hasOne(CompanyTelegramSettings::class);
     }
 }

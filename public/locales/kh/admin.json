@@ -1,0 +1,12 @@
+{
+    "assign_driver": "ចាត់តាំងអ្នកបើកបរ",
+    "select_driver": "ជ្រើសរើសអ្នកបើកបរ",
+    "no_driver_assigned": "មិនទាន់មានអ្នកបើកបរ",
+    "assigned_driver_vehicle": "អ្នកទទួលភារកិច្ច",
+    "priority": "កម្រិតអាទិភាព",
+    "priority_low": "ទាប",
+    "priority_normal": "ធម្មតា",
+    "priority_high": "ខ្ពស់",
+    "priority_urgent": "បន្ទាន់",
+    "field_required": "សូមបំពេញចន្លោះនេះ"
+}

@@ -19,7 +19,7 @@ class CompanyController extends Controller
         $perPage = $request->input('per_page', 10);
         $search = $request->input('search');
 
-        $query = Company::query();
+        $query = Company::query()->with('telegramSettings');
 
         if ($search) {
             $query->where(function($q) use ($search) {

@@ -5,13 +5,14 @@ namespace App\Models\Driver;
 use App\Models\Fleet\Vehicle;
 use App\Models\System\Company;
 use App\Models\User\User;
+use App\Traits\HasAuditFields;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Task extends Model
 {
-    use HasFactory, HasUlids;
+    use HasFactory, HasUlids, HasAuditFields;
 
     protected $fillable = [
         'company_id',
@@ -28,6 +29,9 @@ class Task extends Model
         'dropoff_address',
         'scheduled_at',
         'completed_at',
+        'priority',
+        'created_by',
+        'updated_by',
     ];
 
     protected $casts = [

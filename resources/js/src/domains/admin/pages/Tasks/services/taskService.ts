@@ -20,6 +20,7 @@ export interface Task {
     dropoff_address: string | null;
     scheduled_at: string | null;
     completed_at: string | null;
+    priority?: 'low' | 'normal' | 'high' | 'urgent';
     created_at: string;
     updated_at: string;
     vehicle?: { plate_number: string };
