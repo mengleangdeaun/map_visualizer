@@ -1,0 +1,45 @@
+{
+  "active_route": "活跃路线",
+  "route_progress": "路线进度",
+  "expected_cod": "预估代收货款总计",
+  "select_stop": "选择停靠点",
+  "stops_completed": "个停靠点已完成",
+  "pending": "等待中",
+  "arrived": "已到达",
+  "completed": "已完成",
+  "skipped": "已跳过",
+  "failed": "已失败",
+  
+  "customer_details": "客户详情",
+  "delivery_address": "送货地址",
+  "client_phone": "客户电话",
+  "items_to_deliver": "待送达商品",
+  "parcel_weight": "包裹重量",
+  
+  "slide_to_arrive": "滑动以确认到达",
+  "complete_stop": "完成送达确认",
+  "report_issue": "报告停靠点异常",
+  
+  "cod_due": "应收代收货款",
+  "upload_photo": "上传照片凭证",
+  "notes": "司机备注信息",
+  "submit_success": "确认送达成功",
+  
+  "issue_reason": "选择异常原因",
+  "reason_unreachable": "无法联系客户",
+  "reason_address": "未找到地址 / 地址错误",
+  "reason_refused_payment": "拒付代收货款",
+  "reason_refused_delivery": "拒收货物 / 已取消",
+  "reason_damaged": "包裹破损",
+  "reason_other": "其他问题",
+  "submit_issue": "记录停靠点异常",
+  
+  "live_map": "实时地图",
+  "toggle_view": "切换视图",
+  "deliveries": "送货任务",
+  "tasks": "跑腿 / 内部任务",
+  "road_alerts": "实时路况警告",
+  "hazard_title": "路段封锁警告",
+  "hazard_dispatched": "发布于",
+  "hazard_by": "由调度中心"
+}

@@ -12,7 +12,7 @@ i18n
         fallbackLng: themeConfig.locale || 'en',
         debug: false,
         load: 'languageOnly',
-        ns: ['translation', 'sidebar', 'system', 'admin', 'driver'],
+        ns: ['translation', 'sidebar', 'system', 'admin', 'driver', 'delivery'],
         defaultNS: 'translation'
     });
 

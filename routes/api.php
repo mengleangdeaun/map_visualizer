@@ -50,6 +50,10 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::patch('vehicles/active/location', [\App\Http\Controllers\Api\Admin\Fleet\VehicleController::class, 'updateActiveLocation']);
             Route::patch('vehicles/{vehicle}/location', [\App\Http\Controllers\Api\Admin\Fleet\VehicleController::class, 'updateLocation']);
         });
+
+        // Geospatial road alerts
+        Route::post('road-alerts', [\App\Http\Controllers\Api\Admin\Delivery\RoadAlertController::class, 'store']);
+        Route::get('road-alerts', [\App\Http\Controllers\Api\Admin\Delivery\RoadAlertController::class, 'index']);
     });
 
     // Driver Domain
@@ -77,5 +81,17 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('profile/password', [\App\Http\Controllers\Api\Driver\Profile\ProfileController::class, 'changePassword']);
         Route::post('profile/push-subscription', [\App\Http\Controllers\Api\Driver\Profile\ProfileController::class, 'savePushSubscription']);
         Route::delete('profile/push-subscription', [\App\Http\Controllers\Api\Driver\Profile\ProfileController::class, 'deletePushSubscription']);
+
+        // Multi-Stop Delivery Routes
+        Route::prefix('route')->group(function () {
+            Route::get('active', [\App\Http\Controllers\Api\Driver\Delivery\RouteController::class, 'getActiveRoute']);
+            Route::post('stops/{id}/arrive', [\App\Http\Controllers\Api\Driver\Delivery\RouteController::class, 'arrive']);
+            Route::post('stops/{id}/complete', [\App\Http\Controllers\Api\Driver\Delivery\RouteController::class, 'complete']);
+            Route::post('stops/{id}/fail', [\App\Http\Controllers\Api\Driver\Delivery\RouteController::class, 'fail']);
+        });
+
+        // Active Road alerts for Driver Map
+        Route::get('road-alerts', [\App\Http\Controllers\Api\Driver\Delivery\RouteController::class, 'getRoadAlerts']);
+        Route::post('road-alerts', [\App\Http\Controllers\Api\Admin\Delivery\RoadAlertController::class, 'store']);
     });
 });

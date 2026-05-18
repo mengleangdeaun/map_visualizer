@@ -23,3 +23,10 @@ Broadcast::channel('fleet.{id}', function ($user, $id) {
     }
     return (string) $user->company_id === (string) $id;
 });
+
+Broadcast::channel('company.{id}', function ($user, $id) {
+    if ($user->role === 'super_admin' || $user->role === 'system_staff') {
+        return true;
+    }
+    return (string) $user->company_id === (string) $id;
+});

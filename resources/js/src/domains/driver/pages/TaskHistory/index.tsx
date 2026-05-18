@@ -26,12 +26,12 @@ const TaskHistoryPage = () => {
     // Bottom Sheet filter state
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [tempDate, setTempDate] = useState('');
-    const [tempPriority, setTempPriority] = useState<'all' | 'low' | 'medium' | 'high'>('all');
+    const [tempPriority, setTempPriority] = useState<'all' | 'low' | 'normal' | 'high' | 'urgent'>('all');
     const [tempStatus, setTempStatus] = useState<'all' | 'completed' | 'cancelled'>('all');
     
     // Active filter state
     const [filterDate, setFilterDate] = useState('');
-    const [filterPriority, setFilterPriority] = useState<'all' | 'low' | 'medium' | 'high'>('all');
+    const [filterPriority, setFilterPriority] = useState<'all' | 'low' | 'normal' | 'high' | 'urgent'>('all');
     const [filterStatus, setFilterStatus] = useState<'all' | 'completed' | 'cancelled'>('all');
 
     // Fetch Completed/Cancelled tasks matching active filters
@@ -105,13 +105,16 @@ const TaskHistoryPage = () => {
     // Color badges helper
     const getPriorityStyles = (priority: string) => {
         switch (priority?.toLowerCase()) {
+            case 'urgent':
+                return 'bg-rose-500/10 text-rose-600 border-rose-500/20';
             case 'high':
                 return 'bg-rose-500/10 text-rose-600 border-rose-500/20';
-            case 'medium':
+            case 'normal':
                 return 'bg-amber-500/10 text-amber-600 border-amber-500/20';
             case 'low':
-            default:
                 return 'bg-sky-500/10 text-sky-600 border-sky-500/20';
+            default:
+                return 'bg-gray-500/10 text-gray-600 border-gray-500/20';
         }
     };
 
@@ -221,7 +224,7 @@ const TaskHistoryPage = () => {
                                                 <div className="flex items-center gap-1.5 shrink-0">
                                                     <span className={cn(
                                                         "text-[8px] font-black uppercase tracking-widest px-2 py-0.5 border rounded-full",
-                                                        getPriorityStyles(task.priority)
+                                                        getPriorityStyles(task.priority || 'LOW')
                                                     )}>
                                                         {task.priority || 'LOW'}
                                                     </span>
@@ -335,12 +338,13 @@ const TaskHistoryPage = () => {
                         <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">
                             {t('driver:filter_by_priority') || 'Filter by Priority'}
                         </label>
-                        <div className="grid grid-cols-4 gap-2 bg-muted/30 p-1 rounded-xl">
+                        <div className="grid grid-cols-5 gap-1 bg-muted/30 p-1 rounded-xl">
                             {([
                                 { code: 'all', label: t('driver:all') || 'All' },
                                 { code: 'low', label: t('driver:priority_low') || 'Low' },
-                                { code: 'medium', label: t('driver:priority_medium') || 'Med' },
-                                { code: 'high', label: t('driver:priority_high') || 'High' }
+                                { code: 'normal', label: t('driver:priority_normal') || 'Normal' },
+                                { code: 'high', label: t('driver:priority_high') || 'High' },
+                                { code: 'urgent', label: t('driver:priority_urgent') || 'Urgent' }
                             ] as const).map((prio) => (
                                 <button
                                     key={prio.code}

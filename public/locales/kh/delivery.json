@@ -1,0 +1,45 @@
+{
+  "active_route": "ផ្លូវដឹកជញ្ជូនសកម្ម",
+  "route_progress": "វឌ្ឍនភាពផ្លូវដឹក",
+  "expected_cod": "សរុបប្រាក់ COD រំពឹងទុក",
+  "select_stop": "ជ្រើសរើសចំណត",
+  "stops_completed": "ចំណតត្រូវបានបញ្ចប់",
+  "pending": "កំពុងរង់ចាំ",
+  "arrived": "បានមកដល់",
+  "completed": "បានបញ្ចប់",
+  "skipped": "បានរំលង",
+  "failed": "បានបរាជ័យ",
+  
+  "customer_details": "ព័ត៌មានលម្អិតអតិថិជន",
+  "delivery_address": "អាសយដ្ឋានដឹកជញ្ជូន",
+  "client_phone": "លេខទូរស័ព្ទអតិថិជន",
+  "items_to_deliver": "ទំនិញត្រូវដឹកជញ្ជូន",
+  "parcel_weight": "ទម្ងន់កញ្ចប់",
+  
+  "slide_to_arrive": "អូសដើម្បីបញ្ជាក់ការមកដល់",
+  "complete_stop": "បញ្ចប់ការដឹកជញ្ជូន",
+  "report_issue": "រាយការណ៍បញ្ហាចំណត",
+  
+  "cod_due": "ចំនួនប្រាក់ COD ត្រូវប្រមូល",
+  "upload_photo": "ផ្ទុកឡើងរូបថតភស្តុតាង",
+  "notes": "កំណត់ចំណាំរបស់អ្នកបើកបរ",
+  "submit_success": "បញ្ជាក់ការដឹកជញ្ជូនជោគជ័យ",
+  
+  "issue_reason": "ជ្រើសរើសមូលហេតុនៃបញ្ហា",
+  "reason_unreachable": "មិនអាចទាក់ទងអតិថិជនបាន",
+  "reason_address": "រកមិនឃើញអាសយដ្ឋាន / អាសយដ្ឋានខុស",
+  "reason_refused_payment": "បដិសេធការបង់ប្រាក់ COD",
+  "reason_refused_delivery": "បដិសេធមិនទទួលយកទំនិញ",
+  "reason_damaged": "កញ្ចប់ទំនិញមានការខូចខាត",
+  "reason_other": "បញ្ហាផ្សេងៗ",
+  "submit_issue": "កត់ត្រាបញ្ហាចំណត",
+  
+  "live_map": "ផែនទីផ្ទាល់",
+  "toggle_view": "ប្តូរទិដ្ឋភាព",
+  "deliveries": "ការដឹកជញ្ជូន",
+  "tasks": "កិច្ចការ",
+  "road_alerts": "ការជូនដំណឹងផ្លូវថ្នល់",
+  "hazard_title": "ការជូនដំណឹងផ្លូវបិទ / គ្រោះថ្នាក់",
+  "hazard_dispatched": "បញ្ជូនចេញ",
+  "hazard_by": "ដោយមជ្ឈមណ្ឌល"
+}

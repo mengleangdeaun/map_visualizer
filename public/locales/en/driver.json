@@ -31,8 +31,9 @@
     "all": "All",
     "filter_by_priority": "Filter by Priority",
     "priority_low": "Low",
-    "priority_medium": "Medium",
+    "priority_normal": "Normal",
     "priority_high": "High",
+    "priority_urgent": "Urgent",
     "close": "Close",
     "apply_filters": "Apply Filters",
     

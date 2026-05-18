@@ -106,11 +106,11 @@ export const PwaToast = () => {
 
                     {/* Content Texts */}
                     <div className="flex flex-col gap-0.5 min-w-0">
-                        <span className="text-xs font-black tracking-tight text-foreground leading-normal">
+                        <span className="text-xs font-semibold tracking-tight text-foreground leading-normal">
                             {activeToast.message}
                         </span>
                         {activeToast.description && (
-                            <span className="text-[10px] font-bold text-muted-foreground leading-normal">
+                            <span className="text-[10px] font-medium text-muted-foreground leading-normal">
                                 {activeToast.description}
                             </span>
                         )}

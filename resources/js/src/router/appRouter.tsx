@@ -68,6 +68,13 @@ const driverNotificationsRoute = createRoute({ getParentRoute: () => driverLayou
 const driverProfileRoute = createRoute({ getParentRoute: () => driverLayoutRoute, path: 'driver/profile', component: lazyRouteComponent(() => import('../domains/driver/pages/Profile/index')) });
 const driverSettingsRoute = createRoute({ getParentRoute: () => driverLayoutRoute, path: 'driver/settings', component: lazyRouteComponent(() => import('../domains/driver/pages/Settings/index')) });
 const driverTaskHistoryRoute = createRoute({ getParentRoute: () => driverLayoutRoute, path: 'driver/task-history', component: lazyRouteComponent(() => import('../domains/driver/pages/TaskHistory/index')) });
+
+// Multi-Stop Delivery & Map Routes
+const driverMapRoute = createRoute({ getParentRoute: () => driverLayoutRoute, path: 'driver/map', component: lazyRouteComponent(() => import('../domains/driver/pages/Map/index')) });
+const driverRouteFeedRoute = createRoute({ getParentRoute: () => driverLayoutRoute, path: 'driver/route', component: lazyRouteComponent(() => import('../domains/driver/pages/RouteFeed/index')) });
+const driverStopDetailsRoute = createRoute({ getParentRoute: () => driverLayoutRoute, path: 'driver/route/stop/$id', component: lazyRouteComponent(() => import('../domains/driver/pages/StopDetails/index')) });
+const driverPODRoute = createRoute({ getParentRoute: () => driverLayoutRoute, path: 'driver/route/stop/$id/pod', component: lazyRouteComponent(() => import('../domains/driver/pages/PODForm/index')) });
+
 const landingPageRoute = createRoute({ getParentRoute: () => rootRoute, path: '/', component: lazyRouteComponent(() => import('../domains/system/pages/Landing/index')) });
 const adminVehiclesRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'admin/fleet/vehicles', component: lazyRouteComponent(() => import('../domains/admin/pages/Vehicle/index')) });
 const adminHubsRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'admin/fleet/hubs', component: lazyRouteComponent(() => import('../domains/admin/pages/Hub/index')) });
@@ -119,6 +126,10 @@ const routeTree = rootRoute.addChildren([
         driverProfileRoute,
         driverSettingsRoute,
         driverTaskHistoryRoute,
+        driverMapRoute,
+        driverRouteFeedRoute,
+        driverStopDetailsRoute,
+        driverPODRoute,
     ]),
 ]);
 
