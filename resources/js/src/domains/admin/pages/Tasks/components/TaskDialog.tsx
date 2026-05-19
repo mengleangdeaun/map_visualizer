@@ -352,7 +352,7 @@ const TaskDialog = ({ open, onOpenChange, task, initialValues }: TaskDialogProps
                                                 <Input
                                                     value={field.state.value || ''}
                                                     onChange={(e) => field.handleChange(e.target.value)}
-                                                    placeholder="e.g. John Doe"
+                                                    placeholder="e.g. Sok Sabay"
                                                     className="bg-background"
                                                 />
                                             </div>
