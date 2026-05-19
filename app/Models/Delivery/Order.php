@@ -16,19 +16,43 @@ class Order extends Model
         'company_id',
         'customer_id',
         'order_number',
-        'status', // pending, paid, completed, cancelled
+        'order_date',
+        'status',
         'currency_code',
-        'exchange_rate_snap',
-        'total_amount',
+        'exchange_rate',
+        'subtotal',
+        'subtotal_khr',
+        'taxable_amount',
+        'tax_percent',
+        'tax_total',
+        'discount_type',
+        'discount_value',
+        'discount_total',
+        'grand_total',
+        'grand_total_khr',
+        'paid_amount',
+        'balance_amount',
+        'payment_status',
         'amount_due_cod',
-        'payment_method', // cash, khqr, postpaid
+        'payment_method',
         'created_by',
         'updated_by',
     ];
 
     protected $casts = [
-        'exchange_rate_snap' => 'decimal:6',
-        'total_amount' => 'decimal:2',
+        'order_date' => 'datetime',
+        'exchange_rate' => 'decimal:6',
+        'subtotal' => 'decimal:2',
+        'subtotal_khr' => 'decimal:2',
+        'taxable_amount' => 'decimal:2',
+        'tax_percent' => 'decimal:2',
+        'tax_total' => 'decimal:2',
+        'discount_value' => 'decimal:2',
+        'discount_total' => 'decimal:2',
+        'grand_total' => 'decimal:2',
+        'grand_total_khr' => 'decimal:2',
+        'paid_amount' => 'decimal:2',
+        'balance_amount' => 'decimal:2',
         'amount_due_cod' => 'decimal:2',
     ];
 
@@ -45,5 +69,10 @@ class Order extends Model
     public function delivery()
     {
         return $this->hasOne(Delivery::class, 'order_id');
+    }
+
+    public function deliveries()
+    {
+        return $this->hasMany(Delivery::class, 'order_id');
     }
 }

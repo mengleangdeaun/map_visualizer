@@ -2,8 +2,8 @@
 
 namespace App\Models\Delivery;
 
-use App\Models\User\User;
 use App\Models\Fleet\Location;
+use App\Models\User\User;
 use App\Traits\HasAuditFields;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -18,16 +18,25 @@ class Route extends Model
         'driver_id',
         'hub_id',
         'date',
-        'status', // draft, optimized, in_progress, completed
-        'cash_to_remit',
+        'status',
+        'notes',
+        'total_weight_kg',
+        'stop_count',
+        'estimated_distance_km',
+        'estimated_duration_min',
         'created_by',
         'updated_by',
     ];
 
     protected $casts = [
-        'date' => 'date',
-        'cash_to_remit' => 'decimal:2',
+        'date'                   => 'date',
+        'total_weight_kg'        => 'decimal:2',
+        'estimated_distance_km'  => 'decimal:2',
+        'estimated_duration_min' => 'integer',
+        'stop_count'             => 'integer',
     ];
+
+    // ── Relationships ──────────────────────────────────────────────────────────
 
     public function driver()
     {
@@ -49,10 +58,10 @@ class Route extends Model
         return $this->hasManyThrough(
             Delivery::class,
             RouteStop::class,
-            'route_id',      // Foreign key on RouteStop table
-            'id',            // Foreign key on Delivery table
-            'id',            // Local key on Route table
-            'delivery_id'    // Local key on RouteStop table
+            'route_id',
+            'id',
+            'id',
+            'delivery_id'
         );
     }
 }

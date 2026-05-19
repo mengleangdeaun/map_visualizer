@@ -55,14 +55,15 @@ const companySearchSchema = z.object({ page: z.number().catch(1), per_page: z.nu
 const systemDashboardRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'system', component: lazyRouteComponent(() => import('../domains/system/pages/Dashboard/index')) });
 const systemCompaniesRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'system/companies', validateSearch: (search) => companySearchSchema.parse(search), component: lazyRouteComponent(() => import('../domains/system/pages/Company/index')) });
 const systemUsersRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'system/users', component: lazyRouteComponent(() => import('../domains/system/pages/User/index')) });
-const systemSettingsRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'system/settings', component: ComingSoon });
-const systemExchangeRatesRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'system/exchange-rates', component: lazyRouteComponent(() => import('../domains/system/pages/ExchangeRate/index')) });
+const systemSettingsRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'system/settings', component: lazyRouteComponent(() => import('../domains/system/pages/Settings/index')) });
+const systemExchangeRatesRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'system/exchange-rates', component: lazyRouteComponent(() => import('../domains/system/pages/Settings/index')) });
 const systemHubsRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'system/hubs', component: lazyRouteComponent(() => import('../domains/system/pages/Location/index')) });
 const systemStaffRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'system/staff', component: lazyRouteComponent(() => import('../domains/system/pages/PlatformStaff/index')) });
 const systemTelegramBotRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'system/telegram-bot', component: lazyRouteComponent(() => import('../domains/system/pages/TelegramBot/index')) });
 
 const adminDashboardRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'admin', component: lazyRouteComponent(() => import('../domains/admin/pages/Index')) });
 const driverDashboardRoute = createRoute({ getParentRoute: () => driverLayoutRoute, path: 'driver', component: lazyRouteComponent(() => import('../domains/driver/pages/Dashboard/index')) });
+const driverDeliveriesRoute = createRoute({ getParentRoute: () => driverLayoutRoute, path: 'driver/deliveries', component: lazyRouteComponent(() => import('../domains/driver/pages/Delivery/index')) });
 const driverTasksRoute = createRoute({ getParentRoute: () => driverLayoutRoute, path: 'driver/tasks', component: lazyRouteComponent(() => import('../domains/driver/pages/Tasks/index')) });
 const driverNotificationsRoute = createRoute({ getParentRoute: () => driverLayoutRoute, path: 'driver/notifications', component: lazyRouteComponent(() => import('../domains/driver/pages/Notification/index')) });
 const driverProfileRoute = createRoute({ getParentRoute: () => driverLayoutRoute, path: 'driver/profile', component: lazyRouteComponent(() => import('../domains/driver/pages/Profile/index')) });
@@ -81,6 +82,9 @@ const adminHubsRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path
 const adminMonitoringRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'admin/fleet/monitoring', component: lazyRouteComponent(() => import('../domains/admin/pages/Monitoring/index')) });
 const adminCustomersRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'admin/fleet/customers', component: lazyRouteComponent(() => import('../domains/admin/pages/Customer/index')) });
 const adminTasksRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'admin/fleet/tasks', component: lazyRouteComponent(() => import('../domains/admin/pages/Tasks/index')) });
+const adminUsersRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'admin/fleet/users', component: lazyRouteComponent(() => import('../domains/admin/pages/User/index')) });
+const adminDeliveriesRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'admin/fleet/deliveries', component: lazyRouteComponent(() => import('../domains/admin/pages/Delivery/index')) });
+const adminDispatchRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'admin/fleet/dispatch', component: lazyRouteComponent(() => import('../domains/admin/pages/Dispatch/index')) });
 const systemDemoStaticRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'system/demomap/static', component: lazyRouteComponent(() => import('../domains/system/pages/DemoMap/StaticMap/StaticMap')) });
 const systemDemoInteractiveRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'system/demomap/interactive', component: lazyRouteComponent(() => import('../domains/system/pages/DemoMap/InteractiveMap/InteractiveMap')) });
 const systemDemoMarkerRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'system/demomap/marker', component: lazyRouteComponent(() => import('../domains/system/pages/DemoMap/MapMarker/MapMarker')) });
@@ -107,6 +111,9 @@ const routeTree = rootRoute.addChildren([
         adminMonitoringRoute,
         adminCustomersRoute,
         adminTasksRoute,
+        adminUsersRoute,
+        adminDeliveriesRoute,
+        adminDispatchRoute,
         systemDemoStaticRoute,
         systemDemoInteractiveRoute,
         systemDemoMarkerRoute,
@@ -121,6 +128,7 @@ const routeTree = rootRoute.addChildren([
     landingPageRoute,
     driverLayoutRoute.addChildren([
         driverDashboardRoute,
+        driverDeliveriesRoute,
         driverTasksRoute,
         driverNotificationsRoute,
         driverProfileRoute,

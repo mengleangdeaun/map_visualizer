@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from '@tanstack/react-router';
-import { Home, ListChecks, Map as MapIcon, User, Bell } from 'lucide-react';
+import { Home, ListChecks, Map as MapIcon, User, Bell, Truck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useDriverNotifications } from '../../hooks/useDriverNotifications';
 
@@ -15,7 +15,7 @@ export const BottomNav = () => {
 
     const navItems = [
         { id: 'home', label: 'Home', icon: Home, path: '/driver' },
-        { id: 'tasks', label: 'Tasks', icon: ListChecks, path: '/driver/tasks' },
+        { id: 'deliveries', label: 'Deliveries', icon: Truck, path: '/driver/deliveries' },
         { id: 'map', label: 'Live Map', icon: MapIcon, path: '/driver/map' },
         { id: 'notifications', label: 'Alerts', icon: Bell, path: '/driver/notifications', badge: unreadCount },
         { id: 'profile', label: 'Profile', icon: User, path: '/driver/profile' },

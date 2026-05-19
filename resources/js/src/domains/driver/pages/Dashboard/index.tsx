@@ -113,7 +113,7 @@ const DriverDashboard = () => {
                     <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
                         {t('upcoming_deliveries') || "Upcoming Deliveries"}
                     </span>
-                    <Link to="/driver/tasks" className="text-[10px] font-bold text-primary hover:underline uppercase">
+                    <Link to="/driver/deliveries" className="text-[10px] font-bold text-primary hover:underline uppercase">
                         {t('view_all') || "View All"}
                     </Link>
                 </div>
@@ -126,7 +126,7 @@ const DriverDashboard = () => {
                         </span>
                     </Card>
                 ) : (
-                    <Link to="/driver/tasks">
+                    <Link to="/driver/deliveries">
                         <Card className="p-4 bg-primary/5 border-primary/20 hover:bg-primary/10 transition-colors flex items-center justify-between gap-4">
                             <div className="flex items-center gap-3">
                                 <div className="size-10 rounded-full bg-primary/20 flex items-center justify-center text-primary">

@@ -12,6 +12,8 @@ export interface Company {
     telegram_user_id: string | null;
     telegram_settings?: any | null;
     telegramSettings?: any | null;
+    exchange_rate_mode: 'global' | 'override';
+    exchange_rate_override_value: number | null;
     created_at: string;
     updated_at: string;
 }

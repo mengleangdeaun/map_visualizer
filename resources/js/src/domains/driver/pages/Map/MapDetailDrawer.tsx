@@ -88,24 +88,49 @@ export const MapDetailDrawer: React.FC<MapDetailDrawerProps> = ({
                             </div>
                         </div>
 
-                        <div className="flex gap-2">
-                            <Button 
-                                onClick={() => navigate({ to: '/driver/route/stop/$id', params: { id: String(selectedItem.id) } })}
-                                className="flex-1 h-10 rounded-xl flex items-center justify-center gap-2 font-bold transition-all"
-                            >
-                                <Navigation size={16} />
-                                <span>{t('delivery:select_stop')}</span>
-                            </Button>
+                        <div className="flex flex-col gap-2">
+                            {selectedItem.status !== 'completed' && selectedItem.status !== 'skipped' && (
+                                <>
+                                    {hasRoutesPlanned ? (
+                                        <Button 
+                                            onClick={() => onStartTaskNavigation?.(selectedItem)}
+                                            disabled={isTaskInProgress}
+                                            className="w-full h-10 rounded-xl flex items-center justify-center gap-2 font-bold bg-emerald-500 hover:bg-emerald-600 text-white transition-all shadow-lg shadow-emerald-500/10 active:scale-[0.98]"
+                                        >
+                                            <Navigation size={16} className="animate-pulse" />
+                                            <span>{isTaskInProgress ? "Starting Navigation..." : "Start Delivery Route"}</span>
+                                        </Button>
+                                    ) : (
+                                        <Button 
+                                            onClick={() => onSelectTaskRoute?.(selectedItem)}
+                                            className="w-full h-10 rounded-xl flex items-center justify-center gap-2 font-bold bg-primary hover:bg-primary/90 text-white transition-all shadow-lg shadow-primary/10 active:scale-[0.98]"
+                                        >
+                                            <Compass size={16} />
+                                            <span>Select Custom Route</span>
+                                        </Button>
+                                    )}
+                                </>
+                            )}
                             
-                            <a 
-                                href={`https://www.google.com/maps/dir/?api=1&destination=${selectedItem.delivery.lat},${selectedItem.delivery.lng}&travelmode=driving`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="h-10 px-4 rounded-xl bg-muted/50 border border-border/50 text-foreground flex items-center justify-center gap-2 font-bold hover:bg-muted active:scale-95 transition-all text-xs"
-                            >
-                                <MapPin size={16} className="text-green-500" />
-                                <span>Navigate</span>
-                            </a>
+                            <div className="flex gap-2">
+                                <Button 
+                                    onClick={() => navigate({ to: '/driver/route/stop/$id', params: { id: String(selectedItem.id) } })}
+                                    className="flex-1 h-10 rounded-xl flex items-center justify-center gap-2 font-bold transition-all bg-muted border border-border/50 text-foreground hover:bg-muted/80"
+                                >
+                                    <Navigation size={16} />
+                                    <span>{t('delivery:select_stop')}</span>
+                                </Button>
+                                
+                                <a 
+                                    href={`https://www.google.com/maps/dir/?api=1&destination=${selectedItem.delivery.lat},${selectedItem.delivery.lng}&travelmode=driving`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="h-10 px-4 rounded-xl bg-muted/50 border border-border/50 text-foreground flex items-center justify-center gap-2 font-bold hover:bg-muted active:scale-95 transition-all text-xs"
+                                >
+                                    <MapPin size={16} className="text-green-500" />
+                                    <span>Google Maps</span>
+                                </a>
+                            </div>
                         </div>
                     </div>
                 )}

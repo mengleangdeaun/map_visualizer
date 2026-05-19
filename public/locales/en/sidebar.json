@@ -23,5 +23,8 @@
     "fleet": "Fleet",
     "monitoring": "Monitoring",
     "vehicles": "Vehicles",
-    "hubs": "Hubs"
+    "hubs": "Hubs",
+    "users": "Users & Drivers",
+    "customers": "Customers",
+    "deliveries": "Deliveries"
 }

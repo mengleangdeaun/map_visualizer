@@ -34,6 +34,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('companies/{company}/telegram-settings', [\App\Http\Controllers\Api\System\TelegramSettingController::class, 'update']);
         Route::post('companies/{company}/telegram-settings/test-bot', [\App\Http\Controllers\Api\System\TelegramSettingController::class, 'testBot']);
         Route::post('companies/{company}/telegram-settings/test-message', [\App\Http\Controllers\Api\System\TelegramSettingController::class, 'testMessage']);
+
+        Route::get('settings', [\App\Http\Controllers\Api\System\SystemSettingController::class, 'index']);
+        Route::put('settings', [\App\Http\Controllers\Api\System\SystemSettingController::class, 'update']);
+        Route::post('settings/sync', [\App\Http\Controllers\Api\System\SystemSettingController::class, 'sync']);
     });
 
     // Fleet Domain
@@ -44,11 +48,20 @@ Route::middleware('auth:sanctum')->group(function () {
     // Admin Domain (Company Admin / Dispatcher)
     Route::prefix('admin')->group(function () {
         Route::prefix('fleet')->group(function () {
+            Route::apiResource('users', \App\Http\Controllers\Api\Admin\Fleet\UserController::class);
             Route::apiResource('vehicles', \App\Http\Controllers\Api\Admin\Fleet\VehicleController::class);
             Route::apiResource('tasks', \App\Http\Controllers\Api\Admin\Fleet\TaskController::class);
             Route::apiResource('customers', \App\Http\Controllers\Api\Admin\Customer\CustomerController::class);
+            Route::apiResource('deliveries', \App\Http\Controllers\Api\Admin\Delivery\DeliveryController::class);
             Route::patch('vehicles/active/location', [\App\Http\Controllers\Api\Admin\Fleet\VehicleController::class, 'updateActiveLocation']);
             Route::patch('vehicles/{vehicle}/location', [\App\Http\Controllers\Api\Admin\Fleet\VehicleController::class, 'updateLocation']);
+
+            // Route management
+            Route::apiResource('routes', \App\Http\Controllers\Api\Admin\Delivery\RouteController::class);
+            Route::post('routes/{route}/stops', [\App\Http\Controllers\Api\Admin\Delivery\RouteController::class, 'addStops']);
+            Route::delete('routes/{route}/stops/{stop}', [\App\Http\Controllers\Api\Admin\Delivery\RouteController::class, 'removeStop']);
+            Route::put('routes/{route}/reorder', [\App\Http\Controllers\Api\Admin\Delivery\RouteController::class, 'reorder']);
+            Route::post('routes/{route}/optimize', [\App\Http\Controllers\Api\Admin\Delivery\RouteController::class, 'optimize']);
         });
 
         // Geospatial road alerts

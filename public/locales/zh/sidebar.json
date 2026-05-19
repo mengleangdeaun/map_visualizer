@@ -12,5 +12,8 @@
     "map_marker": "地图标记",
     "delivery_tracking": "送货追踪",
     "available_driver": "可用司机",
-    "realtime_tracking": "实时追踪"
+    "realtime_tracking": "实时追踪",
+    "users": "用户与司机",
+    "customers": "客户",
+    "deliveries": "运单/交付"
 }

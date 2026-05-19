@@ -9,6 +9,7 @@ interface ActiveNavigationOverlayProps {
     onArriveAtPickup: () => void;
     onCompleteTask: (taskId: string) => void;
     onStop: () => void;
+    onArriveAtDeliveryStop?: (stopId: string) => void;
 }
 
 export const ActiveNavigationOverlay: React.FC<ActiveNavigationOverlayProps> = ({
@@ -18,11 +19,21 @@ export const ActiveNavigationOverlay: React.FC<ActiveNavigationOverlayProps> = (
     isPending,
     onArriveAtPickup,
     onCompleteTask,
-    onStop
+    onStop,
+    onArriveAtDeliveryStop
 }) => {
     const [isCollapsed, setIsCollapsed] = useState(false);
 
     if (!task || !route) return null;
+
+    const isDelivery = !!task.delivery;
+    const title = isDelivery 
+        ? `Stop #${task.sequence_number}: ${task.delivery.order.customer.name}` 
+        : task.title;
+
+    const subtitle = isDelivery
+        ? `Delivery drop-off • ${(route.distance / 1000).toFixed(2)} km remaining`
+        : `${leg === 'pickup' && task.pickup_lat ? "Leg 1: To Pickup" : "Leg 2: To Drop-off"} • ${(route.distance / 1000).toFixed(2)} km remaining`;
 
     return (
         <div className="absolute top-4 left-4 right-4 z-30 max-w-sm mx-auto bg-card/95 backdrop-blur-md border border-emerald-500/25 rounded-2xl p-3 shadow-xl transition-all duration-300 pointer-events-auto">
@@ -39,7 +50,7 @@ export const ActiveNavigationOverlay: React.FC<ActiveNavigationOverlayProps> = (
                             <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                         </span>
                         <span className="font-bold text-xs text-foreground truncate uppercase tracking-wider">
-                            {task.title}
+                            {title}
                         </span>
                     </div>
 
@@ -99,11 +110,10 @@ export const ActiveNavigationOverlay: React.FC<ActiveNavigationOverlayProps> = (
                     <div className="flex items-center justify-between gap-3 bg-muted/20 p-3.5 rounded-xl border border-border/30">
                         <div className="flex flex-col min-w-0">
                             <span className="font-bold text-sm text-foreground truncate">
-                                {task.title}
+                                {title}
                             </span>
                             <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mt-0.5">
-                                {leg === 'pickup' && task.pickup_lat ? "Leg 1: To Pickup • " : "Leg 2: To Drop-off • "}
-                                {(route.distance / 1000).toFixed(2)} km remaining
+                                {subtitle}
                             </span>
                         </div>
                         <div className="text-right shrink-0">
@@ -116,30 +126,55 @@ export const ActiveNavigationOverlay: React.FC<ActiveNavigationOverlayProps> = (
                         </div>
                     </div>
 
-                    {leg === 'pickup' && task.pickup_lat ? (
-                        <button
-                            onClick={onArriveAtPickup}
-                            disabled={isPending}
-                            className="w-full h-10 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-50 text-white font-semibold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all shadow-lg shadow-primary/10"
-                        >
-                            {isPending ? (
-                                <Loader2 size={14} className="animate-spin" />
-                            ) : (
-                                <Target size={14} className="animate-pulse" />
-                            )}
-                            <span>{isPending ? "Arriving..." : "Arrived at Pickup"}</span>
-                        </button>
+                    {isDelivery ? (
+                        task.status === 'arrived' ? (
+                            <button
+                                onClick={() => onCompleteTask(task.id)}
+                                disabled={isPending}
+                                className="w-full h-10 rounded-xl bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all shadow-lg shadow-emerald-500/10"
+                            >
+                                <span>Complete Delivery Stop</span>
+                            </button>
+                        ) : (
+                            <button
+                                onClick={() => onArriveAtDeliveryStop?.(task.id)}
+                                disabled={isPending}
+                                className="w-full h-10 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-50 text-white font-semibold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all shadow-lg shadow-primary/10"
+                            >
+                                {isPending ? (
+                                    <Loader2 size={14} className="animate-spin" />
+                                ) : (
+                                    <Target size={14} className="animate-pulse" />
+                                )}
+                                <span>{isPending ? "Arriving..." : "Arrived at Stop"}</span>
+                            </button>
+                        )
                     ) : (
-                        <button
-                            onClick={() => onCompleteTask(task.id)}
-                            disabled={isPending}
-                            className="w-full h-10 rounded-xl bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all shadow-lg shadow-emerald-500/10"
-                        >
-                            {isPending ? (
-                                <Loader2 size={14} className="animate-spin" />
-                            ) : null}
-                            <span>{isPending ? "Completing..." : "Complete Errand"}</span>
-                        </button>
+                        leg === 'pickup' && task.pickup_lat ? (
+                            <button
+                                onClick={onArriveAtPickup}
+                                disabled={isPending}
+                                className="w-full h-10 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-50 text-white font-semibold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all shadow-lg shadow-primary/10"
+                            >
+                                {isPending ? (
+                                    <Loader2 size={14} className="animate-spin" />
+                                ) : (
+                                    <Target size={14} className="animate-pulse" />
+                                )}
+                                <span>{isPending ? "Arriving..." : "Arrived at Pickup"}</span>
+                            </button>
+                        ) : (
+                            <button
+                                onClick={() => onCompleteTask(task.id)}
+                                disabled={isPending}
+                                className="w-full h-10 rounded-xl bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all shadow-lg shadow-emerald-500/10"
+                            >
+                                {isPending ? (
+                                    <Loader2 size={14} className="animate-spin" />
+                                ) : null}
+                                <span>{isPending ? "Completing..." : "Complete Errand"}</span>
+                            </button>
+                        )
                     )}
                 </div>
             )}

@@ -23,14 +23,17 @@ class Delivery extends Model
         'status', // pending, at_hub, linehaul, out_for_delivery, delivered, failed
         'origin_hub_id',
         'current_hub_id',
-        'route_id',
         'driver_id',
+        'sequence_number',
+        'eta',
+        'route_status', // pending, arrived, completed, skipped
         'created_by',
         'updated_by',
     ];
 
     protected $casts = [
         'weight_kg' => 'decimal:2',
+        'eta' => 'datetime',
     ];
 
     public function order()
@@ -53,13 +56,15 @@ class Delivery extends Model
         return $this->belongsTo(Location::class, 'current_hub_id');
     }
 
-    public function route()
+    public function routeStops()
     {
-        return $this->belongsTo(Route::class, 'route_id');
+        return $this->hasMany(RouteStop::class, 'delivery_id');
     }
 
-    public function stop()
+    public function routes()
     {
-        return $this->hasOne(RouteStop::class, 'delivery_id');
+        return $this->belongsToMany(Route::class, 'route_stops', 'delivery_id', 'route_id')
+                    ->withPivot(['sequence_number', 'eta', 'status', 'leg_distance_km', 'leg_duration_min', 'leg_geometry'])
+                    ->withTimestamps();
     }
 }

@@ -13,5 +13,8 @@
     "map_marker": "សញ្ញាសម្គាល់ផែនទី",
     "delivery_tracking": "ការតាមដានការដឹកជញ្ជូន",
     "available_driver": "អ្នកបើកបរដែលមាន",
-    "realtime_tracking": "ការតាមដានពេលវេលាជាក់ស្តែង"
+    "realtime_tracking": "ការតាមដានពេលវេលាជាក់ស្តែង",
+    "users": "អ្នកប្រើប្រាស់ និង អ្នកបើកបរ",
+    "customers": "អតិថិជន",
+    "deliveries": "ការដឹកជញ្ជូន"
 }

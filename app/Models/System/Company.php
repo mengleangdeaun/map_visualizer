@@ -23,8 +23,14 @@ class Company extends Model
         'logo_url',
         'status',
         'telegram_user_id',
+        'exchange_rate_mode',
+        'exchange_rate_override_value',
         'created_by',
         'updated_by',
+    ];
+
+    protected $casts = [
+        'exchange_rate_override_value' => 'decimal:6',
     ];
 
     /**

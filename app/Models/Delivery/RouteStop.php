@@ -15,13 +15,26 @@ class RouteStop extends Model
         'delivery_id',
         'sequence_number',
         'eta',
-        'status', // pending, arrived, completed, skipped
+        'arrived_at',
+        'completed_at',
+        'status',
+        'notes',
+        'leg_distance_km',
+        'leg_duration_min',
+        'leg_geometry',
     ];
 
     protected $casts = [
-        'eta' => 'datetime',
-        'sequence_number' => 'integer',
+        'eta'              => 'datetime',
+        'arrived_at'       => 'datetime',
+        'completed_at'     => 'datetime',
+        'sequence_number'  => 'integer',
+        'leg_distance_km'  => 'decimal:2',
+        'leg_duration_min' => 'integer',
+        'leg_geometry'     => 'array',
     ];
+
+    // ── Relationships ──────────────────────────────────────────────────────────
 
     public function route()
     {

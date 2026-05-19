@@ -72,7 +72,7 @@ const ExchangeRateForm = ({ open, onOpenChange, exchangeRate }: ExchangeRateForm
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[425px] bg-card/95 backdrop-blur-xl border-border/50 shadow-2xl">
+            <DialogContent className=" bg-card/95 backdrop-blur-xl border-border/50 shadow-2xl">
                 <DialogHeader>
                     <DialogTitle className="text-xl font-bold text-primary">
                         {isEditing ? t('edit_exchange_rate') : t('add_new_exchange_rate')}

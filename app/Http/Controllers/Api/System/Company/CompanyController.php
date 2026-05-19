@@ -47,6 +47,8 @@ class CompanyController extends Controller
             'logo_url' => 'nullable|string|max:2048',
             'status' => 'nullable|string|in:active,inactive,suspended',
             'telegram_user_id' => 'nullable|string|max:255',
+            'exchange_rate_mode' => 'nullable|string|in:global,override',
+            'exchange_rate_override_value' => 'nullable|numeric|min:0',
         ]);
 
         if ($validator->fails()) {
@@ -63,6 +65,22 @@ class CompanyController extends Controller
         }
 
         $company->save();
+
+        // Seed initial exchange rate snap for company
+        $rate = 1.000000;
+        if ($company->exchange_rate_mode === 'override' && $company->exchange_rate_override_value !== null) {
+            $rate = (float) $company->exchange_rate_override_value;
+        } else {
+            $rate = (float) \App\Models\System\SystemSetting::getValue('exchange_rate_current_value', 4014.00);
+        }
+
+        \App\Models\System\ExchangeRate::create([
+            'company_id' => $company->id,
+            'from_currency' => 'USD',
+            'to_currency' => 'KHR',
+            'rate' => $rate,
+            'effective_date' => now(),
+        ]);
 
         return response()->json([
             'message' => 'Company created successfully',
@@ -92,6 +110,8 @@ class CompanyController extends Controller
             'logo_url' => 'nullable|string|max:2048',
             'status' => 'sometimes|required|string|in:active,inactive,suspended',
             'telegram_user_id' => 'nullable|string|max:255',
+            'exchange_rate_mode' => 'sometimes|required|string|in:global,override',
+            'exchange_rate_override_value' => 'nullable|numeric|min:0',
         ]);
 
         if ($validator->fails()) {
@@ -99,6 +119,9 @@ class CompanyController extends Controller
         }
 
         $data = $validator->validated();
+
+        $oldMode = $company->exchange_rate_mode;
+        $oldOverride = $company->exchange_rate_override_value;
 
         if ($request->hasFile('logo')) {
             $oldPath = $company->getAttributes()['logo_url'] ?? null;
@@ -119,6 +142,24 @@ class CompanyController extends Controller
         unset($data['logo']);
         $company->fill($data);
         $company->save();
+
+        // If exchange settings changed, record new entry in exchange_rates history
+        if ($company->exchange_rate_mode !== $oldMode || $company->exchange_rate_override_value != $oldOverride) {
+            $rate = 1.000000;
+            if ($company->exchange_rate_mode === 'override' && $company->exchange_rate_override_value !== null) {
+                $rate = (float) $company->exchange_rate_override_value;
+            } else {
+                $rate = (float) \App\Models\System\SystemSetting::getValue('exchange_rate_current_value', 4014.00);
+            }
+
+            \App\Models\System\ExchangeRate::create([
+                'company_id' => $company->id,
+                'from_currency' => 'USD',
+                'to_currency' => 'KHR',
+                'rate' => $rate,
+                'effective_date' => now(),
+            ]);
+        }
 
         return response()->json([
             'message' => 'Company updated successfully',

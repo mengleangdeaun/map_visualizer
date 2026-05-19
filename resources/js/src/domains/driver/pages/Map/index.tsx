@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from '@tanstack/react-router';
 import { Map, MapControls, MapMarker, MarkerContent, MapRoute } from '@/components/ui/map';
 import { UserLocationMarker } from '@/components/shared/map/UserLocationMarker';
 import { RoadRoute } from '@/components/shared/map/RoadRoute';
@@ -13,11 +14,9 @@ import api from '@/lib/api';
 import { 
     AlertTriangle, 
     ClipboardList, 
-    Package,
     Compass,
     Navigation,
     Target,
-    X,
     MapPin
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -45,9 +44,23 @@ interface RoadblockAlert {
     created_at: string;
 }
 
+// Global Haversine Distance helper
+const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const R = 6371; // Earth's radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+};
+
 const DriverMapPage = () => {
     const { t } = useTranslation(['delivery', 'driver']);
     const { user } = useAuthStore();
+    const navigate = useNavigate();
     const queryClient = useQueryClient();
     const setHeader = useHeaderStore(s => s.setHeader);
     const updateTaskStatusMutation = useUpdateTaskStatus();
@@ -91,7 +104,7 @@ const DriverMapPage = () => {
     // Roadblock interactive placement states
     const [pinPlacementMode, setPinPlacementMode] = useState(false);
 
-    // Active navigation states for Errand Tasks
+    // Active navigation states for Errand Tasks & Deliveries
     const [activeNavTask, setActiveNavTask] = useState<any | null>(null);
     const [activeNavRoute, setActiveNavRoute] = useState<any | null>(null);
     const [activeNavLeg, setActiveNavLeg] = useState<'pickup' | 'dropoff'>('pickup');
@@ -164,15 +177,10 @@ const DriverMapPage = () => {
     // Proximity watcher: automatically transition from Leg 1 (Pickup) to Leg 2 (Drop-off) when within 50m of Pickup
     useEffect(() => {
         if (activeNavTask && activeNavLeg === 'pickup' && activeNavTask.pickup_lat && activeNavTask.pickup_lng && userLat && userLng) {
-            const R = 6371; // Earth's radius in km
-            const dLat = (activeNavTask.pickup_lat - userLat) * Math.PI / 180;
-            const dLon = (activeNavTask.pickup_lng - userLng) * Math.PI / 180;
-            const a = 
-                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(userLat * Math.PI / 180) * Math.cos(activeNavTask.pickup_lat * Math.PI / 180) * 
-                Math.sin(dLon / 2) * Math.sin(dLon / 2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            const distance = R * c;
+            const distance = calculateDistance(
+                userLat, userLng,
+                activeNavTask.pickup_lat, activeNavTask.pickup_lng
+            );
 
             // If within 50 meters, trigger automatic transition
             if (distance <= 0.05) {
@@ -202,6 +210,32 @@ const DriverMapPage = () => {
         }
     });
 
+    // Listen for Reverb broadcast when admin assigns a route to this driver
+    useEffect(() => {
+        if (!user?.id) return;
+
+        const channel = echo.private(`driver.${user.id}`);
+
+        channel.listen('.route.assigned', (event: any) => {
+            // Refetch the active route query so the map updates immediately
+            queryClient.invalidateQueries({ queryKey: ['driver', 'route', 'active'] });
+
+            const stopCount = event?.route?.stop_count ?? 0;
+            const distance  = event?.route?.estimated_distance_km
+                ? ` · ${event.route.estimated_distance_km} km`
+                : '';
+
+            toast.success(`📦 New route assigned — ${stopCount} stops${distance}`);
+
+            if ('vibrate' in navigator) navigator.vibrate([150, 80, 150]);
+        });
+
+        return () => {
+            channel.stopListening('.route.assigned');
+        };
+    }, [user?.id]);
+
+
     // Mutation to submit a newly reported roadblock hazard
     const reportRoadblockMutation = useMutation({
         mutationFn: async ({ description, type }: { description: string; type: string }) => {
@@ -228,10 +262,30 @@ const DriverMapPage = () => {
         }
     });
 
+    // Mutation to register arrival at a delivery stop
+    const arriveMutation = useMutation({
+        mutationFn: async (stopId: string) => {
+            const { data } = await api.post(`/driver/route/stops/${stopId}/arrive`);
+            return data.data;
+        },
+        onSuccess: (res, stopId) => {
+            toast.success("Arrived at stop! You can now resolve this delivery.");
+            queryClient.invalidateQueries({ queryKey: ['driver', 'route', 'active'] });
+            setActiveNavTask(prev => prev ? { ...prev, status: 'arrived' } : null);
+        },
+        onError: () => {
+            toast.error("Failed to register arrival. Please try again.");
+        }
+    });
+
     // Extract markers list
     const deliveries = useMemo(() => routeData?.stops || [], [routeData]);
     const tasks = useMemo(() => tasksData?.data || [], [tasksData]);
     const roadblocks = useMemo(() => roadblocksData || [], [roadblocksData]);
+
+    const nextImmediateStop = useMemo(() => {
+        return deliveries.find((stop: any) => stop.status === 'pending' || stop.status === 'arrived');
+    }, [deliveries]);
 
     // Echo listener for real-time roadblocks
     useEffect(() => {
@@ -282,63 +336,54 @@ const DriverMapPage = () => {
         }
     }, []);
 
-    const handleSelectTaskRoute = async (task: any) => {
-        // Calculate distance in kilometers using the Haversine formula
-        const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-            const R = 6371; // Earth's radius in km
-            const dLat = (lat2 - lat1) * Math.PI / 180;
-            const dLon = (lon2 - lon1) * Math.PI / 180;
-            const a = 
-                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-                Math.sin(dLon / 2) * Math.sin(dLon / 2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            return R * c;
-        };
+    const handleSelectTaskRoute = async (item: any) => {
+        const isDelivery = !!item.delivery;
 
-        // Determine destination:
-        // If task is not started, route to Pickup first.
-        // If task is in_progress, route to Pickup first if the driver is still further than 50 meters from it,
-        // otherwise route directly to Drop-off.
-        let usePickup = false;
-        if (task.pickup_lng && task.pickup_lat) {
-            if (task.status === 'assigned' || task.status === 'pending') {
-                usePickup = true;
-            } else if (task.status === 'in_progress') {
-                const startPoint: [number, number] = (userLng && userLat) 
-                    ? [userLng, userLat] 
-                    : (userLocation || viewport.center);
-                
-                const distanceToPickup = calculateDistance(
-                    startPoint[1], startPoint[0], 
-                    task.pickup_lat, task.pickup_lng
-                );
-                
-                // If the driver is more than 50 meters away, route to pickup first
-                if (distanceToPickup > 0.05) {
+        let destLng = 0;
+        let destLat = 0;
+
+        if (isDelivery) {
+            destLng = item.delivery.lng;
+            destLat = item.delivery.lat;
+        } else {
+            // Determine errand task destination
+            let usePickup = false;
+            if (item.pickup_lng && item.pickup_lat) {
+                if (item.status === 'assigned' || item.status === 'pending') {
                     usePickup = true;
+                } else if (item.status === 'in_progress') {
+                    const startPoint: [number, number] = (userLng && userLat) 
+                        ? [userLng, userLat] 
+                        : (userLocation || viewport.center);
+                    
+                    const distanceToPickup = calculateDistance(
+                        startPoint[1], startPoint[0], 
+                        item.pickup_lat, item.pickup_lng
+                    );
+                    
+                    if (distanceToPickup > 0.05) {
+                        usePickup = true;
+                    }
                 }
             }
+            destLng = usePickup ? item.pickup_lng : (item.dropoff_lng || item.pickup_lng);
+            destLat = usePickup ? item.pickup_lat : (item.dropoff_lat || item.pickup_lat);
         }
 
-        const destLng = usePickup ? task.pickup_lng : (task.dropoff_lng || task.pickup_lng);
-        const destLat = usePickup ? task.pickup_lat : (task.dropoff_lat || task.pickup_lat);
-        
         if (!destLat || !destLng) {
-            toast.error("Errand Task has no valid coordinates.");
+            toast.error(isDelivery ? "Delivery Stop has no valid coordinates." : "Errand Task has no valid coordinates.");
             return;
         }
-        
+
         const dest: [number, number] = [destLng, destLat];
         setCustomRouteDestination(dest);
         setIsRoutingLoading(true);
         setRoutePlanningMode(true);
-        
-        // Prioritize latest live user GPS coordinates as the starting point
+
         const startPoint: [number, number] = (userLng && userLat) 
             ? [userLng, userLat] 
             : (userLocation || viewport.center);
-        
+
         try {
             const response = await fetch(`https://router.project-osrm.org/route/v1/driving/${startPoint[0]},${startPoint[1]};${dest[0]},${dest[1]}?overview=full&geometries=geojson&alternatives=true`);
             const data = await response.json();
@@ -352,11 +397,11 @@ const DriverMapPage = () => {
                 setCustomRoutes(routesList);
                 setSelectedCustomRouteIndex(0);
 
-                // Dynamically fetch Leg 2 (Pickup -> Drop-off) if we are routing to Pickup
+                // Fetch Leg 2 only for Errand Tasks if pickup is used
                 let leg2Route = null;
-                if (usePickup && task.dropoff_lng && task.dropoff_lat) {
+                if (!isDelivery && item.pickup_lng && item.pickup_lat && item.dropoff_lng && item.dropoff_lat) {
                     try {
-                        const response2 = await fetch(`https://router.project-osrm.org/route/v1/driving/${task.pickup_lng},${task.pickup_lat};${task.dropoff_lng},${task.dropoff_lat}?overview=full&geometries=geojson`);
+                        const response2 = await fetch(`https://router.project-osrm.org/route/v1/driving/${item.pickup_lng},${item.pickup_lat};${item.dropoff_lng},${item.dropoff_lat}?overview=full&geometries=geojson`);
                         const data2 = await response2.json();
                         if (data2.code === 'Ok' && data2.routes?.length > 0) {
                             leg2Route = {
@@ -371,11 +416,11 @@ const DriverMapPage = () => {
                 }
                 setPlanningLeg2Route(leg2Route);
             } else {
-                toast.error("Could not trace route to this errand destination.");
+                toast.error(isDelivery ? "Could not trace route to this stop." : "Could not trace route to this errand destination.");
                 setPlanningLeg2Route(null);
             }
         } catch (err) {
-            console.error("Task OSRM route planning failure:", err);
+            console.error("OSRM route planning failure:", err);
             toast.error("Routing server error. Please try again.");
             setPlanningLeg2Route(null);
         } finally {
@@ -383,32 +428,47 @@ const DriverMapPage = () => {
         }
     };
 
-    const handleStartTaskNavigation = (task: any) => {
+    const handleStartTaskNavigation = (item: any) => {
         if (customRoutes.length === 0) return;
         const selectedRoute = customRoutes[selectedCustomRouteIndex];
-        
-        updateTaskStatusMutation.mutate({
-            taskId: task.id,
-            status: 'in_progress'
-        }, {
-            onSuccess: (updatedTask) => {
-                setActiveNavTask(updatedTask);
-                setActiveNavRoute(selectedRoute);
-                
-                // Initialize the active navigation leg (defaults to pickup if coordinates exist)
-                const hasPickup = !!(updatedTask.pickup_lat && updatedTask.pickup_lng);
-                setActiveNavLeg(hasPickup ? 'pickup' : 'dropoff');
-                setPlanningLeg2Route(null);
+        const isDelivery = !!item.delivery;
 
-                setRoutePlanningMode(false);
-                setCustomRoutes([]);
-                setCustomRouteDestination(null);
-                setSelectedItem(null);
-                setSelectedType(null);
-                setIsDrawerOpen(false);
-                queryClient.invalidateQueries({ queryKey: ['driver', 'tasks'] });
-            }
-        });
+        if (isDelivery) {
+            // For deliveries, directly start navigation overlay
+            setActiveNavTask(item);
+            setActiveNavRoute(selectedRoute);
+            setActiveNavLeg('dropoff');
+
+            setRoutePlanningMode(false);
+            setCustomRoutes([]);
+            setCustomRouteDestination(null);
+            setSelectedItem(null);
+            setSelectedType(null);
+            setIsDrawerOpen(false);
+        } else {
+            // Errand Tasks status update mutation
+            updateTaskStatusMutation.mutate({
+                taskId: item.id,
+                status: 'in_progress'
+            }, {
+                onSuccess: (updatedTask) => {
+                    setActiveNavTask(updatedTask);
+                    setActiveNavRoute(selectedRoute);
+                    
+                    const hasPickup = !!(updatedTask.pickup_lat && updatedTask.pickup_lng);
+                    setActiveNavLeg(hasPickup ? 'pickup' : 'dropoff');
+                    setPlanningLeg2Route(null);
+
+                    setRoutePlanningMode(false);
+                    setCustomRoutes([]);
+                    setCustomRouteDestination(null);
+                    setSelectedItem(null);
+                    setSelectedType(null);
+                    setIsDrawerOpen(false);
+                    queryClient.invalidateQueries({ queryKey: ['driver', 'tasks'] });
+                }
+            });
+        }
     };
 
     const handleCompleteTask = (taskId: string) => {
@@ -538,16 +598,44 @@ const DriverMapPage = () => {
                     className="h-full w-full"
                     language="km"
                 >
-
-                {/* <MapControls
-                    showCompass={true}
-                    showZoom={false}
-                    position="bottom-right"
-                /> */}
-
-
                     {/* Active Driver GPS Pin */}
                     <UserLocationMarker coordinates={userLocation} />
+
+                    {/* 1B. Draw Snap-To-Road Sequential Snapped Delivery Polylines */}
+                    {activeFilter === 'deliveries' && !activeNavTask && deliveries.length > 1 && deliveries.map((stop: any, idx: number) => {
+                        if (idx === deliveries.length - 1) return null;
+                        const nextStop = deliveries[idx + 1];
+                        const fromCoords: [number, number] = [stop.delivery.lng, stop.delivery.lat];
+                        const toCoords: [number, number] = [nextStop.delivery.lng, nextStop.delivery.lat];
+                        
+                        if (!fromCoords[0] || !fromCoords[1] || !toCoords[0] || !toCoords[1]) return null;
+                        
+                        const isCompletedLeg = (stop.status === 'completed' || stop.status === 'skipped') && 
+                                               (nextStop.status === 'completed' || nextStop.status === 'skipped');
+                        
+                        return (
+                            <RoadRoute 
+                                key={`delivery-leg-${stop.id}`}
+                                from={fromCoords}
+                                to={toCoords}
+                                color={isCompletedLeg ? "#94a3b8" : "#3b82f6"}
+                                width={isCompletedLeg ? 2.5 : 4}
+                                opacity={isCompletedLeg ? 0.6 : 0.85}
+                                dashArray={isCompletedLeg ? [5, 5] : undefined}
+                            />
+                        );
+                    })}
+
+                    {/* 1C. Draw Next Immediate Delivery Target Snapped Polyline */}
+                    {activeFilter === 'deliveries' && !activeNavTask && userLocation && nextImmediateStop && nextImmediateStop.delivery?.lng && nextImmediateStop.delivery?.lat && (
+                        <RoadRoute 
+                            id="next-delivery-leg"
+                            from={userLocation}
+                            to={[nextImmediateStop.delivery.lng, nextImmediateStop.delivery.lat]}
+                            color="#0ea5e9"
+                            width={5}
+                        />
+                    )}
 
                     {/* 2A. Render Deliveries Markers */}
                     {activeFilter === 'deliveries' && deliveries.map((stop: any) => {
@@ -575,7 +663,7 @@ const DriverMapPage = () => {
                                         )}
                                         <div className={cn(
                                             "w-9 h-9 rounded-full flex items-center justify-center font-bold border-2 border-white shadow-lg text-sm transition-all duration-200",
-                                            stop.status === 'completed' ? "bg-muted text-muted-foreground" : 
+                                            (stop.status === 'completed' || stop.status === 'skipped') ? "bg-muted text-muted-foreground" : 
                                             stop.status === 'arrived' ? "bg-amber-500 text-white" :
                                             "bg-primary text-primary-foreground"
                                         )}>
@@ -587,7 +675,7 @@ const DriverMapPage = () => {
                         );
                     })}
 
-                    {/* 2B. Render Tasks Markers (both Pickup and Drop-off markers) */}
+                    {/* 2B. Render Tasks Markers */}
                     {activeFilter === 'tasks' && tasks.flatMap((task: any) => {
                         const markers = [];
                         const isSelected = selectedType === 'task' && selectedItem?.id === task.id;
@@ -668,7 +756,7 @@ const DriverMapPage = () => {
                         />
                     )}
 
-                    {/* 2C. Render Roadblock Hazards (⚠️ warning triangle signs) */}
+                    {/* 2C. Render Roadblock Hazards */}
                     {roadblocks.map((rb) => {
                         if (!rb.lng || !rb.lat) return null;
                         const isSelected = selectedType === 'roadblock' && selectedItem?.id === rb.id;
@@ -698,17 +786,18 @@ const DriverMapPage = () => {
                             </MapMarker>
                         );
                     })}
+
                     {/* 2D. Render custom route planning OSRM paths */}
                     {routePlanningMode && customRoutes.length > 0 && (
                         <>
-                            {/* Leg 1: Current Location -> Pickup */}
+                            {/* Leg 1: Current Location -> Destination */}
                             <MapRoute 
                                 id="planning-leg-1"
                                 coordinates={customRoutes[selectedCustomRouteIndex].coordinates}
                                 color="#0ea5e9"
                                 width={5}
                             />
-                            {/* Leg 2: Pickup -> Drop-off */}
+                            {/* Leg 2: Errand Pickup -> Drop-off */}
                             {planningLeg2Route && (
                                 <MapRoute 
                                     id="planning-leg-2"
@@ -771,7 +860,7 @@ const DriverMapPage = () => {
                 {/* Roadblock Placement Mode: Dead-Center Hovering Locked Pin */}
                 <LockedPlacementPin visible={pinPlacementMode} />
 
-                {/* 3. Floating Filter Toggle Segment (Top Floating, h-11) */}
+                {/* 3. Floating Filter Toggle Segment */}
                 {!pinPlacementMode && (
                     <MapFilterToggle 
                         activeFilter={activeFilter} 
@@ -820,7 +909,7 @@ const DriverMapPage = () => {
                     </div>
                 )}
 
-                {/* 4. Recenter floating FAB button (h-11 w-11) */}
+                {/* 4. Recenter floating FAB button */}
                 {!pinPlacementMode && (
                     <button
                         onClick={recenterToUser}
@@ -842,9 +931,20 @@ const DriverMapPage = () => {
                     task={activeNavTask}
                     route={activeNavRoute}
                     leg={activeNavLeg}
-                    isPending={updateTaskStatusMutation.isPending}
+                    isPending={updateTaskStatusMutation.isPending || arriveMutation.isPending}
                     onArriveAtPickup={handleArriveAtPickup}
-                    onCompleteTask={handleCompleteTask}
+                    onCompleteTask={(id) => {
+                        const isDelivery = !!activeNavTask?.delivery;
+                        if (isDelivery) {
+                            // Navigate to stop details screen to let the driver complete/fail it
+                            navigate({ to: '/driver/route/stop/$id', params: { id: String(id) } });
+                            setActiveNavTask(null);
+                            setActiveNavRoute(null);
+                        } else {
+                            handleCompleteTask(id);
+                        }
+                    }}
+                    onArriveAtDeliveryStop={(id) => arriveMutation.mutate(id)}
                     onStop={() => {
                         setActiveNavTask(null);
                         setActiveNavRoute(null);
@@ -868,7 +968,7 @@ const DriverMapPage = () => {
                 onSelectTaskRoute={handleSelectTaskRoute}
                 onStartTaskNavigation={handleStartTaskNavigation}
                 hasRoutesPlanned={customRoutes.length > 0}
-                isTaskInProgress={updateTaskStatusMutation.isPending}
+                isTaskInProgress={updateTaskStatusMutation.isPending || arriveMutation.isPending}
             />
 
             {/* 6. Custom Report Roadblock/Hazard Dialog Overlay */}

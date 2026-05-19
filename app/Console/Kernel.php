@@ -12,8 +12,15 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // $schedule->command('inspire')->hourly();
+        $schedule->command('exchange-rate:sync')
+            ->dailyAt('09:00')
+            ->timezone('Asia/Phnom_Penh');
+
+        $schedule->command('exchange-rate:sync')
+            ->dailyAt('15:00')
+            ->timezone('Asia/Phnom_Penh');
     }
+
 
     /**
      * Register the commands for the application.

@@ -1,5 +1,5 @@
 import { MenuItem } from '@/types/nav';
-import { Home, Truck, Users, Activity, ClipboardList } from 'lucide-react';
+import { Home, Truck, Users, Activity, ClipboardList, Package, Route as RouteIcon } from 'lucide-react';
 
 export const adminNav: MenuItem[] = [
     {
@@ -11,6 +11,15 @@ export const adminNav: MenuItem[] = [
         ]
     },
     {
+        id: 'deliveries',
+        title: 'deliveries',
+        icon: Package,
+        children: [
+            { id: 'deliveries-list', title: 'deliveries', path: '/admin/fleet/deliveries' },
+            { id: 'dispatch', title: 'dispatch', path: '/admin/fleet/dispatch' },
+        ]
+    },
+    {
         id: 'fleet',
         title: 'fleet',
         icon: Truck,
@@ -18,6 +27,7 @@ export const adminNav: MenuItem[] = [
             { id: 'tasks', title: 'tasks', path: '/admin/fleet/tasks' },
             { id: 'vehicles', title: 'vehicles', path: '/admin/fleet/vehicles' },
             { id: 'hubs', title: 'hubs', path: '/admin/fleet/hubs' },
+            { id: 'users', title: 'users', path: '/admin/fleet/users' },
             { id: 'customers', title: 'customers', path: '/admin/fleet/customers' },
         ]
     }

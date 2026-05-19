@@ -58,6 +58,8 @@ const companySchema = z.object({
         }
     }),
     status: z.enum(['active', 'inactive', 'suspended']),
+    exchange_rate_mode: z.enum(['global', 'override']),
+    exchange_rate_override_value: z.number().nullable().optional(),
 });
 
 const CompanyModal = ({ isOpen, onClose, initialData }: CompanyModalProps) => {
@@ -76,6 +78,8 @@ const CompanyModal = ({ isOpen, onClose, initialData }: CompanyModalProps) => {
             telegram_user_id: initialData?.telegram_user_id ?? null,
             logo_url: initialData?.logo_full_url || initialData?.logo_url || null,
             status: initialData?.status || 'active',
+            exchange_rate_mode: initialData?.exchange_rate_mode || 'global',
+            exchange_rate_override_value: initialData?.exchange_rate_override_value || null,
         },
         onSubmit: async ({ value }) => {
             const formData = new FormData();
@@ -307,6 +311,58 @@ const CompanyModal = ({ isOpen, onClose, initialData }: CompanyModalProps) => {
                                         )}
                                     </div>
                                 )}
+                            />
+
+                            <form.Field
+                                name="exchange_rate_mode"
+                                children={(field) => (
+                                    <div className="space-y-2">
+                                        <Label>{t('exchange_rate_mode', 'Exchange Rate Mode')}</Label>
+                                        <Select 
+                                            value={field.state.value} 
+                                            onValueChange={(value) => {
+                                                field.handleChange(value as 'global' | 'override');
+                                                if (value === 'global') {
+                                                    form.setFieldValue('exchange_rate_override_value', null);
+                                                }
+                                            }}
+                                        >
+                                            <SelectTrigger className="bg-background">
+                                                <SelectValue placeholder="Select Mode" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="global">Global NBC Sync</SelectItem>
+                                                <SelectItem value="override">Manual Override</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                )}
+                            />
+
+                            <form.Subscribe
+                                selector={(state) => [state.values.exchange_rate_mode]}
+                                children={([exchangeRateMode]) => {
+                                    if (exchangeRateMode !== 'override') return <div />;
+                                    return (
+                                        <form.Field
+                                            name="exchange_rate_override_value"
+                                            children={(field) => (
+                                                <div className="space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                                                    <Label>{t('exchange_rate_override_value', 'Manual Exchange Rate')}</Label>
+                                                    <Input 
+                                                        name={field.name}
+                                                        type="number"
+                                                        value={field.state.value ?? ''}
+                                                        onBlur={field.handleBlur}
+                                                        onChange={(e) => field.handleChange(e.target.value === '' ? null : Number(e.target.value))}
+                                                        placeholder="4019"
+                                                        className="bg-background font-mono"
+                                                    />
+                                                </div>
+                                            )}
+                                        />
+                                    );
+                                }}
                             />
                         </div>
                     </div>

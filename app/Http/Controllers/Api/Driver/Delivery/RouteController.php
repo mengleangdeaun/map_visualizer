@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Api\Driver\Delivery;
 
 use App\Http\Controllers\Controller;
-use App\Models\Delivery\Route;
-use App\Models\Delivery\RouteStop;
 use App\Models\Delivery\Delivery;
 use App\Models\Delivery\ProofOfDelivery;
+use App\Models\Delivery\Route;
+use App\Models\Delivery\RouteStop;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -21,39 +21,75 @@ class RouteController extends Controller
     {
         $user = $request->user();
         
-        // Find today's route that is currently in_progress or optimized/draft
+        // 1. Retrieve the active route for today assigned to this driver
         $route = Route::where('driver_id', $user->id)
-            ->whereIn('status', ['in_progress', 'optimized', 'draft'])
-            ->orderBy('date', 'desc')
+            ->whereDate('date', now()->toDateString())
+            ->whereIn('status', ['in_progress', 'optimized'])
             ->first();
 
+        // 2. Roll-over: fetch active route from previous days
         if (!$route) {
+            $route = Route::where('driver_id', $user->id)
+                ->where('status', 'in_progress')
+                ->latest('date')
+                ->first();
+        }
+
+        // Load route stops map if route exists
+        $routeStopsMap = [];
+        $routeStopDeliveryIds = [];
+        if ($route) {
+            $routeStops = RouteStop::where('route_id', $route->id)->get();
+            foreach ($routeStops as $stop) {
+                $routeStopsMap[$stop->delivery_id] = [
+                    'sequence_number' => $stop->sequence_number,
+                    'status'          => $stop->status,
+                    'eta'             => $stop->eta,
+                ];
+            }
+            $routeStopDeliveryIds = array_keys($routeStopsMap);
+        }
+
+        // Fetch all deliveries assigned to this driver that are active or in the route stops list
+        $deliveries = Delivery::where('driver_id', $user->id)
+            ->where(function ($query) use ($routeStopDeliveryIds) {
+                $query->whereIn('route_status', ['pending', 'arrived'])
+                      ->orWhereIn('id', $routeStopDeliveryIds);
+            })
+            ->get();
+
+        if ($deliveries->isEmpty()) {
             return response()->json([
-                'message' => 'No active route found for today.',
+                'message' => 'No active route found.',
                 'data' => null
             ]);
         }
 
-        // Fetch stops sequentially, loading delivery and spatial coordinates
-        $stops = $route->stops()->get()->map(function ($stop) {
-            $delivery = $stop->delivery;
-            
-            // Extract geometry point coordinates securely
+        $stops = $deliveries->map(function ($delivery) use ($routeStopsMap) {
             $coords = DB::selectOne(
                 "SELECT ST_X(dropoff_location::geometry) as lng, ST_Y(dropoff_location::geometry) as lat FROM deliveries WHERE id = ?",
                 [$delivery->id]
             );
 
-            // Fetch order items & customer details
             $order = $delivery->order;
-            $customer = $order->customer;
-            $items = $order->items;
+            $customer = $order ? $order->customer : null;
+            $items = $order ? $order->items : collect();
+
+            if (isset($routeStopsMap[$delivery->id])) {
+                $seq = $routeStopsMap[$delivery->id]['sequence_number'];
+                $status = $routeStopsMap[$delivery->id]['status'];
+                $eta = $routeStopsMap[$delivery->id]['eta'];
+            } else {
+                $seq = 999; // Temporary marker for standalone deliveries
+                $status = $delivery->route_status;
+                $eta = $delivery->eta;
+            }
 
             return [
-                'id' => $stop->id,
-                'sequence_number' => $stop->sequence_number,
-                'eta' => $stop->eta ? $stop->eta->toIso8601String() : null,
-                'status' => $stop->status, // pending, arrived, completed, skipped
+                'id' => $delivery->id,
+                'sequence_number' => $seq,
+                'eta' => $eta ? $eta->toIso8601String() : null,
+                'status' => $status,
                 'delivery' => [
                     'id' => $delivery->id,
                     'tracking_number' => $delivery->tracking_number,
@@ -62,17 +98,18 @@ class RouteController extends Controller
                     'lng' => $coords ? (float) $coords->lng : null,
                     'lat' => $coords ? (float) $coords->lat : null,
                     'status' => $delivery->status,
-                    'order' => [
+                    'order' => $order ? [
                         'id' => $order->id,
                         'order_number' => $order->order_number,
-                        'total_amount' => (float) $order->total_amount,
-                        'amount_due_cod' => (float) $order->amount_due_cod,
+                        'total_amount' => (float) $order->grand_total,
+                        'amount_due_cod' => (float) ($order->amount_due_cod !== null ? $order->amount_due_cod : ($order->payment_method === 'cod' ? $order->balance_amount : 0.0)),
                         'payment_method' => $order->payment_method,
-                        'customer' => [
+                        'payment_status' => $order->payment_status,
+                        'customer' => $customer ? [
                             'id' => $customer->id,
                             'name' => $customer->name,
                             'phone' => $customer->phone,
-                        ],
+                        ] : null,
                         'items' => $items->map(function ($item) {
                             return [
                                 'id' => $item->id,
@@ -81,56 +118,91 @@ class RouteController extends Controller
                                 'quantity' => $item->quantity,
                             ];
                         })
-                    ]
+                    ] : null
                 ]
             ];
         });
 
+        // Separate and resequence stops dynamically
+        $routeStops = $stops->filter(fn($s) => $s['sequence_number'] !== 999)->sortBy('sequence_number')->values();
+        $standaloneStops = $stops->filter(fn($s) => $s['sequence_number'] === 999)->values();
+
+        $finalStops = collect();
+        $routeStopsCount = $routeStops->count();
+
+        foreach ($routeStops as $s) {
+            $finalStops->push($s);
+        }
+
+        foreach ($standaloneStops as $idx => $s) {
+            $s['sequence_number'] = $routeStopsCount + $idx + 1;
+            $finalStops->push($s);
+        }
+
+        // Calculate cash to remit
+        $cashToRemit = $finalStops->sum(function ($s) {
+            $order = $s['delivery']['order'] ?? null;
+            if ($order && $order['payment_method'] === 'cod') {
+                return (float) $order['amount_due_cod'];
+            }
+            return 0.0;
+        });
+
+        if ($route) {
+            $routeId = $route->id;
+            $routeStatus = $route->status;
+            $routeDate = $route->date->toDateString();
+        } else {
+            $routeId = 'route_' . $user->id . '_' . now()->toDateString();
+            $hasArrivedOrCompleted = $deliveries->contains(fn($d) => in_array($d->route_status, ['arrived', 'completed']));
+            $allDone = $deliveries->every(fn($d) => in_array($d->route_status, ['completed', 'skipped']));
+            $routeStatus = $allDone ? 'completed' : 'in_progress';
+            $routeDate = now()->toDateString();
+        }
+
         return response()->json([
             'data' => [
-                'id' => $route->id,
-                'status' => $route->status,
-                'cash_to_remit' => (float) $route->cash_to_remit,
-                'date' => $route->date->toDateString(),
-                'stops' => $stops
+                'id' => $routeId,
+                'status' => $routeStatus,
+                'cash_to_remit' => (float) $cashToRemit,
+                'date' => $routeDate,
+                'stops' => $finalStops->toArray()
             ]
         ]);
     }
 
     /**
-     * Mark a route stop as "arrived".
+     * Mark a delivery stop as "arrived".
      */
     public function arrive(Request $request, $id)
     {
-        $stop = RouteStop::findOrFail($id);
-        $route = $stop->route;
+        $delivery = Delivery::findOrFail($id);
 
-        // Verify route driver matching
-        if ($route->driver_id !== $request->user()->id) {
+        // Verify driver matching
+        if ($delivery->driver_id !== $request->user()->id) {
             return response()->json(['message' => 'Unauthorized stop access.'], 403);
         }
 
-        // Set route to in_progress if not already
-        if ($route->status !== 'in_progress') {
-            $route->status = 'in_progress';
-            $route->save();
-        }
+        DB::transaction(function () use ($delivery) {
+            $delivery->route_status = 'arrived';
+            $delivery->status = 'out_for_delivery';
+            $delivery->save();
 
-        $stop->status = 'arrived';
-        $stop->save();
-
-        $delivery = $stop->delivery;
-        $delivery->status = 'out_for_delivery';
-        $delivery->save();
+            // Synchronize with RouteStop row
+            RouteStop::where('delivery_id', $delivery->id)->update([
+                'status' => 'arrived',
+                'arrived_at' => now(),
+            ]);
+        });
 
         return response()->json([
             'message' => 'Arrived at stop successfully.',
-            'data' => ['stop_status' => $stop->status, 'delivery_status' => $delivery->status]
+            'data' => ['stop_status' => 'arrived', 'delivery_status' => $delivery->status]
         ]);
     }
 
     /**
-     * Mark a route stop as "completed" (delivered successfully).
+     * Mark a delivery stop as "completed" (delivered successfully).
      */
     public function complete(Request $request, $id)
     {
@@ -139,30 +211,32 @@ class RouteController extends Controller
             'photo' => 'nullable|image|max:10240', // Max 10MB camera uploads
         ]);
 
-        $stop = RouteStop::findOrFail($id);
-        $route = $stop->route;
+        $delivery = Delivery::findOrFail($id);
 
-        if ($route->driver_id !== $request->user()->id) {
+        if ($delivery->driver_id !== $request->user()->id) {
             return response()->json(['message' => 'Unauthorized stop access.'], 403);
         }
 
-        $delivery = $stop->delivery;
         $order = $delivery->order;
 
-        DB::transaction(function () use ($request, $stop, $delivery, $order) {
+        DB::transaction(function () use ($request, $delivery, $order) {
             // Update statuses
-            $stop->status = 'completed';
-            $stop->save();
-
+            $delivery->route_status = 'completed';
             $delivery->status = 'delivered';
             $delivery->save();
 
-            $order->status = 'completed';
-            $order->save();
+            // Synchronize with RouteStop row
+            RouteStop::where('delivery_id', $delivery->id)->update([
+                'status' => 'completed',
+                'completed_at' => now(),
+            ]);
 
-            // Save cash collection snapshot if applicable
-            if ($order->amount_due_cod > 0) {
-                // Future payment integration trigger can be here
+            if ($order) {
+                $order->status = 'completed';
+                $order->payment_status = 'paid';
+                $order->paid_amount = $order->grand_total;
+                $order->balance_amount = 0;
+                $order->save();
             }
 
             // Save photo file path if provided
@@ -179,24 +253,14 @@ class RouteController extends Controller
             }
         });
 
-        // Auto-complete route if all stops are processed
-        $remainingStops = RouteStop::where('route_id', $route->id)
-            ->whereIn('status', ['pending', 'arrived'])
-            ->count();
-
-        if ($remainingStops === 0) {
-            $route->status = 'completed';
-            $route->save();
-        }
-
         return response()->json([
             'message' => 'Stop resolved as delivered successfully.',
-            'data' => ['stop_status' => $stop->status, 'delivery_status' => $delivery->status]
+            'data' => ['stop_status' => 'completed', 'delivery_status' => $delivery->status]
         ]);
     }
 
     /**
-     * Mark a route stop as "failed" (skipped / delivery issue).
+     * Mark a delivery stop as "failed" (skipped / delivery issue).
      */
     public function fail(Request $request, $id)
     {
@@ -205,21 +269,22 @@ class RouteController extends Controller
             'notes' => 'nullable|string|max:1000',
         ]);
 
-        $stop = RouteStop::findOrFail($id);
-        $route = $stop->route;
+        $delivery = Delivery::findOrFail($id);
 
-        if ($route->driver_id !== $request->user()->id) {
+        if ($delivery->driver_id !== $request->user()->id) {
             return response()->json(['message' => 'Unauthorized stop access.'], 403);
         }
 
-        $delivery = $stop->delivery;
-
-        DB::transaction(function () use ($request, $stop, $delivery) {
-            $stop->status = 'skipped';
-            $stop->save();
-
+        DB::transaction(function () use ($request, $delivery) {
+            $delivery->route_status = 'skipped';
             $delivery->status = 'failed';
             $delivery->save();
+
+            // Synchronize with RouteStop row
+            RouteStop::where('delivery_id', $delivery->id)->update([
+                'status' => 'skipped',
+                'completed_at' => now(),
+            ]);
 
             // Store delivery issue exception record
             DB::table('delivery_issues')->insert([
@@ -233,19 +298,9 @@ class RouteController extends Controller
             ]);
         });
 
-        // Auto-complete route if all stops are processed
-        $remainingStops = RouteStop::where('route_id', $route->id)
-            ->whereIn('status', ['pending', 'arrived'])
-            ->count();
-
-        if ($remainingStops === 0) {
-            $route->status = 'completed';
-            $route->save();
-        }
-
         return response()->json([
             'message' => 'Stop exception logged successfully.',
-            'data' => ['stop_status' => $stop->status, 'delivery_status' => $delivery->status]
+            'data' => ['stop_status' => 'skipped', 'delivery_status' => $delivery->status]
         ]);
     }
 

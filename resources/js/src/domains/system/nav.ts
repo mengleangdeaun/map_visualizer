@@ -32,12 +32,7 @@ export const systemNav: MenuItem[] = [
         icon: ShieldCheck, 
         path: '/system/staff'
     },
-    {
-        id: 'exchange_rate_management',
-        title: 'exchange_rate_management',
-        icon: Banknote,
-        path: '/system/exchange-rates'
-    },
+
     {
         id: 'hub_management',
         title: 'hub_management',

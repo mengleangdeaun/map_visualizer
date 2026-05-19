@@ -7,7 +7,7 @@ import { PageHeader } from '@/components/shared/system/PageHeader';
 import { DataTable } from '@/components/shared/system/DataTable';
 import { SearchInput } from '@/components/shared/system/SearchInput';
 import { Button } from '@/components/ui/button';
-import { Plus, ArrowRightLeft, RotateCw } from 'lucide-react';
+import { Plus, ArrowRightLeft, RotateCw, Sliders } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ColumnDef } from '@tanstack/react-table';
 import { DeleteConfirmModal } from '@/components/shared/system/DeleteConfirmModal';
@@ -15,7 +15,12 @@ import { TableActionButtons, TableActionButton } from '@/components/shared/syste
 import ExchangeRateForm from './components/ExchangeRateForm/index';
 import { formatDateTime } from '@/lib/dateUtils';
 
-const ExchangeRatePage = () => {
+interface ExchangeRatePageProps {
+    showConfigureButton?: boolean;
+    onConfigureClick?: () => void;
+}
+
+const ExchangeRatePage = ({ showConfigureButton = false, onConfigureClick }: ExchangeRatePageProps) => {
     const { t } = useTranslation('system');
     const [searchInput, setSearchInput] = useState('');
     const debouncedSearch = useDebounce(searchInput, 500);
@@ -132,24 +137,26 @@ const ExchangeRatePage = () => {
     ], [t, page, perPage]);
 
     return (
-        <div>
-            <PageHeader
-                title={t('exchange_rate_management')}
-                subtitle={t('manage_currency_conversion_rates')}
-                refreshAction={{
-                    onClick: () => refetch(),
-                    isFetching: isFetching
-                }}
-                primaryAction={{
-                    label: t('add_exchange_rate'),
-                    onClick: handleAdd
-                }}
-            />
+        <div className="space-y-4">
+            {!showConfigureButton && (
+                <PageHeader
+                    title={t('exchange_rate_management')}
+                    subtitle={t('manage_currency_conversion_rates')}
+                    refreshAction={{
+                        onClick: () => refetch(),
+                        isFetching: isFetching
+                    }}
+                    primaryAction={{
+                        label: t('add_exchange_rate'),
+                        onClick: handleAdd
+                    }}
+                />
+            )}
 
             <div className="bg-card border rounded-xl overflow-hidden shadow-sm">
                 <div className="p-4 border-b bg-muted/30">
-                    <div className="flex items-center justify-between gap-4">
-                        <div className="flex-1 max-w-sm">
+                    <div className="flex items-center justify-between gap-4 flex-wrap sm:flex-nowrap">
+                        <div className="flex-1 max-w-sm w-full">
                             <SearchInput
                                 value={searchInput}
                                 onChange={(e) => setSearchInput(e.target.value)}
@@ -157,6 +164,27 @@ const ExchangeRatePage = () => {
                                 onClear={handleSearchClear}
                                 isLoading={isFetching}
                             />
+                        </div>
+                        <div className="flex items-center gap-2">
+                            {showConfigureButton && (
+                                <>
+                                    <Button 
+                                        onClick={onConfigureClick}
+                                        variant="outline"
+                                        className="gap-2 border-primary/20 hover:bg-primary/5 hover:text-primary hover:border-primary transition-all duration-200"
+                                    >
+                                        <Sliders size={16} />
+                                        Configure Rates
+                                    </Button>
+                                    <Button 
+                                        onClick={handleAdd}
+                                        className="gap-2"
+                                    >
+                                        <Plus size={16} />
+                                        {t('add_exchange_rate')}
+                                    </Button>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>

@@ -30,3 +30,8 @@ Broadcast::channel('company.{id}', function ($user, $id) {
     }
     return (string) $user->company_id === (string) $id;
 });
+
+// Private channel for individual driver notifications (route assignments, alerts)
+Broadcast::channel('driver.{userId}', function ($user, $userId) {
+    return (string) $user->id === (string) $userId;
+});

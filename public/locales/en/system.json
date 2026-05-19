@@ -176,5 +176,20 @@
     "are_you_sure_you_want_to_remove_staff": "Are you sure you want to remove {{name}} from the platform team?",
     "manage_all_companies": "Manage All Companies",
     "access_billing": "Access Billing",
-    "edit_system_settings": "Edit System Settings"
+    "edit_system_settings": "Edit System Settings",
+    "system_settings": "System Settings",
+    "configure_global_system_variables": "Configure global system-wide variables and parameters",
+    "exchange_rate_settings": "Exchange Rate Settings",
+    "exchange_rate_provider_url": "Provider API URL",
+    "exchange_rate_mode": "Exchange Rate Mode",
+    "exchange_rate_mode_auto": "Automatic NBC Sync",
+    "exchange_rate_mode_manual": "Manual Override",
+    "exchange_rate_manual_value": "Manual Exchange Rate",
+    "exchange_rate_current_value": "Current USD/KHR Rate",
+    "exchange_rate_last_sync": "Last Sync DateTime",
+    "sync_now": "Sync Now",
+    "settings_updated_successfully": "Settings updated successfully",
+    "error_updating_settings": "Error updating settings",
+    "exchange_rate_sync_success": "Exchange rate synchronized successfully from NBC",
+    "exchange_rate_sync_failed": "Failed to synchronize exchange rate from NBC"
 }
