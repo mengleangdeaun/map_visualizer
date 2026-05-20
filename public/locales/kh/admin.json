@@ -94,5 +94,10 @@
     "payment_method": "វិធីសាស្ត្រទូទាត់",
     "cash": "សាច់ប្រាក់ (COD)",
     "khqr": "KHQR (ស្កេន)",
-    "postpaid": "បង់ប្រាក់តាមក្រោយ"
+    "postpaid": "បង់ប្រាក់តាមក្រោយ",
+    "create_task_by_map": "បង្កើតភារកិច្ចតាមផែនទី",
+    "create_delivery_by_map": "បង្កើតការដឹកជញ្ជូនតាមផែនទី",
+    "click_to_set_delivery_destination": "ចុចលើផែនទីដើម្បីកំណត់ទីតាំងទម្លាក់",
+    "new_delivery_destination": "គោលដៅដឹកជញ្ជូនថ្មី",
+    "create_delivery_now": "បង្កើតការដឹកជញ្ជូនឥឡូវនេះ"
 }

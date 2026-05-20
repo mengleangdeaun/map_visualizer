@@ -11,102 +11,76 @@ import { UserLocationMarker } from '@/components/shared/map/UserLocationMarker';
 import { useTranslation } from 'react-i18next';
 import { Truck, MapPin, Activity, ShieldAlert, ClipboardList, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { echo } from '@/lib/echo';
 import { Badge } from '@/components/ui/badge';
-import { useAuthStore } from '@/domains/auth/store/useAuthStore';
+
 
 import { Task } from '@/domains/admin/pages/Tasks/services/taskService';
+import { Delivery } from '@/domains/admin/services/deliveryService';
 import { MonitoringStats } from './MonitoringStats';
+import { useMonitoringTelemetry } from '../hooks/useMonitoringTelemetry';
 import { MapSearch, SearchResult } from '@/components/shared/map/MapSearch';
-import { PickupMarker, DropoffMarker } from '@/components/shared/map/TaskMarkers';
+import { PickupMarker, DropoffMarker, DeliveryMarker } from '@/components/shared/map/TaskMarkers';
 import { Button } from '@/components/ui/button';
 
 interface MonitoringMapProps {
     locations: Location[];
     vehicles: Vehicle[];
     tasks: Task[];
+    deliveries: Delivery[];
     isLoading?: boolean;
     isFetching?: boolean;
-    focusTarget?: { id: string; type: 'vehicle' | 'hub' | 'task'; center: [number, number] } | null;
+    focusTarget?: { id: string; type: 'vehicle' | 'hub' | 'task' | 'delivery'; center: [number, number] } | null;
     onClick?: (e: any) => void;
     pendingPickup?: { lat: number, lng: number } | null;
     pendingDropoff?: { lat: number, lng: number } | null;
+    pendingDeliveryDropoff?: { lat: number, lng: number } | null;
     onCreateTask?: () => void;
+    onCreateDelivery?: () => void;
 }
 
 export const MonitoringMap = React.memo(({ 
     locations, 
     vehicles, 
     tasks,
+    deliveries,
     isLoading, 
     isFetching,
     focusTarget,
     onClick,
     pendingPickup,
     pendingDropoff,
-    onCreateTask
+    pendingDeliveryDropoff,
+    onCreateTask,
+    onCreateDelivery
 }: MonitoringMapProps) => {
     const { t } = useTranslation(['admin', 'system']);
-    const { user } = useAuthStore();
     const mapRef = React.useRef<any>(null);
-    const [liveVehicles, setLiveVehicles] = useState<Vehicle[]>([]);
-    
-    const googleKhmerStyle = useMemo<any>(() => {
-        const tiles = ['https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&hl=km'];
-        return {
-            light: {
-                version: 8,
-                sources: {
-                    'google-tiles': {
-                        type: 'raster',
-                        tiles,
-                        tileSize: 256,
-                        attribution: '&copy; Google',
-                    },
-                },
-                layers: [{ id: 'google-tiles', type: 'raster', source: 'google-tiles', minzoom: 0, maxzoom: 22 }],
-            },
-            dark: {
-                version: 8,
-                sources: {
-                    'google-tiles': {
-                        type: 'raster',
-                        tiles,
-                        tileSize: 256,
-                        attribution: '&copy; Google',
-                    },
-                },
-                layers: [
-                    {
-                        id: 'google-tiles',
-                        type: 'raster',
-                        source: 'google-tiles',
-                        minzoom: 0,
-                        maxzoom: 22,
-                        paint: {
-                            'raster-brightness-max': 0.6,
-                            'raster-brightness-min': 0,
-                            'raster-contrast': 0.2,
-                            'raster-hue-rotate': 180,
-                            'raster-saturation': -0.8,
-                        },
-                    },
-                ],
-            },
-        };
-    }, []);
 
     const [viewport, setViewport] = useState({
         center: [104.9282, 11.5564] as [number, number], // Default to Phnom Penh
         zoom: 12,
         bearing: 0,
-        pitch: 45,
+        pitch: 0,
+    });
+
+    const {
+        liveVehicles,
+        googleKhmerStyle,
+        userLocation,
+        setUserLocation,
+        activeVehiclesCount
+    } = useMonitoringTelemetry({
+        vehicles,
+        locations,
+        focusTarget,
+        setViewport
     });
 
     const [selectedId, setSelectedId] = useState<string | null>(null);
-    const [selectedType, setSelectedType] = useState<'hub' | 'vehicle' | 'task' | null>(null);
-    const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+    const [selectedType, setSelectedType] = useState<'hub' | 'vehicle' | 'task' | 'delivery' | null>(null);
     const [showHubs, setShowHubs] = useState(false);
+    const [showTasks, setShowTasks] = useState(true);
+    const [showDeliveries, setShowDeliveries] = useState(true);
 
     // Handle focus target
     useEffect(() => {
@@ -122,78 +96,6 @@ export const MonitoringMap = React.memo(({
             setSelectedType(focusTarget.type as any);
         }
     }, [focusTarget]);
-
-    // 1. Synchronize props to live state
-    useEffect(() => {
-        setLiveVehicles(vehicles);
-    }, [vehicles]);
-
-    // 2. Listen for real-time location updates
-    useEffect(() => {
-        if (!echo || !user) return;
-
-        const companyId = user.company_id;
-        const channelName = companyId ? `fleet.${companyId}` : 'telemetry.public';
-        const channel = companyId ? echo.private(channelName) : echo.channel(channelName);
-
-        console.log(`MonitoringMap: Subscribing to ${companyId ? 'PRIVATE' : 'PUBLIC'} channel:`, channelName);
-
-        channel.listen('.vehicle.location.updated', (event: any) => {
-            setLiveVehicles((prev) => {
-                const exists = prev.find(v => v.id === event.vehicle_id);
-                if (exists) {
-                    return prev.map((v) => 
-                        v.id === event.vehicle_id 
-                            ? { ...v, latitude: event.latitude, longitude: event.longitude, heading: event.heading, speed: event.speed } 
-                            : v
-                    );
-                }
-                
-                const newVehicle: any = {
-                    id: event.vehicle_id,
-                    plate_number: event.vehicle_id.includes('SIM') ? event.vehicle_id : 'NEW-UNIT',
-                    latitude: event.latitude,
-                    longitude: event.longitude,
-                    heading: event.heading,
-                    speed: event.speed,
-                    type: 'motorcycle',
-                    is_active: true
-                };
-                return [...prev, newVehicle];
-            });
-        });
-
-        return () => {
-            echo.leave(channelName);
-        };
-    }, [user?.company_id]);
-
-    // Only auto-center on the very first load if nothing is focused
-    useEffect(() => {
-        if (focusTarget) return;
-        
-        if (liveVehicles.length > 0) {
-            const first = liveVehicles.find(v => v.latitude && v.longitude);
-            if (first) {
-                setViewport(prev => ({
-                    ...prev,
-                    center: [Number(first.longitude), Number(first.latitude)],
-                    zoom: 12
-                }));
-            }
-        } else if (locations.length > 0) {
-            const first = locations.find(l => l.latitude && l.longitude);
-            if (first) {
-                setViewport(prev => ({
-                    ...prev,
-                    center: [Number(first.longitude), Number(first.latitude)],
-                    zoom: 11
-                }));
-            }
-        }
-    }, [liveVehicles.length === 0 && locations.length === 0]);
-
-    const activeVehiclesCount = useMemo(() => liveVehicles.filter(v => v.is_active).length, [liveVehicles]);
 
     if (isLoading && vehicles.length === 0 && locations.length === 0) {
         return (
@@ -258,6 +160,29 @@ export const MonitoringMap = React.memo(({
                     </DropoffMarker>
                 )}
 
+                {pendingDeliveryDropoff && (
+                    <DeliveryMarker 
+                        longitude={pendingDeliveryDropoff.lng} 
+                        latitude={pendingDeliveryDropoff.lat}
+                        label={t('admin:new_delivery_destination') || "New Destination"}
+                        className="animate-in zoom-in duration-300"
+                    >
+                        <MarkerLabel position="top" className="mb-10 pointer-events-auto">
+                            <Button 
+                                size="sm" 
+                                className="rounded-full py-4 px-3 shadow-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold animate-in zoom-in slide-in-from-bottom-2 duration-500"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onCreateDelivery?.();
+                                }}
+                            >
+                                <Plus className="mr-1.5 size-3.5" strokeWidth={3} />
+                                {t('admin:create_delivery_now') || 'Create Delivery Now'}
+                            </Button>
+                        </MarkerLabel>
+                    </DeliveryMarker>
+                )}
+
                 {/* Render Hubs */}
                 {showHubs && locations.map((location) => (
                     <HubMarker 
@@ -285,7 +210,7 @@ export const MonitoringMap = React.memo(({
                 ))}
 
                 {/* Render Tasks */}
-                {tasks.map((task) => {
+                {showTasks && tasks.map((task) => {
                     const isFocused = selectedType === 'task' && selectedId === task.id;
                     
                     return (
@@ -332,6 +257,27 @@ export const MonitoringMap = React.memo(({
                         </React.Fragment>
                     );
                 })}
+
+                {/* Render Deliveries */}
+                {showDeliveries && deliveries.map((delivery) => {
+                    const isFocused = selectedType === 'delivery' && selectedId === delivery.id;
+                    if (!delivery.dropoff_latitude || !delivery.dropoff_longitude) return null;
+
+                    return (
+                        <React.Fragment key={delivery.id}>
+                            <DeliveryMarker 
+                                longitude={Number(delivery.dropoff_longitude)}
+                                latitude={Number(delivery.dropoff_latitude)}
+                                isFocused={isFocused}
+                                label={`D: ${delivery.order?.customer?.name || delivery.tracking_number.substring(0, 8)}`}
+                                onClick={() => {
+                                    setSelectedId(delivery.id);
+                                    setSelectedType('delivery');
+                                }}
+                            />
+                        </React.Fragment>
+                    );
+                })}
             </Map>
 
             <MonitoringStats 
@@ -340,8 +286,13 @@ export const MonitoringMap = React.memo(({
                 activeVehiclesCount={activeVehiclesCount}
                 tasksCount={tasks.length}
                 hubsCount={locations.length}
+                deliveriesCount={deliveries.length}
                 showHubs={showHubs}
                 onToggleHubs={() => setShowHubs(!showHubs)}
+                showTasks={showTasks}
+                onToggleTasks={() => setShowTasks(!showTasks)}
+                showDeliveries={showDeliveries}
+                onToggleDeliveries={() => setShowDeliveries(!showDeliveries)}
             />
 
             <div className="absolute top-3 left-1/2 -translate-x-1/2 w-full max-w-md px-4 z-20">

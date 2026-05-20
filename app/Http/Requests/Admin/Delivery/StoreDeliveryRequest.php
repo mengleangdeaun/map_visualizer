@@ -62,7 +62,9 @@ class StoreDeliveryRequest extends FormRequest
             'stops.*.current_hub_id' => 'nullable|exists:locations,id',
             'stops.*.driver_id' => 'nullable|exists:users,id',
             'stops.*.sequence_number' => 'nullable|integer|min:1',
-            'stops.*.status' => 'nullable|string|in:pending,at_hub,linehaul,out_for_delivery,delivered,failed',
+            'stops.*.status' => 'nullable|string|in:pending,at_hub,linehaul,out_for_delivery,delivered,failed,rescheduled',
+            'scheduled_at' => 'nullable|date',
+            'stops.*.scheduled_at' => 'nullable|date',
         ];
     }
 }

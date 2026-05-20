@@ -9,6 +9,7 @@
   "completed": "បានបញ្ចប់",
   "skipped": "បានរំលង",
   "failed": "បានបរាជ័យ",
+  "rescheduled": "បានពន្យារពេល",
   
   "customer_details": "ព័ត៌មានលម្អិតអតិថិជន",
   "delivery_address": "អាសយដ្ឋានដឹកជញ្ជូន",
@@ -31,6 +32,7 @@
   "reason_refused_payment": "បដិសេធការបង់ប្រាក់ COD",
   "reason_refused_delivery": "បដិសេធមិនទទួលយកទំនិញ",
   "reason_damaged": "កញ្ចប់ទំនិញមានការខូចខាត",
+  "reason_rescheduled": "អតិថិជនសុំពន្យារពេល",
   "reason_other": "បញ្ហាផ្សេងៗ",
   "submit_issue": "កត់ត្រាបញ្ហាចំណត",
   

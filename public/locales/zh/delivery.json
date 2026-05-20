@@ -9,6 +9,7 @@
   "completed": "已完成",
   "skipped": "已跳过",
   "failed": "已失败",
+  "rescheduled": "已重新安排",
   
   "customer_details": "客户详情",
   "delivery_address": "送货地址",
@@ -31,6 +32,7 @@
   "reason_refused_payment": "拒付代收货款",
   "reason_refused_delivery": "拒收货物 / 已取消",
   "reason_damaged": "包裹破损",
+  "reason_rescheduled": "客户要求重新安排时间",
   "reason_other": "其他问题",
   "submit_issue": "记录停靠点异常",
   

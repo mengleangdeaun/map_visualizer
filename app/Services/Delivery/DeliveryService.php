@@ -179,6 +179,7 @@ class DeliveryService
                     'current_hub_id' => $stop['current_hub_id'] ?? null,
                     'driver_id' => $stop['driver_id'] ?? null,
                     'sequence_number' => isset($stop['sequence_number']) ? (int) $stop['sequence_number'] : ($idx + 1),
+                    'scheduled_at' => $stop['scheduled_at'] ?? null,
                 ];
 
                 if (isset($stop['dropoff_latitude']) && isset($stop['dropoff_longitude'])) {
@@ -277,6 +278,7 @@ class DeliveryService
                         'current_hub_id' => $stop['current_hub_id'] ?? null,
                         'driver_id' => $stop['driver_id'] ?? null,
                         'sequence_number' => isset($stop['sequence_number']) ? (int) $stop['sequence_number'] : ($idx + 1),
+                        'scheduled_at' => $stop['scheduled_at'] ?? null,
                     ];
 
                     if (isset($stop['dropoff_latitude']) && isset($stop['dropoff_longitude'])) {
@@ -295,7 +297,7 @@ class DeliveryService
             // Exclude non-delivery table fields from delivery updates
             $deliveryFields = [
                 'weight_kg', 'dropoff_address', 'dropoff_location', 'status',
-                'origin_hub_id', 'current_hub_id', 'driver_id', 'sequence_number'
+                'origin_hub_id', 'current_hub_id', 'driver_id', 'sequence_number', 'scheduled_at'
             ];
             $deliveryData = array_intersect_key($data, array_flip($deliveryFields));
 

@@ -15,7 +15,7 @@ class UpdateDeliveryRequest extends FormRequest
     {
         return [
             // Logistics
-            'status' => 'nullable|string|in:pending,at_hub,linehaul,out_for_delivery,delivered,failed',
+            'status' => 'nullable|string|in:pending,at_hub,linehaul,out_for_delivery,delivered,failed,rescheduled',
             'driver_id' => 'nullable|exists:users,id',
             'origin_hub_id' => 'nullable|exists:locations,id',
             'current_hub_id' => 'nullable|exists:locations,id',
@@ -24,6 +24,7 @@ class UpdateDeliveryRequest extends FormRequest
             'dropoff_latitude' => 'nullable|numeric|between:-90,90',
             'dropoff_longitude' => 'nullable|numeric|between:-180,180',
             'sequence_number' => 'nullable|integer|min:1',
+            'scheduled_at' => 'nullable|date',
 
             // Multi-stop support
             'stops' => 'nullable|array',
@@ -35,7 +36,8 @@ class UpdateDeliveryRequest extends FormRequest
             'stops.*.current_hub_id' => 'nullable|exists:locations,id',
             'stops.*.driver_id' => 'nullable|exists:users,id',
             'stops.*.sequence_number' => 'nullable|integer|min:1',
-            'stops.*.status' => 'nullable|string|in:pending,at_hub,linehaul,out_for_delivery,delivered,failed',
+            'stops.*.status' => 'nullable|string|in:pending,at_hub,linehaul,out_for_delivery,delivered,failed,rescheduled',
+            'stops.*.scheduled_at' => 'nullable|date',
 
             // Optional Order updates
             'customer_id' => 'nullable|exists:customers,id',

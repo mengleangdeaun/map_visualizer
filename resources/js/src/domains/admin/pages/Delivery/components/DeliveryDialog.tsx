@@ -36,6 +36,11 @@ interface DeliveryDialogProps {
     onOpenChange: (open: boolean) => void;
     delivery?: Delivery;
     onSuccess?: (delivery: Delivery) => void;
+    initialValues?: {
+        dropoff_latitude?: number | null;
+        dropoff_longitude?: number | null;
+        dropoff_address?: string;
+    };
 }
 
 interface FormItem {
@@ -45,7 +50,7 @@ interface FormItem {
 }
 
 /** Builds the initial stops array from a delivery object */
-function buildInitialStops(delivery?: Delivery): any[] {
+function buildInitialStops(delivery?: Delivery, initialValues?: DeliveryDialogProps['initialValues']): any[] {
     if (delivery?.order?.deliveries && delivery.order.deliveries.length > 0) {
         return delivery.order.deliveries.map((d) => ({
             id: d.id,
@@ -58,19 +63,21 @@ function buildInitialStops(delivery?: Delivery): any[] {
             driver_id: d.driver_id || '',
             status: d.status || 'pending',
             sequence_number: d.sequence_number || 1,
+            scheduled_at: d.scheduled_at ? new Date(d.scheduled_at).toISOString().slice(0, 16) : '',
         }));
     }
     return [
         {
             weight_kg: delivery?.weight_kg || 0,
-            dropoff_address: delivery?.dropoff_address || '',
-            dropoff_latitude: delivery?.dropoff_latitude ? Number(delivery.dropoff_latitude) : null,
-            dropoff_longitude: delivery?.dropoff_longitude ? Number(delivery.dropoff_longitude) : null,
+            dropoff_address: delivery?.dropoff_address || initialValues?.dropoff_address || '',
+            dropoff_latitude: delivery?.dropoff_latitude ? Number(delivery.dropoff_latitude) : initialValues?.dropoff_latitude ? Number(initialValues.dropoff_latitude) : null,
+            dropoff_longitude: delivery?.dropoff_longitude ? Number(delivery.dropoff_longitude) : initialValues?.dropoff_longitude ? Number(initialValues.dropoff_longitude) : null,
             origin_hub_id: delivery?.origin_hub_id || '',
             current_hub_id: delivery?.current_hub_id || '',
             driver_id: delivery?.driver_id || '',
             status: delivery?.status || 'pending',
             sequence_number: delivery?.sequence_number || 1,
+            scheduled_at: delivery?.scheduled_at ? new Date(delivery.scheduled_at).toISOString().slice(0, 16) : '',
         },
     ];
 }
@@ -80,7 +87,7 @@ function buildInitialStops(delivery?: Delivery): any[] {
  * Delegates rendering to CustomerInfoSection, OrderItemsSection, and LogisticsSection.
  * Business logic lives in useBillingCalculator and useDeliveryMap hooks.
  */
-const DeliveryDialog = ({ open, onOpenChange, delivery, onSuccess }: DeliveryDialogProps) => {
+const DeliveryDialog = ({ open, onOpenChange, delivery, onSuccess, initialValues }: DeliveryDialogProps) => {
     const { t } = useTranslation(['admin', 'system']);
     const createMutation = useCreateDelivery();
     const updateMutation = useUpdateDelivery();
@@ -139,7 +146,7 @@ const DeliveryDialog = ({ open, onOpenChange, delivery, onSuccess }: DeliveryDia
             items: (delivery?.order?.items || [
                 { product_name: '', quantity: 1, unit_price: 0 },
             ]) as FormItem[],
-            stops: buildInitialStops(delivery) as any[],
+            stops: buildInitialStops(delivery, initialValues) as any[],
         },
         onSubmit: async ({ value }) => {
             try {
@@ -167,6 +174,7 @@ const DeliveryDialog = ({ open, onOpenChange, delivery, onSuccess }: DeliveryDia
                         dropoff_latitude: stop.dropoff_latitude ? Number(stop.dropoff_latitude) : null,
                         dropoff_longitude: stop.dropoff_longitude ? Number(stop.dropoff_longitude) : null,
                         sequence_number: stop.sequence_number ? Number(stop.sequence_number) : idx + 1,
+                        scheduled_at: stop.scheduled_at ? new Date(stop.scheduled_at).toISOString() : null,
                     })),
                 };
 
@@ -206,7 +214,7 @@ const DeliveryDialog = ({ open, onOpenChange, delivery, onSuccess }: DeliveryDia
     useEffect(() => {
         if (!open) return;
 
-        const initialStops = buildInitialStops(delivery);
+        const initialStops = buildInitialStops(delivery, initialValues);
 
         form.reset({
             customer_id: delivery?.order?.customer_id || '',
@@ -246,7 +254,7 @@ const DeliveryDialog = ({ open, onOpenChange, delivery, onSuccess }: DeliveryDia
         } else {
             setPinCoords(null);
         }
-    }, [delivery, open, activeExchangeRate]);
+    }, [delivery, open, activeExchangeRate, initialValues]);
 
     const isPending = createMutation.isPending || updateMutation.isPending;
 

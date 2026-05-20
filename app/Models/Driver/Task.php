@@ -29,6 +29,7 @@ class Task extends Model
         'pickup_address',
         'dropoff_address',
         'scheduled_at',
+        'started_at',
         'completed_at',
         'priority',
         'created_by',
@@ -37,6 +38,7 @@ class Task extends Model
 
     protected $casts = [
         'scheduled_at' => 'datetime',
+        'started_at' => 'datetime',
         'completed_at' => 'datetime',
     ];
 

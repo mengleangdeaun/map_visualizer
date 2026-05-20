@@ -9,6 +9,7 @@
   "completed": "Completed",
   "skipped": "Skipped",
   "failed": "Failed",
+  "rescheduled": "Rescheduled",
   
   "customer_details": "Customer Details",
   "delivery_address": "Delivery Address",
@@ -31,6 +32,7 @@
   "reason_refused_payment": "Refused COD Payment",
   "reason_refused_delivery": "Refused Delivery / Cancelled",
   "reason_damaged": "Package Damaged",
+  "reason_rescheduled": "Rescheduled by Customer",
   "reason_other": "Other Issue",
   "submit_issue": "Log Stop Exception",
   

@@ -20,13 +20,16 @@ class Delivery extends Model
         'weight_kg',
         'dropoff_address',
         'dropoff_location',
-        'status', // pending, at_hub, linehaul, out_for_delivery, delivered, failed
+        'status', // pending, at_hub, linehaul, out_for_delivery, delivered, failed, rescheduled
         'origin_hub_id',
         'current_hub_id',
         'driver_id',
         'sequence_number',
         'eta',
         'route_status', // pending, arrived, completed, skipped
+        'started_at',
+        'scheduled_at',
+        'completed_at',
         'created_by',
         'updated_by',
     ];
@@ -34,6 +37,9 @@ class Delivery extends Model
     protected $casts = [
         'weight_kg' => 'decimal:2',
         'eta' => 'datetime',
+        'started_at' => 'datetime',
+        'scheduled_at' => 'datetime',
+        'completed_at' => 'datetime',
     ];
 
     public function order()

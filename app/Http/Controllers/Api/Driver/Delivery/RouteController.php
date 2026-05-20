@@ -186,6 +186,7 @@ class RouteController extends Controller
         DB::transaction(function () use ($delivery) {
             $delivery->route_status = 'arrived';
             $delivery->status = 'out_for_delivery';
+            $delivery->started_at = now();
             $delivery->save();
 
             // Synchronize with RouteStop row
@@ -223,6 +224,7 @@ class RouteController extends Controller
             // Update statuses
             $delivery->route_status = 'completed';
             $delivery->status = 'delivered';
+            $delivery->completed_at = now();
             $delivery->save();
 
             // Synchronize with RouteStop row
@@ -265,7 +267,7 @@ class RouteController extends Controller
     public function fail(Request $request, $id)
     {
         $request->validate([
-            'reason_code' => 'required|string|in:customer_unreachable,address_not_found,refused_payment,refused_delivery,damaged_package,other',
+            'reason_code' => 'required|string|in:customer_unreachable,address_not_found,refused_payment,refused_delivery,damaged_package,rescheduled,other',
             'notes' => 'nullable|string|max:1000',
         ]);
 
@@ -276,8 +278,10 @@ class RouteController extends Controller
         }
 
         DB::transaction(function () use ($request, $delivery) {
+            $reasonCode = $request->input('reason_code');
             $delivery->route_status = 'skipped';
-            $delivery->status = 'failed';
+            $delivery->status = $reasonCode === 'rescheduled' ? 'rescheduled' : 'failed';
+            $delivery->completed_at = now();
             $delivery->save();
 
             // Synchronize with RouteStop row

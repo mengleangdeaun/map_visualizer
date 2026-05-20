@@ -182,5 +182,10 @@
     "payment_method": "Payment Method",
     "cash": "Cash (COD)",
     "khqr": "KHQR (Scan)",
-    "postpaid": "Postpaid"
+    "postpaid": "Postpaid",
+    "create_task_by_map": "Create Task by Map",
+    "create_delivery_by_map": "Create Delivery by Map",
+    "click_to_set_delivery_destination": "Click on map to set Destination",
+    "new_delivery_destination": "New Destination",
+    "create_delivery_now": "Create Delivery Now"
 }

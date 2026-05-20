@@ -93,6 +93,7 @@ const DeliveryPage = () => {
             out_for_delivery: { label: t('admin:status_out_for_delivery', 'Out for Delivery'), className: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20' },
             delivered: { label: t('admin:status_delivered', 'Delivered'), className: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' },
             failed: { label: t('admin:status_failed', 'Failed'), className: 'bg-destructive/10 text-destructive border-destructive/20' },
+            rescheduled: { label: t('admin:status_rescheduled', 'Rescheduled'), className: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20' },
         };
 
         const config = styles[status] || { label: status, className: '' };
@@ -324,6 +325,7 @@ const DeliveryPage = () => {
                                 <SelectItem value="out_for_delivery">{t('admin:out_for_delivery', 'Out for Delivery')}</SelectItem>
                                 <SelectItem value="delivered">{t('admin:delivered', 'Delivered')}</SelectItem>
                                 <SelectItem value="failed">{t('admin:failed', 'Failed')}</SelectItem>
+                                <SelectItem value="rescheduled">{t('admin:rescheduled', 'Rescheduled')}</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>

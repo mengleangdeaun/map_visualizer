@@ -68,9 +68,17 @@ class TaskController extends Controller
             'longitude' => 'nullable|numeric',
         ]);
 
-        $task->update([
+        $updateData = [
             'status' => $validated['status'],
-        ]);
+        ];
+
+        if ($validated['status'] === 'in_progress') {
+            $updateData['started_at'] = now();
+        } elseif (in_array($validated['status'], ['completed', 'cancelled'])) {
+            $updateData['completed_at'] = now();
+        }
+
+        $task->update($updateData);
 
         broadcast(new \App\Events\TaskUpdated($task));
 

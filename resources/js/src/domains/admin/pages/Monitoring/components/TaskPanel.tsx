@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
@@ -76,7 +75,7 @@ export const TaskPanel = ({ onFocusTarget }: TaskPanelProps) => {
 
 
     return (
-        <Card className="h-full flex flex-col min-h-0">
+        <div className="h-full flex flex-col min-h-0">
             <div className="p-4 pt-0 border-b space-y-4">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -106,7 +105,7 @@ export const TaskPanel = ({ onFocusTarget }: TaskPanelProps) => {
             </div>
 
             <ScrollArea className="flex-1 h-full min-h-0">
-                <div className="p-4 space-y-3 pt-0">
+                <div className="p-4 space-y-3">
                     {isLoading ? (
                         Array.from({ length: 5 }).map((_, i) => (
                             <div key={i} className="h-24 rounded-xl bg-muted/50 animate-pulse" />
@@ -217,6 +216,6 @@ export const TaskPanel = ({ onFocusTarget }: TaskPanelProps) => {
                 confirmText={t('cancel_task', 'Cancel Task')}
                 variant="destructive"
             />
-        </Card>
+        </div>
     );
 };

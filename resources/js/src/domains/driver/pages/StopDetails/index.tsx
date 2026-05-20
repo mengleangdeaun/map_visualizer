@@ -289,6 +289,7 @@ const StopDetailsPage = () => {
                                 <option value="refused_payment">{t('delivery:reason_refused_payment')}</option>
                                 <option value="refused_delivery">{t('delivery:reason_refused_delivery')}</option>
                                 <option value="damaged_package">{t('delivery:reason_damaged')}</option>
+                                <option value="rescheduled">{t('delivery:reason_rescheduled')}</option>
                                 <option value="other">{t('delivery:reason_other')}</option>
                             </select>
                         </div>

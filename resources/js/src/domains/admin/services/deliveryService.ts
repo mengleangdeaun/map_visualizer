@@ -55,7 +55,7 @@ export interface Delivery {
     dropoff_address: string | null;
     dropoff_latitude: number | null;
     dropoff_longitude: number | null;
-    status: 'pending' | 'at_hub' | 'linehaul' | 'out_for_delivery' | 'delivered' | 'failed';
+    status: 'pending' | 'at_hub' | 'linehaul' | 'out_for_delivery' | 'delivered' | 'failed' | 'rescheduled';
     origin_hub_id: string | null;
     current_hub_id: string | null;
     route_id: string | null;
@@ -65,6 +65,9 @@ export interface Delivery {
     driver?: User;
     origin_hub?: Location;
     current_hub?: Location;
+    started_at: string | null;
+    scheduled_at: string | null;
+    completed_at: string | null;
     created_at: string;
     updated_at: string;
 }

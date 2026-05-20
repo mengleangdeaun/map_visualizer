@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Trash2, MapPin, Scale, Activity, Layers, Link2 } from 'lucide-react';
+import { Plus, Trash2, MapPin, Scale, Activity, Layers, Link2, Calendar } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { parseGoogleMapsUrl } from '@/lib/maps';
@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/select';
 import { SearchableSelect } from '@/components/shared/SearchableSelect';
 import { Map, MapControls, MapMarker, MarkerContent } from '@/components/ui/map';
+import { getDeliveryStatusStyle } from '@/domains/admin/utils/statusStyles';
 
 interface LogisticsSectionProps {
     form: any;
@@ -32,12 +33,7 @@ interface LogisticsSectionProps {
     driversData: { data: any[] } | undefined;
 }
 
-/** Returns a semantic badge class based on stop status */
-function getStopStatusClass(status: string): string {
-    if (status === 'delivered') return 'border-success/30 bg-success/10 text-success';
-    if (status === 'failed') return 'border-destructive/30 bg-destructive/10 text-destructive';
-    return 'border-warning/30 bg-warning/10 text-warning';
-}
+
 
 /**
  * Presentational section for logistics planning:
@@ -115,6 +111,7 @@ const LogisticsSection = ({
                                     driver_id: updated[updated.length - 1]?.driver_id || '',
                                     status: 'pending',
                                     sequence_number: updated.length + 1,
+                                    scheduled_at: '',
                                 });
                                 form.setFieldValue('stops', updated);
                                 setActiveStopIndex(updated.length - 1);
@@ -146,7 +143,7 @@ const LogisticsSection = ({
                                                 : 'border-border bg-muted text-muted-foreground'
                                         }`}
                                     >
-                                        {t('admin:stop_n', `Stop ${stop.sequence_number || idx + 1}`)}
+                                        {t('admin:stop_n', { defaultValue: 'Stop {{sequence_number}}', sequence_number: stop.sequence_number || idx + 1 })}
                                     </Badge>
                                     {stops.length > 1 && (
                                         <Button
@@ -176,9 +173,9 @@ const LogisticsSection = ({
                                     <span className="text-[9px] text-muted-foreground font-mono">•</span>
                                     <Badge
                                         variant="outline"
-                                        className={`text-[9px] font-semibold ${getStopStatusClass(stop.status)}`}
+                                        className={`text-[9px] font-semibold capitalize ${getDeliveryStatusStyle(stop.status)}`}
                                     >
-                                        {stop.status}
+                                        {stop.status ? stop.status.replace(/_/g, ' ') : ''}
                                     </Badge>
                                 </div>
                             </div>
@@ -191,7 +188,7 @@ const LogisticsSection = ({
                     {/* Active stop indicator */}
                     <div className="bg-primary/5 p-3 rounded-lg border border-primary/20">
                         <span className="text-xs font-semibold text-primary block uppercase">
-                            {t('admin:editing_stop', `Editing Stop ${stops[activeStopIndex]?.sequence_number || activeStopIndex + 1}`)}
+                            {t('admin:editing_stop', { defaultValue: 'Editing Stop {{sequence_number}}', sequence_number: stops[activeStopIndex]?.sequence_number || activeStopIndex + 1 })}
                         </span>
                         <span className="text-[10px] text-muted-foreground">
                             {t('admin:editing_stop_desc') ||
@@ -251,6 +248,7 @@ const LogisticsSection = ({
                                     </SelectItem>
                                     <SelectItem value="delivered">{t('admin:delivered') || 'Delivered'}</SelectItem>
                                     <SelectItem value="failed">{t('admin:failed') || 'Failed'}</SelectItem>
+                                    <SelectItem value="rescheduled">{t('admin:rescheduled') || 'Rescheduled'}</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -318,33 +316,55 @@ const LogisticsSection = ({
                         </div>
                     </div>
 
-                    {/* Driver */}
-                    <div className="space-y-1.5 flex flex-col">
-                        <Label className="text-xs font-semibold">
-                            {t('admin:assigned_driver') || 'Assign Driver (Optional)'}
-                        </Label>
-                        <SearchableSelect
-                            options={driversData?.data || []}
-                            value={stops[activeStopIndex]?.driver_id || ''}
-                            onChange={(val: string | null) => {
-                                const updated = [...stops];
-                                updated[activeStopIndex] = {
-                                    ...updated[activeStopIndex],
-                                    driver_id: val || '',
-                                };
-                                form.setFieldValue('stops', updated);
-                            }}
-                            placeholder={t('admin:select_driver') || 'Unassigned / Available'}
-                            getOptionValue={(d: any) => d.id}
-                            getOptionLabel={(d: any) => `${d.name} (${d.phone})`}
-                            getOptionSearchTerms={(d: any) => [d.name, d.phone]}
-                            renderOption={(d: any) => (
-                                <div className="flex flex-col py-0.5">
-                                    <span className="font-semibold text-xs text-foreground">{d.name}</span>
-                                    <span className="text-[10px] text-muted-foreground font-mono">{d.phone}</span>
-                                </div>
-                            )}
-                        />
+                    {/* Driver & Scheduled Time */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5 flex flex-col">
+                            <Label className="text-xs font-semibold">
+                                {t('admin:assigned_driver') || 'Assign Driver (Optional)'}
+                            </Label>
+                            <SearchableSelect
+                                options={driversData?.data || []}
+                                value={stops[activeStopIndex]?.driver_id || ''}
+                                onChange={(val: string | null) => {
+                                    const updated = [...stops];
+                                    updated[activeStopIndex] = {
+                                        ...updated[activeStopIndex],
+                                        driver_id: val || '',
+                                    };
+                                    form.setFieldValue('stops', updated);
+                                }}
+                                placeholder={t('admin:select_driver') || 'Unassigned / Available'}
+                                getOptionValue={(d: any) => d.id}
+                                getOptionLabel={(d: any) => `${d.name} (${d.phone})`}
+                                getOptionSearchTerms={(d: any) => [d.name, d.phone]}
+                                renderOption={(d: any) => (
+                                    <div className="flex flex-col py-0.5">
+                                        <span className="font-semibold text-xs text-foreground">{d.name}</span>
+                                        <span className="text-[10px] text-muted-foreground font-mono">{d.phone}</span>
+                                    </div>
+                                )}
+                            />
+                        </div>
+
+                        <div className="space-y-1.5 flex flex-col">
+                            <Label className="text-xs font-semibold flex items-center gap-1">
+                                <Calendar className="size-3.5 text-muted-foreground" />
+                                {t('admin:scheduled_at') || 'Scheduled Time (Optional)'}
+                            </Label>
+                            <Input
+                                type="datetime-local"
+                                className="h-9"
+                                value={stops[activeStopIndex]?.scheduled_at || ''}
+                                onChange={(e) => {
+                                    const updated = [...stops];
+                                    updated[activeStopIndex] = {
+                                        ...updated[activeStopIndex],
+                                        scheduled_at: e.target.value || '',
+                                    };
+                                    form.setFieldValue('stops', updated);
+                                }}
+                            />
+                        </div>
                     </div>
 
                     {/* Dropoff Address */}
@@ -443,7 +463,7 @@ const LogisticsSection = ({
                                                     <MapPin className="size-4 text-white" />
                                                 </div>
                                                 <div className="bg-background/90 text-[8px] font-semibold border p-0.5 px-1 rounded shadow-xs mt-1 border-primary/20">
-                                                    {t('admin:stop_n', `STOP ${stops[activeStopIndex]?.sequence_number || activeStopIndex + 1}`)}
+                                                    {t('admin:stop_n', { defaultValue: 'STOP {{sequence_number}}', sequence_number: stops[activeStopIndex]?.sequence_number || activeStopIndex + 1 })}
                                                 </div>
                                             </div>
                                         </MarkerContent>

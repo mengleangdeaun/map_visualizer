@@ -1,6 +1,6 @@
 import api from '@/lib/api';
 
-export type TaskStatus = 'pending' | 'assigned' | 'in_progress' | 'completed' | 'cancelled' | 'archived';
+export type TaskStatus = 'pending' | 'assigned' | 'in_progress' | 'completed' | 'cancelled' | 'archived' | 'rescheduled';
 
 export interface Task {
     id: string;
@@ -19,6 +19,7 @@ export interface Task {
     pickup_address: string | null;
     dropoff_address: string | null;
     scheduled_at: string | null;
+    started_at: string | null;
     completed_at: string | null;
     priority?: 'low' | 'normal' | 'high' | 'urgent';
     created_at: string;

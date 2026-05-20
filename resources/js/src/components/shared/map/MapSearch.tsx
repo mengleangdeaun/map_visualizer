@@ -103,7 +103,7 @@ export const MapSearch = ({ onSelect, className, placeholder = "Search places in
                     onChange={(e) => setQuery(e.target.value)}
                     onFocus={() => query.length >= 2 && results.length > 0 && setIsOpen(true)}
                     placeholder={placeholder}
-                    className="pl-12 pr-10 h-12 bg-background/50  dark:bg-background/90 backdrop-blur-xl border-none rounded-lg focus-visible:ring-2 focus-visible:ring-primary/50 text-sm font-medium shadow-xl hover:shadow-2xl transition-all ring-1 ring-slate-200 dark:ring-slate-800"
+                    className="pl-12 pr-10 h-10 bg-background/50  dark:bg-background/90 backdrop-blur-xl border-none rounded-lg focus-visible:ring-2 focus-visible:ring-primary/50 text-sm font-medium shadow-xl hover:shadow-2xl transition-all ring-1 ring-slate-200 dark:ring-slate-800"
                 />
                 {query && (
                     <button 
