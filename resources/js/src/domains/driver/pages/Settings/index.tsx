@@ -170,7 +170,7 @@ const DriverSettings = () => {
             <div className="p-4 flex flex-col gap-6 max-w-md mx-auto animate-in fade-in duration-500 pb-24">
             
             {/* Profile Avatar Editor */}
-            <Card className="p-5 flex flex-col items-center gap-3.5 border bg-card/60 backdrop-blur-xl shadow-md rounded-2xl relative overflow-hidden">
+            <Card className="p-5 flex flex-col items-center gap-3.5 bg-card/60 backdrop-blur-xl rounded-2xl relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none" />
 
                 <div className="relative group cursor-pointer" onClick={handleAvatarClick}>
@@ -211,7 +211,7 @@ const DriverSettings = () => {
             </Card>
 
             {/* Email Edit Block */}
-            <Card className="p-5 flex flex-col gap-4 border bg-card/60 backdrop-blur-xl shadow-md rounded-2xl">
+            <Card className="p-5 flex flex-col gap-4 bg-card/60 backdrop-blur-xl rounded-2xl">
                 <div className="flex items-center gap-2 border-b pb-3">
                     <Mail size={18} className="text-primary" />
                     <span className="text-sm font-black tracking-tight">{t('driver:change_email') || 'Email Address'}</span>
@@ -296,7 +296,7 @@ const DriverSettings = () => {
             </Card>
 
             {/* Password Reset Block */}
-            <Card className="p-5 flex flex-col gap-4 border bg-card/60 backdrop-blur-xl shadow-md rounded-2xl">
+            <Card className="p-5 flex flex-col gap-4 bg-card/60 backdrop-blur-xl rounded-2xl">
                 <div className="flex items-center gap-2 border-b pb-3">
                     <Lock size={18} className="text-primary" />
                     <span className="text-sm font-black tracking-tight">{t('driver:reset_password') || 'Reset Password'}</span>
@@ -344,7 +344,7 @@ const DriverSettings = () => {
             </Card>
 
             {/* VAPID Push Notification Settings */}
-            <Card className="p-5 flex flex-col gap-4 border bg-card/60 backdrop-blur-xl shadow-md rounded-2xl">
+            <Card className="p-5 flex flex-col gap-4 bg-card/60 backdrop-blur-xl rounded-2xl">
                 <div className="flex items-center gap-2 border-b pb-3">
                     <Bell size={18} className="text-primary" />
                     <span className="text-sm font-black tracking-tight">{t('driver:push_notifications') || 'Push Notifications'}</span>

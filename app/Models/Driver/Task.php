@@ -18,6 +18,7 @@ class Task extends Model
         'company_id',
         'vehicle_id',
         'driver_id',
+        'tracking_number',
         'title',
         'description',
         'status',

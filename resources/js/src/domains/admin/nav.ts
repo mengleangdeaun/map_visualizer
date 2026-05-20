@@ -29,6 +29,7 @@ export const adminNav: MenuItem[] = [
             { id: 'hubs', title: 'hubs', path: '/admin/fleet/hubs' },
             { id: 'users', title: 'users', path: '/admin/fleet/users' },
             { id: 'customers', title: 'customers', path: '/admin/fleet/customers' },
+            { id: 'document-numbering', title: 'document_numbering', path: '/admin/fleet/document-numbering' },
         ]
     }
 ];

@@ -3,11 +3,19 @@
 namespace App\Services\Admin\Fleet;
 
 use App\Models\Driver\Task;
+use App\Services\Admin\Fleet\DocumentNumberingService;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class TaskService
 {
+    protected $documentNumberingService;
+
+    public function __construct(DocumentNumberingService $documentNumberingService)
+    {
+        $this->documentNumberingService = $documentNumberingService;
+    }
     /**
      * Find a task by ID with spatial data.
      */
@@ -101,6 +109,11 @@ class TaskService
                     $data['vehicle_id'] = $activeShift->vehicle_id;
                 }
             }
+        }
+
+        if (empty($data['tracking_number']) && isset($data['company_id'])) {
+            $data['tracking_number'] = $this->documentNumberingService->generateNextNumberByScope('task', $data['company_id'])
+                ?? ('TSK-' . date('ymd') . '-' . strtoupper(Str::random(8)));
         }
 
         $task = Task::create($data);

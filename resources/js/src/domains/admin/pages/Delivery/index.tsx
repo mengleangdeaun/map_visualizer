@@ -163,7 +163,7 @@ const DeliveryPage = () => {
                             <span className="capitalize">{order.payment_method}</span>
                         </div>
                         <div className="text-[10px] text-muted-foreground flex gap-2">
-                            <span>Total: <strong className="text-foreground">${order.total_amount}</strong></span>
+                            <span>Total: <strong className="text-foreground">${order.grand_total}</strong></span>
                             {order.amount_due_cod > 0 && (
                                 <span className="text-yellow-600 dark:text-yellow-400 font-bold">COD: ${order.amount_due_cod}</span>
                             )}
@@ -331,6 +331,7 @@ const DeliveryPage = () => {
                     searchQuery={debouncedSearch}
                     onEmptyAction={debouncedSearch ? handleSearchClear : handleAdd}
                     emptyActionLabel={debouncedSearch ? t('admin:clear_search') : t('admin:create_delivery')}
+                    tableClassName="min-w-[1150px]"
                 />
             </div>
 

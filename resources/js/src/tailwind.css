@@ -29,6 +29,10 @@
     --input: 0.925 0.005 214.3;
     --ring: 0.723 0.014 214.4;
     --radius: 0.625rem;
+    --success: 0.627 0.194 142.5;
+    --success-foreground: 0.979 0.021 142.5;
+    --warning: 0.769 0.188 70.08;
+    --warning-foreground: 0.18 0.04 70.08;
     --chart-1: 0.845 0.143 164.978;
     --chart-2: 0.696 0.17 162.48;
     --chart-3: 0.596 0.145 163.225;
@@ -63,6 +67,10 @@
     --accent-foreground: 0.987 0.002 197.1;
     --destructive: 0.704 0.191 22.216;
     --destructive-foreground: 0.985 0 0;
+    --success: 0.696 0.17 142.5;
+    --success-foreground: 0.979 0.021 142.5;
+    --warning: 0.769 0.188 70.08;
+    --warning-foreground: 0.979 0.021 70.08;
     --border: 0.25 0.01 228.8;
     --input: 0.25 0.01 228.8;
     --ring: 0.56 0.021 213.5;

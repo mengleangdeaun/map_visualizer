@@ -117,7 +117,7 @@ const DriverProfile = () => {
 
             {/* Company Card */}
             {user?.company && (
-                <Card className="p-4 flex flex-row items-center justify-between gap-0 border bg-card/60 backdrop-blur-xl shadow-sm rounded-2xl">
+                <Card className="p-4 flex flex-row items-center justify-between gap-0 bg-card/60 backdrop-blur-xl shadow-sm rounded-2xl">
                     <div className="flex flex-row items-center gap-3">
                         <Avatar className="size-11 border bg-background flex items-center justify-center rounded-full p-1 shrink-0">
                             {user.company.logo_full_url ? (
@@ -144,7 +144,7 @@ const DriverProfile = () => {
             )}
 
             {/* Active Vehicle Shift Control */}
-            <Card className="p-5 flex flex-col gap-4 border bg-card/60 backdrop-blur-xl shadow-md rounded-2xl">
+            <Card className="p-5 flex flex-col gap-4 bg-card/60 backdrop-blur-xl shadow rounded-2xl">
                 <div className="flex items-center justify-between border-b pb-3">
                     <div className="flex items-center gap-2">
                         <Truck size={18} className="text-primary" />
@@ -186,7 +186,7 @@ const DriverProfile = () => {
                         </Button>
                     </div>
                 ) : (
-                    <div className="flex flex-col items-center justify-center text-center p-4 bg-muted/20 border border-dashed rounded-xl">
+                    <div className="flex flex-col items-center justify-center text-center p-4 bg-muted/20 rounded-xl">
                         <Truck size={24} className="text-muted-foreground/60 mb-2" />
                         <span className="text-xs font-bold text-muted-foreground">
                             {t('driver:no_active_vehicle') || 'No active vehicle checked in'}
@@ -200,7 +200,7 @@ const DriverProfile = () => {
 
             {/* Task History Card */}
             <Card 
-                className="p-4 flex flex-row items-center justify-between gap-0 border bg-card/60 backdrop-blur-xl shadow-sm hover:shadow-md transition-all rounded-2xl cursor-pointer hover:bg-muted/40" 
+                className="p-4 flex flex-row items-center justify-between gap-0 bg-card/60 backdrop-blur-xl shadow-sm hover:shadow-md transition-all rounded-2xl cursor-pointer hover:bg-muted/40" 
                 onClick={() => navigate({ to: '/driver/task-history' })}
             >
                 <div className="flex flex-row items-center gap-3">
@@ -221,7 +221,7 @@ const DriverProfile = () => {
             </Card>
 
             {/* PWA Settings & App Info */}
-            <Card className="p-5 flex flex-col gap-4 border bg-card/60 backdrop-blur-xl shadow-md rounded-2xl">
+            <Card className="p-5 flex flex-col gap-4 bg-card/60 backdrop-blur-xl shadow rounded-2xl">
                 <div className="flex items-center gap-2 border-b pb-3">
                     <Globe size={18} className="text-primary" />
                     <span className="text-sm font-black tracking-tight">{t('driver:preferences') || 'Preferences'}</span>

@@ -5,12 +5,19 @@ namespace App\Services\Delivery;
 use App\Models\Delivery\Delivery;
 use App\Models\Delivery\Order;
 use App\Models\Delivery\OrderItem;
+use App\Services\Admin\Fleet\DocumentNumberingService;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class DeliveryService
 {
+    protected $documentNumberingService;
+
+    public function __construct(DocumentNumberingService $documentNumberingService)
+    {
+        $this->documentNumberingService = $documentNumberingService;
+    }
     /**
      * Find a delivery by ID with spatial and relational data.
      */
@@ -101,7 +108,8 @@ class DeliveryService
             $companyId = $data['company_id'];
 
             // 1. Create the Order
-            $orderNumber = 'ORD-' . date('Ymd') . '-' . strtoupper(Str::random(6));
+            $orderNumber = $this->documentNumberingService->generateNextNumberByScope('order', $companyId)
+                ?? ('ORD-' . date('Ymd') . '-' . strtoupper(Str::random(6)));
             
             $order = Order::create([
                 'company_id' => $companyId,
@@ -157,7 +165,8 @@ class DeliveryService
             ]];
 
             foreach ($stops as $idx => $stop) {
-                $trackingNumber = 'TRK-' . date('ymd') . '-' . strtoupper(Str::random(8)) . '-' . ($idx + 1);
+                $trackingNumber = $this->documentNumberingService->generateNextNumberByScope('tracking', $companyId)
+                    ?? ('TRK-' . date('ymd') . '-' . strtoupper(Str::random(8)) . '-' . ($idx + 1));
                 
                 $deliveryData = [
                     'company_id' => $companyId,
@@ -254,7 +263,8 @@ class DeliveryService
                 
                 $deliveries = [];
                 foreach ($data['stops'] as $idx => $stop) {
-                    $trackingNumber = 'TRK-' . date('ymd') . '-' . strtoupper(Str::random(8)) . '-' . ($idx + 1);
+                    $trackingNumber = $this->documentNumberingService->generateNextNumberByScope('tracking', $delivery->company_id)
+                        ?? ('TRK-' . date('ymd') . '-' . strtoupper(Str::random(8)) . '-' . ($idx + 1));
                     
                     $deliveryData = [
                         'company_id' => $delivery->company_id,

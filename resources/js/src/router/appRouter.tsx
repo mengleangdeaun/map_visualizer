@@ -85,6 +85,7 @@ const adminTasksRoute = createRoute({ getParentRoute: () => mainLayoutRoute, pat
 const adminUsersRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'admin/fleet/users', component: lazyRouteComponent(() => import('../domains/admin/pages/User/index')) });
 const adminDeliveriesRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'admin/fleet/deliveries', component: lazyRouteComponent(() => import('../domains/admin/pages/Delivery/index')) });
 const adminDispatchRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'admin/fleet/dispatch', component: lazyRouteComponent(() => import('../domains/admin/pages/Dispatch/index')) });
+const adminDocumentNumberingRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'admin/fleet/document-numbering', component: lazyRouteComponent(() => import('../domains/admin/pages/DocumentNumbering/index')) });
 const systemDemoStaticRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'system/demomap/static', component: lazyRouteComponent(() => import('../domains/system/pages/DemoMap/StaticMap/StaticMap')) });
 const systemDemoInteractiveRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'system/demomap/interactive', component: lazyRouteComponent(() => import('../domains/system/pages/DemoMap/InteractiveMap/InteractiveMap')) });
 const systemDemoMarkerRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'system/demomap/marker', component: lazyRouteComponent(() => import('../domains/system/pages/DemoMap/MapMarker/MapMarker')) });
@@ -114,6 +115,7 @@ const routeTree = rootRoute.addChildren([
         adminUsersRoute,
         adminDeliveriesRoute,
         adminDispatchRoute,
+        adminDocumentNumberingRoute,
         systemDemoStaticRoute,
         systemDemoInteractiveRoute,
         systemDemoMarkerRoute,

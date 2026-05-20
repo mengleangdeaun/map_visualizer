@@ -121,7 +121,6 @@ export function DateTimePicker({
                 selected={date}
                 onSelect={handleDateSelect}
                 disabled={(date) => isBefore(startOfDay(date), startOfDay(minDate))}
-                initialFocus
             />
         </div>
       </PopoverContent>

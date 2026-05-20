@@ -53,6 +53,8 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::apiResource('tasks', \App\Http\Controllers\Api\Admin\Fleet\TaskController::class);
             Route::apiResource('customers', \App\Http\Controllers\Api\Admin\Customer\CustomerController::class);
             Route::apiResource('deliveries', \App\Http\Controllers\Api\Admin\Delivery\DeliveryController::class);
+            Route::post('document-number-settings/{id}/generate', [\App\Http\Controllers\Api\Admin\Fleet\DocumentNumberSettingController::class, 'generate']);
+            Route::apiResource('document-number-settings', \App\Http\Controllers\Api\Admin\Fleet\DocumentNumberSettingController::class);
             Route::patch('vehicles/active/location', [\App\Http\Controllers\Api\Admin\Fleet\VehicleController::class, 'updateActiveLocation']);
             Route::patch('vehicles/{vehicle}/location', [\App\Http\Controllers\Api\Admin\Fleet\VehicleController::class, 'updateLocation']);
 

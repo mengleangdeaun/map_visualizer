@@ -56,6 +56,7 @@ interface DataTableProps<TData, TValue> {
     emptyActionLabel?: string;
     onRowSelectionChange?: (selection: any) => void;
     rowSelection?: any;
+    tableClassName?: string;
 }
 
 export function DataTable<TData, TValue>({
@@ -75,6 +76,7 @@ export function DataTable<TData, TValue>({
     emptyActionLabel,
     onRowSelectionChange,
     rowSelection = {},
+    tableClassName,
 }: DataTableProps<TData, TValue>) {
     const { t } = useTranslation('system');
     const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -123,7 +125,7 @@ export function DataTable<TData, TValue>({
             </div>
 
             <div className="overflow-x-auto">
-                <Table>
+                <Table className={tableClassName}>
                     <TableHeader className="bg-muted/30">
                         {table.getHeaderGroups().map((headerGroup) => (
                             <TableRow key={headerGroup.id} className="hover:bg-transparent border-b border-border/50">
