@@ -82,7 +82,7 @@ export const PageHeader = ({
                         size="icon"
                         onClick={refreshAction.onClick}
                         disabled={refreshAction.isFetching}
-                        className="h-8 w-8 bg-background border-border hover:bg-primary/5 hover:text-primary transition-all shadow-sm"
+                        className="h-9 w-9 bg-background border-border hover:bg-primary/5 hover:text-primary transition-all shadow-sm"
                     >
                         <RotateCw className={cn("size-4 transition-all", refreshAction.isFetching && "animate-spin text-primary")} />
                     </Button>
@@ -94,7 +94,7 @@ export const PageHeader = ({
                         size="icon"
                         onClick={filterAction.onClick}
                         className={cn(
-                            "h-8 w-8 bg-background border-border hover:bg-primary/5 hover:text-primary transition-all shadow-sm",
+                            "h-9 w-9 bg-background border-border hover:bg-primary/5 hover:text-primary transition-all shadow-sm",
                             filterAction.isActive && "bg-primary/10 text-primary border-primary/20"
                         )}
                     >
@@ -108,7 +108,7 @@ export const PageHeader = ({
                             <Button
                                 variant="outline"
                                 size="icon"
-                                className="h-8 w-8 bg-background border-border hover:bg-primary/5 hover:text-primary transition-all shadow-sm"
+                                className="h-9 w-9 bg-background border-border hover:bg-primary/5 hover:text-primary transition-all shadow-sm"
                             >
                                 {dropdownAction.icon || <MoreVertical className="size-4" />}
                             </Button>
@@ -123,9 +123,9 @@ export const PageHeader = ({
                     <Tabs 
                         value={viewAction.view} 
                         onValueChange={(v) => viewAction.onChange(v as 'table' | 'map')}
-                        className="h-8"
+                        className="h-9"
                     >
-                        <TabsList className="bg-background border border-border p-0.5 shadow-sm">
+                        <TabsList className="bg-background border border-border p-1 shadow-sm">
                             <TabsTrigger 
                                 value="table" 
                                 className="text-[11px] font-semibold uppercase data-[state=active]:bg-primary/10 data-[state=active]:text-primary"

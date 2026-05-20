@@ -82,7 +82,7 @@ const Header = () => {
                 <div className="relative bg-card flex w-full items-center px-5 py-2.5">
                     <div className="horizontal-logo flex lg:hidden justify-between items-center ltr:mr-2 rtl:ml-2">
                         <Link activeProps={{ className: 'active' }} to="/" className="main-logo flex items-center shrink-0">
-                            <img className="w-12 ltr:-ml-1 rtl:-mr-1 inline" src="/assets/images/logo.svg" alt="logo" />
+                            <img className="w-20 ltr:-ml-1 rtl:-mr-1 inline" src="/assets/images/logo.svg" alt="logo" />
                         </Link>
                         <button
                             type="button"
@@ -212,7 +212,7 @@ const Header = () => {
                                         <img className="w-5 h-5 object-cover rounded-full" src={`/assets/images/flags/${flag.toUpperCase()}.svg`} alt="flag" />
                                     </button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align={isRtl ? "start" : "end"} className="w-[200px] p-2">
+                                <DropdownMenuContent align={isRtl ? "start" : "end"} className="w-[200px] p-2 bg-gradient-to-b from-card to-background">
                                     <DropdownMenuLabel className="flex items-center gap-2">
                                         <Globe className="size-4" /> {t('Select Language')}
                                     </DropdownMenuLabel>
@@ -283,12 +283,12 @@ const Header = () => {
                                         type="button"
                                         className="relative group block rounded-full focus:outline-none"
                                     >
-                                        <img className="w-9 h-9 rounded-full object-cover saturate-50 group-hover:saturate-100 transition-all border-2 border-transparent group-hover:border-primary/30" src="/assets/images/user-profile.jpeg" alt="userProfile" />
+                                        <img className="w-9 h-9 rounded-full object-cover saturate-50 group-hover:saturate-100 transition-all border-2 border-transparent group-hover:border-primary/30" src="/assets/images/user-profile.svg" alt="userProfile" />
                                     </button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align={isRtl ? "start" : "end"} className="w-[240px] p-1">
-                                    <div className="flex items-center px-4 py-4 gap-3 border-b mb-1">
-                                        <img className="rounded-md w-10 h-10 object-cover" src={user?.profile_full_url || "/assets/images/user-profile.jpeg"} alt="userProfile" />
+                                <DropdownMenuContent align={isRtl ? "start" : "end"} className="w-[240px] p-2 bg-gradient-to-b from-card to-background">
+                                    <div className="flex items-center px-3 py-3 gap-3 border-b mb-1">
+                                        <img className="rounded-md w-10 h-10 object-cover" src={user?.profile_full_url || "/assets/images/user-profile.svg"} alt="userProfile" />
                                         <div className="truncate">
                                             <h4 className="text-sm font-bold flex items-center gap-2">
                                                 {user?.name}

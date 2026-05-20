@@ -38,7 +38,7 @@ export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
                     ref={ref}
                     value={value}
                     onChange={onChange}
-                    className="pl-10 pr-10 bg-background border-border/50 focus-visible:ring-primary/20 shadow-sm"
+                    className="pl-10 pr-10 bg-background border border-border focus-visible:ring-primary/20 dark:focus-visible:ring-primary/50"
                     {...props}
                 />
                 {value && (

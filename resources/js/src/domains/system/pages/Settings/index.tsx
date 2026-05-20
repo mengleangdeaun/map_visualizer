@@ -287,7 +287,7 @@ const SettingsPage = () => {
                                         className={`relative cursor-pointer rounded-xl border p-4 flex flex-col gap-2 transition-all duration-300 ${
                                             mode === 'manual' 
                                             ? 'bg-blue-500/5 border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.05)] ring-1 ring-blue-500/20' 
-                                            : 'bg-gradient-to-b from-card to-background  border-border'
+                                            : 'bg-gradient-to-b from-card to-background border-border'
                                         }`}
                                     >
                                         <div className="flex items-center justify-between">

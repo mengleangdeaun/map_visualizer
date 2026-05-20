@@ -122,7 +122,7 @@ const Sidebar = () => {
                 <div className="bg-card h-full">
                     <div className="flex justify-between items-center px-4 py-3">
                         <Link to="/" className="main-logo flex items-center shrink-0">
-                            <img className="w-12 ml-[5px] flex-none" src="/assets/images/logo.svg" alt="logo" />
+                            <img className="w-20 ml-[5px] flex-none" src="/assets/images/logo.svg" alt="logo" />
                         </Link>
 
                         <button

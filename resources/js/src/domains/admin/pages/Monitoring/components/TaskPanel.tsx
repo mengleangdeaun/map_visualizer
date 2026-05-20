@@ -76,7 +76,7 @@ export const TaskPanel = ({ onFocusTarget }: TaskPanelProps) => {
 
 
     return (
-        <Card className="h-full flex flex-col border-none shadow-none bg-transparent min-h-0">
+        <Card className="h-full flex flex-col min-h-0">
             <div className="p-4 pt-0 border-b space-y-4">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -123,8 +123,7 @@ export const TaskPanel = ({ onFocusTarget }: TaskPanelProps) => {
                             <div 
                                 key={task.id}
                                 className={cn(
-                                    "group relative p-3 rounded-xl border bg-card transition-all cursor-pointer hover:shadow-md hover:border-primary/20",
-                                    task.status === 'in_progress' && "border-primary/30 ring-1 ring-primary/5"
+                                    "group relative p-3 rounded-xl border bg-gradient-to-b from-card to-background transition-all cursor-pointer hover:shadow-md hover:border-primary/20",
                                 )}
                                 onClick={() => handleTaskClick(task)}
                             >

@@ -4,7 +4,7 @@ This document defines the strict UI and design guidelines for the Driver App (PW
 
 ## 🎨 1. Color System (Shadcn UI & Tailwind)
 - **No Hardcoded Hex Colors:** Absolutely NO hardcoded hex codes (`#FFFFFF`, `#FF5733`) or static Tailwind color classes (like `text-blue-500` or `bg-red-600`) in your component files.
-- **Theme Variables:** Always use semantic CSS variables mapped in `index.css` (e.g., `text-primary`, `bg-background`, `border-border`, `text-muted-foreground`). This ensures perfect Light/Dark mode switching.
+- **Theme Variables:** Always use semantic CSS variables mapped in `tailwind.css` (e.g., `text-primary`, `bg-background`, `border-border`, `text-muted-foreground`). This ensures perfect Light/Dark mode switching.
 - **High Contrast:** Ensure all interactive elements and text maintain high contrast ratios. The PWA must be perfectly legible under direct, harsh sunlight.
 
 ## 🔤 2. Typography & Text (Source of Truth)

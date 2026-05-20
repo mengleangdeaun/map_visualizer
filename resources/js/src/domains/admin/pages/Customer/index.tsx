@@ -63,6 +63,18 @@ const CustomerPage = () => {
 
     const columns: ColumnDef<Customer>[] = [
         {
+            id: 'index',
+            header: '#',
+            cell: (info) => {
+                const displayIndex = info.table.getSortedRowModel().flatRows.findIndex(row => row.id === info.row.id);
+                return (
+                    <div className="text-[10px] font-black text-muted-foreground/50 w-4">
+                        {(page - 1) * perPage + displayIndex + 1}
+                    </div>
+                );
+            },
+        },
+        {
             accessorKey: 'name',
             header: t('admin:customer_name') || 'Customer',
             cell: ({ row }) => (

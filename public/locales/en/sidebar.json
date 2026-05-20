@@ -1,5 +1,6 @@
 {
     "admin_domain": "Admin Domain",
+    "document_numbering": "Document Number",
     "dashboard": "Dashboard",
     "sales": "Sales",
     "system_domain": "System Domain",
@@ -26,5 +27,8 @@
     "hubs": "Hubs",
     "users": "Users & Drivers",
     "customers": "Customers",
-    "deliveries": "Deliveries"
+    "deliveries": "Deliveries",
+    "tasks": "Tasks",
+    "dispatch": "Dispatch",
+    "settings":"Settings"
 }

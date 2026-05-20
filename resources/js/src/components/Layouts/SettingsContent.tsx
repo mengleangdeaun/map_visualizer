@@ -9,7 +9,7 @@ const SettingsContent = () => {
     const themeConfig = useThemeConfig();
 
     return (
-        <div className="p-4 space-y-6 w-[320px]">
+        <div className="p-4 space-y-6 w-[320px] bg-gradient-to-t from-background to-card">
             <div className="flex items-center gap-2 mb-2">
                 <Settings2 className="size-4 text-primary" />
                 <h4 className="font-bold text-sm uppercase tracking-wider">Appearance</h4>

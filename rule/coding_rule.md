@@ -115,7 +115,7 @@ To maintain a clean and highly maintainable codebase as the enterprise applicati
 
 1. **Stack Compliance:** Strictly use TanStack ecosystem (including Virtual and Ranger), Zustand, Laravel Reverb, Echo, Zod, and Day.js. Do not introduce alternatives (like Redux, Axios, Moment.js) unless explicitly requested.
 2. **Context Awareness (The 3 Portals):** Always consider which application you are modifying (Admin, Driver PWA, or Customer Portal) and apply the appropriate security, network, and performance constraints.
-3. **Design Compliance:** Check `index.css` for theme variables. Never output hardcoded color hexes. Keep Shadcn components clean and use standard Tailwind utilities.
+3. **Design Compliance:** Check `tailwind.css` for theme variables. Never output hardcoded color hexes. Keep Shadcn components clean and use standard Tailwind utilities.
 4. **Code Quality:** Output strict TypeScript. Always handle loading, error, and *offline* states for asynchronous actions, particularly in the PWA.
 5. **Database & API:** Always default to **ULID** for primary keys on core resources. Validate all API requests via Form Requests on the backend and Zod on the frontend.
 6. **Octane Safety:** Actively avoid patterns that cause state bleed between requests in Laravel backend code.
