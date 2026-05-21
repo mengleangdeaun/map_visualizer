@@ -20,7 +20,52 @@ class UserService
         $status = $params['status'] ?? null;
         $type = $params['type'] ?? null; // platform, company
 
-        $query = User::query()->with(['company', 'hub']);
+        $query = User::query()
+            ->select([
+                'id',
+                'company_id',
+                'role',
+                'name',
+                'phone',
+                'email',
+                'telegram_user_id',
+                'base_hub_id',
+                'status',
+                'operational_status',
+                'profile_url',
+                'permissions',
+                'telegram_chat_id',
+                'telegram_topic_id',
+                'created_at',
+                'updated_at',
+            ])
+            ->with([
+                'company' => function($q) {
+                    $q->select([
+                        'id',
+                        'name',
+                        'slug',
+                        'tax_id',
+                        'base_currency',
+                        'logo_url',
+                        'status',
+                        'telegram_user_id',
+                        'exchange_rate_mode',
+                        'exchange_rate_override_value',
+                    ]);
+                },
+                'hub' => function($q) {
+                    $q->select([
+                        'id',
+                        'company_id',
+                        'code',
+                        'name',
+                        'type',
+                    ])
+                    ->selectRaw('ST_Y(location::geometry) as latitude')
+                    ->selectRaw('ST_X(location::geometry) as longitude');
+                }
+            ]);
 
         if ($type === 'platform') {
             $query->whereNull('company_id');

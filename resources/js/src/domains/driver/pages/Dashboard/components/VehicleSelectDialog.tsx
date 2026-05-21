@@ -24,7 +24,7 @@ export const VehicleSelectDialog = ({
     onSelect,
     isLoading = false
 }: VehicleSelectDialogProps) => {
-    const { t } = useTranslation(['driver', 'system']);
+    const { t } = useTranslation();
     const [searchQuery, setSearchQuery] = useState('');
 
     // Filter vehicles based on search query

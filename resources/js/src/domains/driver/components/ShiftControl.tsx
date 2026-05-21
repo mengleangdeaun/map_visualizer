@@ -25,7 +25,7 @@ export const ShiftControl = ({
     onCheckOut,
     isLoading = false
 }: ShiftControlProps) => {
-    const { t } = useTranslation(['driver', 'system']);
+    const { t } = useTranslation();
 
     // Helper to render vehicle type icon
     const getVehicleIcon = (type: string) => {

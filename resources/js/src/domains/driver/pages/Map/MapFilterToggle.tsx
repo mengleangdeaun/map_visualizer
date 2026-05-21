@@ -12,7 +12,7 @@ export const MapFilterToggle: React.FC<MapFilterToggleProps> = ({
     activeFilter,
     onChange
 }) => {
-    const { t } = useTranslation(['delivery', 'driver']);
+    const { t } = useTranslation();
 
     return (
         <div className="absolute top-4 left-4 right-4 z-30 flex justify-center pointer-events-none">
@@ -37,7 +37,7 @@ export const MapFilterToggle: React.FC<MapFilterToggleProps> = ({
                     style={{ minHeight: '36px' }}
                 >
                     <Package size={14} />
-                    <span>{t('delivery:deliveries')}</span>
+                    <span>{t('deliveries')}</span>
                 </button>
 
                 {/* Tab 2: Tasks */}
@@ -52,7 +52,7 @@ export const MapFilterToggle: React.FC<MapFilterToggleProps> = ({
                     style={{ minHeight: '36px' }}
                 >
                     <ClipboardList size={14} />
-                    <span>{t('delivery:tasks')}</span>
+                    <span>{t('tasks')}</span>
                 </button>
             </div>
         </div>

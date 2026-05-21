@@ -34,7 +34,7 @@ export const MapDetailDrawer: React.FC<MapDetailDrawerProps> = ({
     hasRoutesPlanned = false,
     isTaskInProgress = false
 }) => {
-    const { t } = useTranslation(['delivery', 'driver']);
+    const { t } = useTranslation();
     const navigate = useNavigate();
 
     if (!selectedItem) return null;
@@ -60,7 +60,7 @@ export const MapDetailDrawer: React.FC<MapDetailDrawerProps> = ({
                         <div className="flex items-start justify-between">
                             <div className="space-y-1">
                                 <Badge variant={selectedItem.status === 'completed' ? "outline" : "default"}>
-                                    {t(`delivery:${selectedItem.status}`)}
+                                    {t(`${selectedItem.status}`)}
                                 </Badge>
                                 <h3 className="text-lg font-bold tracking-tight">
                                     Stop #{selectedItem.sequence_number}: {selectedItem.delivery.order.customer.name}
@@ -81,7 +81,7 @@ export const MapDetailDrawer: React.FC<MapDetailDrawerProps> = ({
                                 <span>{selectedItem.delivery.dropoff_address}</span>
                             </div>
                             <div className="flex items-center justify-between border-t border-border/50 pt-2 mt-2">
-                                <span>{t('delivery:cod_due')}:</span>
+                                <span>{t('cod_due')}:</span>
                                 <span className="font-black text-foreground">
                                     ${selectedItem.delivery.order.amount_due_cod.toFixed(2)}
                                 </span>
@@ -118,7 +118,7 @@ export const MapDetailDrawer: React.FC<MapDetailDrawerProps> = ({
                                     className="flex-1 h-10 rounded-xl flex items-center justify-center gap-2 font-bold transition-all bg-muted border border-border/50 text-foreground hover:bg-muted/80"
                                 >
                                     <Navigation size={16} />
-                                    <span>{t('delivery:select_stop')}</span>
+                                    <span>{t('select_stop')}</span>
                                 </Button>
                                 
                                 <a 
@@ -141,7 +141,7 @@ export const MapDetailDrawer: React.FC<MapDetailDrawerProps> = ({
                         <div className="flex items-start justify-between">
                             <div className="space-y-1">
                                 <Badge className="bg-orange-500 hover:bg-orange-600">
-                                    {t(`delivery:${selectedItem.status}`)}
+                                    {t(`${selectedItem.status}`)}
                                 </Badge>
                                 <h3 className="text-lg font-bold tracking-tight">{selectedItem.title}</h3>
                             </div>
@@ -215,10 +215,10 @@ export const MapDetailDrawer: React.FC<MapDetailDrawerProps> = ({
                             </div>
                             <div>
                                 <h3 className="text-base font-bold text-destructive leading-tight">
-                                    {t('delivery:hazard_title')}
+                                    {t('hazard_title')}
                                 </h3>
                                 <span className="text-[10px] text-muted-foreground font-semibold">
-                                    {t('delivery:hazard_dispatched')} {new Date(selectedItem.created_at).toLocaleTimeString()} {t('delivery:hazard_by')}
+                                    {t('hazard_dispatched')} {new Date(selectedItem.created_at).toLocaleTimeString()} {t('hazard_by')}
                                 </span>
                             </div>
                         </div>

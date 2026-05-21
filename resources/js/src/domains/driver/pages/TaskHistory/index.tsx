@@ -96,7 +96,7 @@ const TaskHistoryPage = React.memo(() => {
           /* High Performance Virtualized Scroll Container */
           <div
             ref={parentRef}
-            className="flex-1 overflow-y-auto w-full px-1 select-none"
+            className="flex-1 overflow-y-auto no-scrollbar w-full px-1 select-none"
           >
             <div
               style={{
@@ -112,12 +112,13 @@ const TaskHistoryPage = React.memo(() => {
                 return (
                   <div
                     key={virtualRow.key}
+                    ref={rowVirtualizer.measureElement}
+                    data-index={virtualRow.index}
                     style={{
                       position: 'absolute',
                       top: 0,
                       left: 0,
                       width: '100%',
-                      height: `${virtualRow.size}px`,
                       transform: `translateY(${virtualRow.start}px)`,
                     }}
                     className="py-1.5"

@@ -6,13 +6,22 @@ import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
     plugins: [
-        laravel(["resources/js/src/main.tsx"]), 
+        laravel([
+            "resources/js/src/admin.tsx",
+            "resources/js/src/driver.tsx",
+        ]), 
         react(),
         VitePWA({
             registerType: 'autoUpdate',
             injectRegister: 'auto',
             workbox: {
                 globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+                globIgnores: [
+                    '**/admin-*.js',
+                    '**/system-*.js',
+                    '**/admin/**',
+                    '**/system/**',
+                ],
                 cleanupOutdatedCaches: true,
                 maximumFileSizeToCacheInBytes: 3000000, // 3MB
             },
@@ -24,8 +33,8 @@ export default defineConfig({
                 background_color: '#ffffff',
                 display: 'standalone',
                 orientation: 'portrait',
-                scope: '/',
-                start_url: '/',
+                scope: '/driver',
+                start_url: '/driver',
                 icons: [
                     {
                         src: '/icons/icon-192x192.png',

@@ -14,7 +14,7 @@
 
 
     @viteReactRefresh
-    @vite(['resources/js/src/main.tsx'])
+    @vite(['resources/js/src/admin.tsx'])
 </head>
 
 <body>

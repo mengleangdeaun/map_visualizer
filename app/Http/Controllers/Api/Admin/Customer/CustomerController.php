@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Admin\Customer;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer\Customer;
+use App\Http\Resources\Admin\AdminCustomerResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
@@ -12,24 +13,37 @@ class CustomerController extends Controller
     /**
      * Display a listing of customers.
      */
-    public function index(Request $request): JsonResponse
+    public function index(Request $request)
     {
         $perPage = $request->input('per_page', 10);
         $search = $request->input('search');
         $companyId = $request->user()->company_id;
 
-        $query = Customer::query();
+        $query = Customer::query()->select([
+            'id',
+            'company_id',
+            'name',
+            'phone',
+            'telegram_user_id',
+            'default_address',
+            'total_orders',
+            'profile_url',
+            'created_at',
+            'updated_at',
+        ]);
 
         if ($companyId) {
             $query->where('company_id', $companyId);
         }
 
         if ($search) {
-            $query->where('name', 'LIKE', "%{$search}%")
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'LIKE', "%{$search}%")
                   ->orWhere('phone', 'LIKE', "%{$search}%");
+            });
         }
 
-        return response()->json($query->paginate($perPage));
+        return AdminCustomerResource::collection($query->paginate($perPage));
     }
 
     /**
@@ -50,7 +64,7 @@ class CustomerController extends Controller
 
         return response()->json([
             'message' => 'Customer created successfully',
-            'data' => $customer
+            'data' => new AdminCustomerResource($customer)
         ], 201);
     }
 
@@ -60,7 +74,7 @@ class CustomerController extends Controller
     public function show(string $id): JsonResponse
     {
         $customer = Customer::findOrFail($id);
-        return response()->json($customer);
+        return response()->json(new AdminCustomerResource($customer));
     }
 
     /**
@@ -81,7 +95,7 @@ class CustomerController extends Controller
 
         return response()->json([
             'message' => 'Customer updated successfully',
-            'data' => $customer
+            'data' => new AdminCustomerResource($customer)
         ]);
     }
 

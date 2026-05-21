@@ -12,7 +12,7 @@ import {
 } from '@/domains/driver/hooks/useDriverSettings';
 
 export const useSettings = () => {
-  const { t } = useTranslation(['driver', 'system']);
+  const { t } = useTranslation();
   const { user } = useAuthStore();
   const setHeader = useHeaderStore((s) => s.setHeader);
 
@@ -45,7 +45,7 @@ export const useSettings = () => {
 
   useEffect(() => {
     setHeader({
-      title: t('driver:settings') || 'Settings',
+      title: t('settings') || 'Settings',
       showBackButton: true,
       backTarget: '/driver/profile',
     });

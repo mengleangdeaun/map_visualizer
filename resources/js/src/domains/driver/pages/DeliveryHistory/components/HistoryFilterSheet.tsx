@@ -15,9 +15,9 @@ interface HistoryFilterSheetProps {
 }
 
 const STATUS_OPTIONS = [
-  { code: 'all', labelKey: 'driver:all', fallback: 'All' },
-  { code: 'completed', labelKey: 'driver:completed', fallback: 'Done' },
-  { code: 'in_progress', labelKey: 'driver:in_progress', fallback: 'Active' },
+  { code: 'all', labelKey: 'all', fallback: 'All' },
+  { code: 'completed', labelKey: 'completed', fallback: 'Done' },
+  { code: 'in_progress', labelKey: 'in_progress', fallback: 'Active' },
 ] as const;
 
 export const HistoryFilterSheet: React.FC<HistoryFilterSheetProps> = ({
@@ -28,7 +28,7 @@ export const HistoryFilterSheet: React.FC<HistoryFilterSheetProps> = ({
   onApply,
   onReset,
 }) => {
-  const { t } = useTranslation(['driver', 'system']);
+  const { t } = useTranslation();
   const [tempDate, setTempDate] = useState(initialDate);
   const [tempStatus, setTempStatus] = useState(initialStatus);
 
@@ -61,20 +61,20 @@ export const HistoryFilterSheet: React.FC<HistoryFilterSheetProps> = ({
             <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
               <SlidersHorizontal size={18} strokeWidth={2} />
             </div>
-            {t('driver:filter_routes') || 'Filter Route History'}
+            {t('filter_routes') || 'Filter Route History'}
           </h2>
           <button
             onClick={handleReset}
             className="text-xs font-semibold text-red-500 hover:text-red-600 active:scale-95 transition-transform"
           >
-            {t('driver:reset_all') || 'Reset All'}
+            {t('reset_all') || 'Reset All'}
           </button>
         </div>
 
         {/* Date Filter */}
         <div className="flex flex-col gap-2">
           <label className="text-[10px] font-semibold uppercase text-gray-400 tracking-wider">
-            {t('driver:filter_by_date') || 'Filter by Date'}
+            {t('filter_by_date') || 'Filter by Date'}
           </label>
           <input
             type="date"
@@ -87,7 +87,7 @@ export const HistoryFilterSheet: React.FC<HistoryFilterSheetProps> = ({
         {/* Status Filter */}
         <div className="flex flex-col gap-2">
           <label className="text-[10px] font-semibold uppercase text-gray-400 tracking-wider">
-            {t('driver:filter_by_status') || 'Filter by Status'}
+            {t('filter_by_status') || 'Filter by Status'}
           </label>
           <div className="grid grid-cols-3 gap-1.5 bg-gray-100 p-1 rounded-2xl">
             {STATUS_OPTIONS.map((stat) => (
@@ -115,13 +115,13 @@ export const HistoryFilterSheet: React.FC<HistoryFilterSheetProps> = ({
             className="flex-1 rounded-2xl h-12 text-sm font-bold text-gray-600 border-gray-200 hover:bg-gray-50 active:scale-[0.98] transition-all"
             onClick={onClose}
           >
-            {t('driver:close') || 'Close'}
+            {t('close') || 'Close'}
           </Button>
           <Button
             className="flex-1 rounded-2xl h-12 text-sm font-bold bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 active:scale-[0.98] transition-all"
             onClick={handleApply}
           >
-            {t('driver:apply_filters') || 'Apply Filters'}
+            {t('apply_filters') || 'Apply Filters'}
           </Button>
         </div>
       </div>

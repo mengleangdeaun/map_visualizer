@@ -12,17 +12,35 @@ class TaskController extends Controller
     /**
      * Get tasks assigned to the authenticated driver.
      */
-    public function index(Request $request): JsonResponse
+    public function index(Request $request)
     {
         $user = $request->user();
         
         $query = Task::query()
-            ->select('*')
+            ->select([
+                'id',
+                'vehicle_id',
+                'driver_id',
+                'tracking_number',
+                'title',
+                'description',
+                'status',
+                'contact_name',
+                'contact_phone',
+                'pickup_address',
+                'dropoff_address',
+                'scheduled_at',
+                'started_at',
+                'completed_at',
+                'priority',
+            ])
             ->selectRaw('ST_Y(pickup_location::geometry) as pickup_lat')
             ->selectRaw('ST_X(pickup_location::geometry) as pickup_lng')
             ->selectRaw('ST_Y(dropoff_location::geometry) as dropoff_lat')
             ->selectRaw('ST_X(dropoff_location::geometry) as dropoff_lng')
-            ->with(['vehicle'])
+            ->with(['vehicle' => function($q) {
+                $q->select(['id', 'plate_number', 'type', 'is_active']);
+            }])
             ->where(function($q) use ($user) {
                 $q->where('driver_id', $user->id)
                   ->orWhereHas('vehicle', function($vq) use ($user) {
@@ -53,7 +71,9 @@ class TaskController extends Controller
 
         $query->orderBy('created_at', 'desc');
 
-        return response()->json($query->paginate(20));
+        $tasks = $query->paginate(20);
+
+        return \App\Http\Resources\Driver\DriverTaskResource::collection($tasks);
     }
 
     /**
@@ -83,17 +103,35 @@ class TaskController extends Controller
         broadcast(new \App\Events\TaskUpdated($task));
 
         $updatedTask = Task::query()
-            ->select('*')
+            ->select([
+                'id',
+                'vehicle_id',
+                'driver_id',
+                'tracking_number',
+                'title',
+                'description',
+                'status',
+                'contact_name',
+                'contact_phone',
+                'pickup_address',
+                'dropoff_address',
+                'scheduled_at',
+                'started_at',
+                'completed_at',
+                'priority',
+            ])
             ->selectRaw('ST_Y(pickup_location::geometry) as pickup_lat')
             ->selectRaw('ST_X(pickup_location::geometry) as pickup_lng')
             ->selectRaw('ST_Y(dropoff_location::geometry) as dropoff_lat')
             ->selectRaw('ST_X(dropoff_location::geometry) as dropoff_lng')
-            ->with(['vehicle'])
+            ->with(['vehicle' => function($q) {
+                $q->select(['id', 'plate_number', 'type', 'is_active']);
+            }])
             ->find($task->id);
 
         return response()->json([
             'message' => "Task status updated to {$validated['status']}",
-            'data' => $updatedTask
+            'data' => new \App\Http\Resources\Driver\DriverTaskResource($updatedTask)
         ]);
     }
 }

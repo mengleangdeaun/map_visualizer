@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Driver\Task;
 use App\Services\Admin\Fleet\TaskService;
 use App\Events\TaskUpdated;
+use App\Http\Resources\Admin\AdminTaskResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
@@ -21,7 +22,7 @@ class TaskController extends Controller
     /**
      * Display a listing of tasks.
      */
-    public function index(Request $request): JsonResponse
+    public function index(Request $request)
     {
         $params = $request->only(['per_page', 'search', 'status', 'vehicle_id', 'company_id']);
         $user = $request->user();
@@ -31,7 +32,7 @@ class TaskController extends Controller
         }
 
         $tasks = $this->taskService->list($params);
-        return response()->json($tasks);
+        return AdminTaskResource::collection($tasks);
     }
 
     /**
@@ -67,7 +68,7 @@ class TaskController extends Controller
 
         return response()->json([
             'message' => 'Task created successfully',
-            'data' => $task
+            'data' => new AdminTaskResource($task)
         ], 201);
     }
 
@@ -77,7 +78,7 @@ class TaskController extends Controller
     public function show(string $id): JsonResponse
     {
         $task = $this->taskService->findById($id);
-        return response()->json($task);
+        return response()->json(new AdminTaskResource($task));
     }
 
     /**
@@ -111,7 +112,7 @@ class TaskController extends Controller
 
         return response()->json([
             'message' => 'Task updated successfully',
-            'data' => $task
+            'data' => new AdminTaskResource($task)
         ]);
     }
 

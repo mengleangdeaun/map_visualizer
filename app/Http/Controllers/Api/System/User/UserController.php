@@ -7,6 +7,7 @@ use App\Models\User\User;
 use App\Services\System\User\UserService;
 use App\Http\Requests\System\User\StoreUserRequest;
 use App\Http\Requests\System\User\UpdateUserRequest;
+use App\Http\Resources\System\SystemUserResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
@@ -22,10 +23,10 @@ class UserController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request): JsonResponse
+    public function index(Request $request)
     {
         $users = $this->userService->list($request->all());
-        return response()->json($users);
+        return SystemUserResource::collection($users);
     }
 
     /**
@@ -34,9 +35,10 @@ class UserController extends Controller
     public function store(StoreUserRequest $request): JsonResponse
     {
         $user = $this->userService->create($request->validated());
+        $user->load(['company', 'hub']);
         return response()->json([
             'message' => 'User created successfully',
-            'data' => $user->load(['company', 'hub'])
+            'data' => new SystemUserResource($user)
         ], 210);
     }
 
@@ -45,7 +47,8 @@ class UserController extends Controller
      */
     public function show(User $user): JsonResponse
     {
-        return response()->json($user->load(['company', 'hub']));
+        $user->load(['company', 'hub']);
+        return response()->json(new SystemUserResource($user));
     }
 
     /**
@@ -54,9 +57,10 @@ class UserController extends Controller
     public function update(UpdateUserRequest $request, User $user): JsonResponse
     {
         $user = $this->userService->update($user, $request->validated());
+        $user->load(['company', 'hub']);
         return response()->json([
             'message' => 'User updated successfully',
-            'data' => $user->load(['company', 'hub'])
+            'data' => new SystemUserResource($user)
         ]);
     }
 

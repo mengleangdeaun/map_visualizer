@@ -6,7 +6,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { PriorityType, StatusType, HistoryTask } from '../types';
 
 export const useTaskHistory = () => {
-  const { t } = useTranslation(['driver', 'system']);
+  const { t } = useTranslation();
   const setHeader = useHeaderStore((s) => s.setHeader);
 
   // Bottom Sheet filter state

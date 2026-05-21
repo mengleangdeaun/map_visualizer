@@ -117,7 +117,7 @@ const DeliveryHistoryPage = React.memo(() => {
           </div>
         ) : (
           /* Virtualized Scroll Container */
-          <div ref={parentRef} className="flex-1 overflow-y-auto w-full select-none">
+          <div ref={parentRef} className="flex-1 overflow-y-auto no-scrollbar w-full select-none">
             <div
               style={{
                 height: `${rowVirtualizer.getTotalSize()}px`,

@@ -15,8 +15,8 @@ import { StopActionBar }      from './components/StopActionBar';
 import { StopExceptionModal } from './components/StopExceptionModal';
 
 const StopDetailsPage = () => {
-    const { t } = useTranslation(['delivery', 'driver']);
-    const { id } = useParams({ strict: false });
+    const { t } = useTranslation();
+    const { id } = useParams({ strict: false }) as { id: string };
     const setHeader = useHeaderStore((s) => s.setHeader);
 
     const { stop, isLoading, currentTime, arriveMutation, completeMutation, failMutation } =
@@ -34,7 +34,7 @@ const StopDetailsPage = () => {
 
     useEffect(() => {
         setHeader({
-            title: t('delivery:customer_details') || 'Stop Details',
+            title: t('customer_details') || 'Stop Details',
             showBackButton: true,
             backTarget: '/driver/route',
         });

@@ -6,7 +6,7 @@ import { useHeaderStore } from '@/domains/driver/store/useHeaderStore';
 import { HistoricalRoute } from '../types';
 
 export const useDeliveryHistory = () => {
-  const { t } = useTranslation(['driver', 'delivery', 'system']);
+  const { t } = useTranslation();
   const setHeader = useHeaderStore((s) => s.setHeader);
 
   // Pagination

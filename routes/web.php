@@ -18,4 +18,5 @@ Route::get('/login', function () {
     return response()->json(['message' => 'Unauthenticated.'], 401);
 })->name('login');
 
-Route::get('/{any}', [AppController::class, 'index'])->where('any', '.*');
+Route::get('/driver/{any?}', [AppController::class, 'driverIndex'])->where('any', '.*');
+Route::get('/{any?}', [AppController::class, 'adminIndex'])->where('any', '.*');

@@ -24,8 +24,10 @@ api.interceptors.response.use(
         if (error.response?.status === 401) {
             useAuthStore.getState().clearAuth();
             // Optional: redirect to login
-            if (window.location.pathname !== '/auth/login') {
-                window.location.href = '/auth/login';
+            const isDriverPath = window.location.pathname.startsWith('/driver');
+            const loginPath = isDriverPath ? '/driver/login' : '/auth/login';
+            if (window.location.pathname !== loginPath) {
+                window.location.href = loginPath;
             }
         }
         return Promise.reject(error);

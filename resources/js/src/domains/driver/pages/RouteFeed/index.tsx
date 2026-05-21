@@ -23,7 +23,7 @@ import { Badge } from '@/components/ui/badge';
 import { useNavigate } from '@tanstack/react-router';
 
 const RouteFeedPage = () => {
-    const { t } = useTranslation(['delivery', 'driver']);
+    const { t } = useTranslation();
     const queryClient = useQueryClient();
     const navigate = useNavigate();
     const setHeader = useHeaderStore(s => s.setHeader);
@@ -34,36 +34,36 @@ const RouteFeedPage = () => {
     const getStatusLabelAndColor = (stopStatus: string, deliveryStatus: string) => {
         if (stopStatus === 'completed') {
             return {
-                label: t('delivery:delivered') || 'Delivered',
+                label: t('delivered') || 'Delivered',
                 className: 'bg-emerald-500 hover:bg-emerald-600 text-white border-none'
             };
         }
         if (stopStatus === 'skipped') {
             if (deliveryStatus === 'rescheduled') {
                 return {
-                    label: t('delivery:rescheduled') || 'Rescheduled',
+                    label: t('rescheduled') || 'Rescheduled',
                     className: 'bg-amber-500 hover:bg-amber-600 text-white border-none'
                 };
             }
             return {
-                label: t('delivery:failed') || 'Failed',
+                label: t('failed') || 'Failed',
                 className: 'bg-destructive hover:bg-destructive text-destructive-foreground border-none'
             };
         }
         if (stopStatus === 'in_transit') {
             return {
-                label: t('delivery:in_transit') || 'In Transit',
+                label: t('in_transit') || 'In Transit',
                 className: 'bg-sky-500 hover:bg-sky-600 text-white border-none'
             };
         }
         if (stopStatus === 'arrived') {
             return {
-                label: t('delivery:arrived') || 'Arrived',
+                label: t('arrived') || 'Arrived',
                 className: 'bg-blue-500 hover:bg-blue-600 text-white border-none animate-pulse'
             };
         }
         return {
-            label: t('delivery:pending') || 'Pending',
+            label: t('pending') || 'Pending',
             className: 'bg-muted hover:bg-muted text-muted-foreground border-none'
         };
     };
@@ -91,7 +91,7 @@ const RouteFeedPage = () => {
 
     useEffect(() => {
         setHeader({ 
-            title: t('delivery:active_route') || 'Active Route',
+            title: t('active_route') || 'Active Route',
             showBackButton: true,
             backTarget: '/driver'
         });
@@ -176,15 +176,15 @@ const RouteFeedPage = () => {
                 <Card className="p-4 border-none shadow-md bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-between gap-2">
                     <div className="space-y-1">
                         <span className="text-[10px] font-black uppercase tracking-wider text-primary">
-                            {t('delivery:route_progress')}
+                            {t('route_progress')}
                         </span>
                         <h2 className="text-xl font-black text-foreground">
-                            {completedCount} / {stops.length} <span className="text-xs font-semibold text-muted-foreground">{t('delivery:stops_completed')}</span>
+                            {completedCount} / {stops.length} <span className="text-xs font-semibold text-muted-foreground">{t('stops_completed')}</span>
                         </h2>
                     </div>
                     <div className="text-right">
                         <span className="text-[10px] font-bold text-muted-foreground uppercase">
-                            {t('delivery:expected_cod')}
+                            {t('expected_cod')}
                         </span>
                         <div className="flex items-center gap-0.5 justify-end font-black text-lg text-foreground">
                             <DollarSign size={16} className="text-emerald-500" />

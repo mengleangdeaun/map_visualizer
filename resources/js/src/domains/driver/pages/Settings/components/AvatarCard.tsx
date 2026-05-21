@@ -17,7 +17,6 @@ export const AvatarCard = React.memo(
     return (
       <div className="bg-white rounded-2xl shadow-sm p-5 flex flex-col items-center gap-3.5 relative overflow-hidden">
         {/* Subtle gradient accent */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none rounded-2xl" />
 
         <div className="relative group cursor-pointer" onClick={onAvatarClick}>
           <Avatar className="size-24 border-4 border-white shadow-md relative">

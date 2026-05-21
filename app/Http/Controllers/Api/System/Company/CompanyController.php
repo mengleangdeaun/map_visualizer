@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\System\Company;
 
 use App\Http\Controllers\Controller;
 use App\Models\System\Company;
+use App\Http\Resources\System\SystemCompanyResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
@@ -19,7 +20,34 @@ class CompanyController extends Controller
         $perPage = $request->input('per_page', 10);
         $search = $request->input('search');
 
-        $query = Company::query()->with('telegramSettings');
+        $query = Company::query()
+            ->select([
+                'id',
+                'name',
+                'slug',
+                'tax_id',
+                'base_currency',
+                'logo_url',
+                'status',
+                'telegram_user_id',
+                'exchange_rate_mode',
+                'exchange_rate_override_value',
+                'created_at',
+                'updated_at',
+            ])
+            ->with(['telegramSettings' => function($q) {
+                $q->select([
+                    'id',
+                    'company_id',
+                    'bot_token',
+                    'company_chat_id',
+                    'notify_pwa',
+                    'notify_driver_telegram',
+                    'notify_company_telegram',
+                    'bot_username',
+                    'bot_name',
+                ]);
+            }]);
 
         if ($search) {
             $query->where(function($q) use ($search) {
@@ -30,7 +58,7 @@ class CompanyController extends Controller
         }
 
         $companies = $query->latest()->paginate($perPage);
-        return response()->json($companies);
+        return SystemCompanyResource::collection($companies);
     }
 
     /**
@@ -84,7 +112,7 @@ class CompanyController extends Controller
 
         return response()->json([
             'message' => 'Company created successfully',
-            'data' => $company
+            'data' => new SystemCompanyResource($company)
         ], 210);
     }
 
@@ -93,7 +121,8 @@ class CompanyController extends Controller
      */
     public function show(Company $company)
     {
-        return response()->json($company);
+        $company->load('telegramSettings');
+        return new SystemCompanyResource($company);
     }
 
     /**
@@ -161,9 +190,10 @@ class CompanyController extends Controller
             ]);
         }
 
+        $company->load('telegramSettings');
         return response()->json([
             'message' => 'Company updated successfully',
-            'data' => $company
+            'data' => new SystemCompanyResource($company)
         ]);
     }
 

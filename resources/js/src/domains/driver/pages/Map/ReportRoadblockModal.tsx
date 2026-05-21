@@ -18,7 +18,7 @@ export const ReportRoadblockModal: React.FC<ReportRoadblockModalProps> = ({
     onSubmit,
     isPending
 }) => {
-    const { t } = useTranslation(['delivery', 'driver']);
+    const { t } = useTranslation();
     const [reportDescription, setReportDescription] = useState('');
     const [reportType, setReportType] = useState<'blockage' | 'accident' | 'flood' | 'traffic'>('blockage');
 
@@ -35,7 +35,7 @@ export const ReportRoadblockModal: React.FC<ReportRoadblockModalProps> = ({
                 <div className="flex items-center gap-2 text-destructive border-b border-border/50 pb-3">
                     <AlertTriangle size={20} />
                     <h3 className="font-bold text-lg text-foreground">
-                        {t('delivery:report_issue') || 'Report Road Hazard / Blockage'}
+                        {t('report_issue') || 'Report Road Hazard / Blockage'}
                     </h3>
                 </div>
 

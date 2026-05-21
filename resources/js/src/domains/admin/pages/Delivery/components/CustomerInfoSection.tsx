@@ -44,7 +44,7 @@ const CustomerInfoSection = ({ form, customersData }: CustomerInfoSectionProps) 
                             <SearchableSelect
                                 options={customersData?.data || []}
                                 value={field.state.value}
-                                onChange={(val: string) => field.handleChange(val || '')}
+                                onChange={(val: string | null) => field.handleChange(val || '')}
                                 placeholder={t('admin:select_customer') || 'Select Customer'}
                                 searchPlaceholder={t('admin:search_customer') || 'Search customer...'}
                                 getOptionValue={(c: any) => c.id}

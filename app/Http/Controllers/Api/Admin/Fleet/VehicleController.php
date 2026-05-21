@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Admin\Fleet;
 use App\Http\Controllers\Controller;
 use App\Models\Fleet\Vehicle;
 use App\Services\Admin\Fleet\VehicleService;
+use App\Http\Resources\Admin\AdminVehicleResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
@@ -20,7 +21,7 @@ class VehicleController extends Controller
     /**
      * Display a listing of vehicles.
      */
-    public function index(Request $request): JsonResponse
+    public function index(Request $request)
     {
         $params = $request->only(['per_page', 'search', 'type', 'company_id']);
         $user = $request->user();
@@ -33,7 +34,7 @@ class VehicleController extends Controller
 
         $vehicles = $this->vehicleService->list($params);
 
-        return response()->json($vehicles);
+        return AdminVehicleResource::collection($vehicles);
     }
 
     /**
@@ -61,7 +62,7 @@ class VehicleController extends Controller
 
         return response()->json([
             'message' => 'Vehicle created successfully',
-            'data' => $vehicle
+            'data' => new AdminVehicleResource($vehicle)
         ], 201);
     }
 
@@ -71,7 +72,7 @@ class VehicleController extends Controller
     public function show(string $id): JsonResponse
     {
         $vehicle = $this->vehicleService->findById($id);
-        return response()->json($vehicle);
+        return response()->json(new AdminVehicleResource($vehicle));
     }
 
     /**
@@ -98,7 +99,7 @@ class VehicleController extends Controller
 
         return response()->json([
             'message' => 'Vehicle updated successfully',
-            'data' => $vehicle
+            'data' => new AdminVehicleResource($vehicle)
         ]);
     }
 
@@ -169,7 +170,7 @@ class VehicleController extends Controller
 
         return response()->json([
             'message' => 'Vehicle location updated',
-            'data' => $vehicle
+            'data' => new AdminVehicleResource($vehicle)
         ]);
     }
 }

@@ -169,7 +169,7 @@ const CustomerPage = () => {
                     <div className="max-w-sm flex-1">
                         <SearchInput 
                             value={search}
-                            onChange={setSearch}
+                            onChange={(e) => setSearch(e.target.value)}
                             placeholder={t('admin:search_customers') || 'Search name, phone or email...'} 
                             onClear={handleSearchClear}
                             isLoading={isFetching}

@@ -18,7 +18,7 @@ import { VehicleSelectDialog } from './components/VehicleSelectDialog';
 import { PullToRefresh } from '@/domains/driver/components/PullToRefresh';
 
 const DriverDashboard = () => {
-    const { t } = useTranslation(['driver', 'system']);
+    const { t } = useTranslation();
     const { isTracking, startTracking, stopTracking, latitude, longitude, error, speed } = useLocationService();
     
     // Shift Check-in / Checkout states & hooks
@@ -143,7 +143,7 @@ const DriverDashboard = () => {
                                                 tasks[0].priority === 'normal' && "bg-slate-500/10 text-slate-600 border border-slate-500/20",
                                                 tasks[0].priority === 'low' && "bg-blue-500/10 text-blue-600 border border-blue-500/20"
                                             )}>
-                                                {t(`admin:${tasks[0].priority}`) || tasks[0].priority}
+                                                {t(`priority_${tasks[0].priority}`) || tasks[0].priority}
                                             </span>
                                         )}
                                     </div>

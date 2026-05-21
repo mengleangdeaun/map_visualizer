@@ -240,7 +240,7 @@ const VehicleForm = ({ open, onOpenChange, vehicle }: VehicleFormProps) => {
                                         type="number"
                                         value={field.state.value}
                                         onBlur={field.handleBlur}
-                                        onChange={(e) => field.handleChange(e.target.value)}
+                                        onChange={(e) => field.handleChange(e.target.value === '' ? 60 : Number(e.target.value))}
                                         placeholder="60"
                                         className="bg-background border-red-500/20 focus-visible:ring-red-500/30"
                                     />

@@ -19,8 +19,8 @@ import {
 import api from '@/lib/api';
 
 const PODFormPage = () => {
-    const { t } = useTranslation(['delivery', 'driver']);
-    const { id } = useParams({ strict: false });
+    const { t } = useTranslation();
+    const { id } = useParams({ strict: false }) as { id: string };
     const queryClient = useQueryClient();
     const navigate = useNavigate();
     const setHeader = useHeaderStore(s => s.setHeader);
@@ -32,7 +32,7 @@ const PODFormPage = () => {
 
     useEffect(() => {
         setHeader({ 
-            title: t('delivery:complete_stop') || 'Resolve Success',
+            title: t('complete_stop') || 'Resolve Success',
             showBackButton: true,
             backTarget: `/driver/route/stop/${id}`
         });
@@ -135,7 +135,7 @@ const PODFormPage = () => {
             {/* 1. Expected Cash Collection summary */}
             <Card className="p-4 border-none shadow-md bg-emerald-500/10 text-emerald-700 flex items-center justify-between">
                 <div>
-                    <span className="text-xs font-bold uppercase block">{t('delivery:cod_due')}</span>
+                    <span className="text-xs font-bold uppercase block">{t('cod_due')}</span>
                     <span className="text-xs font-semibold uppercase opacity-85 block">
                         Payment: {dl.order.payment_method}
                     </span>
@@ -151,7 +151,7 @@ const PODFormPage = () => {
                 <div className="flex items-center gap-2 border-b border-border/50 pb-3">
                     <Camera size={18} className="text-primary" />
                     <h3 className="font-bold text-base text-foreground">
-                        {t('delivery:upload_photo')}
+                        {t('upload_photo')}
                     </h3>
                 </div>
 
@@ -196,7 +196,7 @@ const PODFormPage = () => {
             {/* 3. Resolution Comments Notes */}
             <Card className="p-4 border-none shadow-md bg-card space-y-2">
                 <label className="text-xs font-bold text-muted-foreground uppercase block">
-                    {t('delivery:notes')}
+                    {t('notes')}
                 </label>
                 <textarea
                     value={notes}
@@ -218,7 +218,7 @@ const PODFormPage = () => {
                     ) : (
                         <CheckCircle2 size={18} />
                     )}
-                    <span>{t('delivery:submit_success')}</span>
+                    <span>{t('submit_success')}</span>
                 </Button>
             </div>
         </div>

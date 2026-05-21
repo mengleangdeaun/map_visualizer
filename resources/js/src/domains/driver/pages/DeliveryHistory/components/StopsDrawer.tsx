@@ -25,7 +25,7 @@ interface StopsDrawerProps {
 }
 
 export const StopsDrawer: React.FC<StopsDrawerProps> = ({ isOpen, onClose, route }) => {
-  const { t } = useTranslation(['driver', 'delivery']);
+  const { t } = useTranslation();
 
   if (!route) return null;
 
@@ -70,7 +70,7 @@ export const StopsDrawer: React.FC<StopsDrawerProps> = ({ isOpen, onClose, route
             </div>
             <div className="flex flex-col">
               <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider leading-none mb-1">
-                {t('driver:route_run_timeline') || 'Route Timeline'}
+                {t('route_run_timeline') || 'Route Timeline'}
               </span>
               <h2 className="text-sm font-black text-gray-800 leading-tight">{formattedDate}</h2>
             </div>
@@ -85,18 +85,18 @@ export const StopsDrawer: React.FC<StopsDrawerProps> = ({ isOpen, onClose, route
             )}
           >
             {route.status === 'completed'
-              ? t('driver:completed') || 'Completed'
-              : t('driver:in_progress') || 'Active'}
+              ? t('completed') || 'Completed'
+              : t('in_progress') || 'Active'}
           </span>
         </div>
 
         {/* Route summary stats row */}
         <div className="grid grid-cols-4 gap-2 mt-3 bg-gray-50 rounded-xl p-2.5 border border-gray-100">
           {[
-            { label: t('delivery:stops') || 'Stops', value: route.stop_count },
-            { label: t('delivery:distance') || 'km', value: `${route.estimated_distance_km} km` },
-            { label: t('delivery:duration') || 'min', value: `${route.estimated_duration_min}m` },
-            { label: t('delivery:weight') || 'kg', value: `${route.total_weight_kg} kg` },
+            { label: t('stops') || 'Stops', value: route.stop_count },
+            { label: t('distance') || 'km', value: `${route.estimated_distance_km} km` },
+            { label: t('duration') || 'min', value: `${route.estimated_duration_min}m` },
+            { label: t('weight') || 'kg', value: `${route.total_weight_kg} kg` },
           ].map((item) => (
             <div key={item.label} className="flex flex-col items-center">
               <span className="text-[8px] font-semibold uppercase text-gray-400 tracking-wider leading-none mb-0.5">
@@ -166,10 +166,10 @@ export const StopsDrawer: React.FC<StopsDrawerProps> = ({ isOpen, onClose, route
                           )}
                         >
                           {stop.status === 'completed'
-                            ? t('driver:delivered') || 'Delivered'
+                            ? t('delivered') || 'Delivered'
                             : stop.status === 'skipped'
-                            ? t('driver:skipped') || 'Skipped'
-                            : t('driver:pending') || 'Pending'}
+                            ? t('skipped') || 'Skipped'
+                            : t('pending') || 'Pending'}
                         </span>
                       </div>
 
@@ -222,7 +222,7 @@ export const StopsDrawer: React.FC<StopsDrawerProps> = ({ isOpen, onClose, route
                           <div className="flex items-center gap-1 bg-sky-50 text-sky-600 px-2 py-1 rounded-lg text-[10px] font-bold border border-sky-100/50 leading-none ml-auto">
                             <Clock size={10} />
                             <span>
-                              {t('driver:stop_spent') || 'Spent'}:{' '}
+                              {t('stop_spent') || 'Spent'}:{' '}
                               {calculateDuration(stop.arrived_at, stop.completed_at)}
                             </span>
                           </div>
@@ -234,7 +234,7 @@ export const StopsDrawer: React.FC<StopsDrawerProps> = ({ isOpen, onClose, route
                         <div className="bg-amber-50/60 border border-amber-100 p-2.5 rounded-xl text-xs text-amber-800 space-y-1">
                           <div className="flex items-center gap-1 font-bold text-[9px] uppercase tracking-wide text-amber-700/80">
                             <FileText size={10} />
-                            <span>{t('driver:stop_notes') || 'Notes'}</span>
+                            <span>{t('stop_notes') || 'Notes'}</span>
                           </div>
                           <p className="font-semibold text-amber-900 leading-snug">{stop.notes}</p>
                         </div>
@@ -244,11 +244,11 @@ export const StopsDrawer: React.FC<StopsDrawerProps> = ({ isOpen, onClose, route
                       {pod && (
                         <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 space-y-2">
                           <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block border-b border-slate-100 pb-1.5">
-                            {t('driver:proof_of_delivery') || 'Proof of Delivery'}
+                            {t('proof_of_delivery') || 'Proof of Delivery'}
                           </span>
                           {pod.receiver_name && (
                             <div className="text-xs text-gray-600 font-semibold">
-                              {t('driver:receiver') || 'Received by'}:{' '}
+                              {t('receiver') || 'Received by'}:{' '}
                               <span className="font-bold text-gray-800">{pod.receiver_name}</span>
                             </div>
                           )}
@@ -290,7 +290,7 @@ export const StopsDrawer: React.FC<StopsDrawerProps> = ({ isOpen, onClose, route
         ) : (
           <div className="flex flex-col items-center justify-center p-8 text-center text-gray-400">
             <Package size={36} className="opacity-20 mb-2" />
-            <p className="text-xs font-bold">{t('driver:no_stops_recorded') || 'No stops recorded.'}</p>
+            <p className="text-xs font-bold">{t('no_stops_recorded') || 'No stops recorded.'}</p>
           </div>
         )}
       </div>
@@ -301,7 +301,7 @@ export const StopsDrawer: React.FC<StopsDrawerProps> = ({ isOpen, onClose, route
           onClick={onClose}
           className="w-full h-12 bg-gray-900 text-white rounded-2xl text-sm font-bold uppercase tracking-wider hover:bg-gray-800 active:scale-[0.99] transition-all"
         >
-          {t('driver:close') || 'Close'}
+          {t('close') || 'Close'}
         </button>
       </div>
     </BottomSheet>

@@ -22,12 +22,54 @@ class TaskService
     public function findById(string $id): Task
     {
         return Task::query()
-            ->select('*')
+            ->select([
+                'id',
+                'company_id',
+                'vehicle_id',
+                'driver_id',
+                'tracking_number',
+                'title',
+                'description',
+                'status',
+                'contact_name',
+                'contact_phone',
+                'pickup_address',
+                'dropoff_address',
+                'scheduled_at',
+                'started_at',
+                'completed_at',
+                'priority',
+                'created_by',
+                'updated_by',
+                'created_at',
+                'updated_at',
+            ])
             ->selectRaw('ST_Y(pickup_location::geometry) as pickup_lat')
             ->selectRaw('ST_X(pickup_location::geometry) as pickup_lng')
             ->selectRaw('ST_Y(dropoff_location::geometry) as dropoff_lat')
             ->selectRaw('ST_X(dropoff_location::geometry) as dropoff_lng')
-            ->with(['company', 'vehicle', 'driver'])
+            ->with([
+                'company' => function($q) {
+                    $q->select(['id', 'name', 'slug']);
+                },
+                'vehicle' => function($q) {
+                    $q->select([
+                        'id',
+                        'driver_id',
+                        'type',
+                        'plate_number',
+                        'is_active'
+                    ]);
+                },
+                'driver' => function($q) {
+                    $q->select([
+                        'id',
+                        'name',
+                        'phone',
+                        'email'
+                    ]);
+                }
+            ])
             ->findOrFail($id);
     }
 
@@ -43,12 +85,51 @@ class TaskService
         $vehicleId = $params['vehicle_id'] ?? null;
 
         $query = Task::query()
-            ->select('*')
+            ->select([
+                'id',
+                'company_id',
+                'vehicle_id',
+                'driver_id',
+                'tracking_number',
+                'title',
+                'description',
+                'status',
+                'contact_name',
+                'contact_phone',
+                'pickup_address',
+                'dropoff_address',
+                'scheduled_at',
+                'started_at',
+                'completed_at',
+                'priority',
+                'created_by',
+                'updated_by',
+                'created_at',
+                'updated_at',
+            ])
             ->selectRaw('ST_Y(pickup_location::geometry) as pickup_lat')
             ->selectRaw('ST_X(pickup_location::geometry) as pickup_lng')
             ->selectRaw('ST_Y(dropoff_location::geometry) as dropoff_lat')
             ->selectRaw('ST_X(dropoff_location::geometry) as dropoff_lng')
-            ->with(['vehicle', 'driver']);
+            ->with([
+                'vehicle' => function($q) {
+                    $q->select([
+                        'id',
+                        'driver_id',
+                        'type',
+                        'plate_number',
+                        'is_active'
+                    ]);
+                },
+                'driver' => function($q) {
+                    $q->select([
+                        'id',
+                        'name',
+                        'phone',
+                        'email'
+                    ]);
+                }
+            ]);
 
         if ($companyId) {
             $query->where('company_id', $companyId);

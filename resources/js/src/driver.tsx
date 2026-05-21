@@ -1,16 +1,15 @@
 import React, { Suspense } from 'react';
 import ReactDOM from 'react-dom/client'
 
-
 // Tailwind css
 import './tailwind.css';
 
 // i18n (needs to be bundled)
-import './i18n';
+import './i18nDriver';
 
 // Router
 import { RouterProvider } from '@tanstack/react-router';
-import router from './router/appRouter';
+import router from './router/driverRouter';
 
 // TanStack Query
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -37,4 +36,3 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
         </Suspense>
     </React.StrictMode>
 );
-

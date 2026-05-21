@@ -14,10 +14,31 @@ class VehicleService
     public function findById(string $id): Vehicle
     {
         return Vehicle::query()
-            ->select('*')
+            ->select([
+                'id',
+                'company_id',
+                'driver_id',
+                'type',
+                'plate_number',
+                'max_weight_kg',
+                'max_volume_cbm',
+                'image_url',
+                'is_active',
+                'max_speed_kmh',
+                'last_telemetry_at',
+                'created_at',
+                'updated_at',
+            ])
             ->selectRaw('ST_Y(last_location::geometry) as latitude')
             ->selectRaw('ST_X(last_location::geometry) as longitude')
-            ->with(['company', 'driver'])
+            ->with([
+                'company' => function($q) {
+                    $q->select(['id', 'name', 'slug']);
+                },
+                'driver' => function($q) {
+                    $q->select(['id', 'name', 'phone', 'email']);
+                }
+            ])
             ->findOrFail($id);
     }
 
@@ -32,10 +53,31 @@ class VehicleService
         $type = $params['type'] ?? null;
 
         $query = Vehicle::query()
-            ->select('*')
+            ->select([
+                'id',
+                'company_id',
+                'driver_id',
+                'type',
+                'plate_number',
+                'max_weight_kg',
+                'max_volume_cbm',
+                'image_url',
+                'is_active',
+                'max_speed_kmh',
+                'last_telemetry_at',
+                'created_at',
+                'updated_at',
+            ])
             ->selectRaw('ST_Y(last_location::geometry) as latitude')
             ->selectRaw('ST_X(last_location::geometry) as longitude')
-            ->with(['company', 'driver']);
+            ->with([
+                'company' => function($q) {
+                    $q->select(['id', 'name', 'slug']);
+                },
+                'driver' => function($q) {
+                    $q->select(['id', 'name', 'phone', 'email']);
+                }
+            ]);
 
         if ($companyId) {
             $query->where('company_id', $companyId);

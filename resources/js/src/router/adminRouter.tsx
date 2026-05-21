@@ -3,7 +3,6 @@ import React from 'react';
 import { z } from 'zod';
 import DefaultLayout from '../components/Layouts/DefaultLayout';
 import { AuthGuard } from '../components/shared/auth/AuthGuard';
-import { MobileLayout } from '../domains/driver/components/Layout/MobileLayout';
 
 const ComingSoon = () => (
     <div className="p-10 text-center">
@@ -34,16 +33,6 @@ const mainLayoutRoute = createRoute({
     ),
 });
 
-const driverLayoutRoute = createRoute({
-    getParentRoute: () => rootRoute,
-    id: 'driver-layout',
-    component: () => (
-        <AuthGuard allowedRoles={['driver']}>
-            <MobileLayout />
-        </AuthGuard>
-    ),
-});
-
 // 3. Define Auth Routes
 const loginRoute = createRoute({ getParentRoute: () => rootRoute, path: '/auth/login', component: lazyRouteComponent(() => import('../domains/auth/pages/Login/index')) });
 const lockscreenRoute = createRoute({ getParentRoute: () => rootRoute, path: '/auth/lockscreen', component: lazyRouteComponent(() => import('../domains/auth/pages/LockScreen/index')) });
@@ -62,20 +51,6 @@ const systemStaffRoute = createRoute({ getParentRoute: () => mainLayoutRoute, pa
 const systemTelegramBotRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'system/telegram-bot', component: lazyRouteComponent(() => import('../domains/system/pages/TelegramBot/index')) });
 
 const adminDashboardRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'admin', component: lazyRouteComponent(() => import('../domains/admin/pages/Index')) });
-const driverDashboardRoute = createRoute({ getParentRoute: () => driverLayoutRoute, path: 'driver', component: lazyRouteComponent(() => import('../domains/driver/pages/Dashboard/index')) });
-const driverDeliveriesRoute = createRoute({ getParentRoute: () => driverLayoutRoute, path: 'driver/deliveries', component: lazyRouteComponent(() => import('../domains/driver/pages/Delivery/index')) });
-const driverTasksRoute = createRoute({ getParentRoute: () => driverLayoutRoute, path: 'driver/tasks', component: lazyRouteComponent(() => import('../domains/driver/pages/Tasks/index')) });
-const driverNotificationsRoute = createRoute({ getParentRoute: () => driverLayoutRoute, path: 'driver/notifications', component: lazyRouteComponent(() => import('../domains/driver/pages/Notification/index')) });
-const driverProfileRoute = createRoute({ getParentRoute: () => driverLayoutRoute, path: 'driver/profile', component: lazyRouteComponent(() => import('../domains/driver/pages/Profile/index')) });
-const driverSettingsRoute = createRoute({ getParentRoute: () => driverLayoutRoute, path: 'driver/settings', component: lazyRouteComponent(() => import('../domains/driver/pages/Settings/index')) });
-const driverTaskHistoryRoute = createRoute({ getParentRoute: () => driverLayoutRoute, path: 'driver/task-history', component: lazyRouteComponent(() => import('../domains/driver/pages/TaskHistory/index')) });
-const driverDeliveryHistoryRoute = createRoute({ getParentRoute: () => driverLayoutRoute, path: 'driver/delivery-history', component: lazyRouteComponent(() => import('../domains/driver/pages/DeliveryHistory/index')) });
-
-// Multi-Stop Delivery & Map Routes
-const driverMapRoute = createRoute({ getParentRoute: () => driverLayoutRoute, path: 'driver/map', component: lazyRouteComponent(() => import('../domains/driver/pages/Map/index')) });
-const driverRouteFeedRoute = createRoute({ getParentRoute: () => driverLayoutRoute, path: 'driver/route', component: lazyRouteComponent(() => import('../domains/driver/pages/RouteFeed/index')) });
-const driverStopDetailsRoute = createRoute({ getParentRoute: () => driverLayoutRoute, path: 'driver/route/stop/$id', component: lazyRouteComponent(() => import('../domains/driver/pages/StopDetails/index')) });
-const driverPODRoute = createRoute({ getParentRoute: () => driverLayoutRoute, path: 'driver/route/stop/$id/pod', component: lazyRouteComponent(() => import('../domains/driver/pages/PODForm/index')) });
 
 const landingPageRoute = createRoute({ getParentRoute: () => rootRoute, path: '/', component: lazyRouteComponent(() => import('../domains/system/pages/Landing/index')) });
 const adminVehiclesRoute = createRoute({ getParentRoute: () => mainLayoutRoute, path: 'admin/fleet/vehicles', component: lazyRouteComponent(() => import('../domains/admin/pages/Vehicle/index')) });
@@ -129,20 +104,6 @@ const routeTree = rootRoute.addChildren([
     forgotPasswordRoute,
     error404Route,
     landingPageRoute,
-    driverLayoutRoute.addChildren([
-        driverDashboardRoute,
-        driverDeliveriesRoute,
-        driverTasksRoute,
-        driverNotificationsRoute,
-        driverProfileRoute,
-        driverSettingsRoute,
-        driverTaskHistoryRoute,
-        driverDeliveryHistoryRoute,
-        driverMapRoute,
-        driverRouteFeedRoute,
-        driverStopDetailsRoute,
-        driverPODRoute,
-    ]),
 ]);
 
 // 6. Create Router
@@ -151,11 +112,6 @@ const router = createRouter({
     defaultPreload: 'intent',
 });
 
-// 7. Register
-declare module '@tanstack/react-router' {
-    interface Register {
-        router: typeof router;
-    }
-}
-
+// 7. Export Router
 export default router;
+

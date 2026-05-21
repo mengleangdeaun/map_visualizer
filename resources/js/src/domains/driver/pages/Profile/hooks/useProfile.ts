@@ -8,7 +8,7 @@ import { pwaToast as toast } from '@/domains/driver/store/usePwaToastStore';
 import { Settings } from 'lucide-react';
 
 export const useProfile = () => {
-  const { t, i18n } = useTranslation(['driver', 'system']);
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { user, clearAuth } = useAuthStore();
   const setHeader = useHeaderStore((s) => s.setHeader);
@@ -23,7 +23,7 @@ export const useProfile = () => {
   // Page Header synchronization
   useEffect(() => {
     setHeader({
-      title: t('driver:my_profile') || 'My Profile',
+      title: t('my_profile') || 'My Profile',
       showBackButton: true,
       backTarget: '/driver',
       rightAction: React.createElement(
@@ -49,11 +49,11 @@ export const useProfile = () => {
   const handleConfirmSignOut = useCallback(() => {
     setIsSignOutOpen(false);
     clearAuth();
-    toast.success(t('driver:logged_out_success') || 'Signed out successfully');
+    toast.success(t('logged_out_success') || 'Signed out successfully');
     if ('vibrate' in navigator) {
       navigator.vibrate(50); // Heavy confirmation haptic
     }
-    navigate({ to: '/auth/login' });
+    navigate({ to: '/driver/login' });
   }, [clearAuth, navigate, t]);
 
   const handleCancelSignOut = useCallback(() => {
@@ -68,7 +68,7 @@ export const useProfile = () => {
     (lang: string) => {
       i18n.changeLanguage(lang);
       toast.success(
-        t('driver:language_changed') || `Language changed to ${lang.toUpperCase()}`
+        t('language_changed') || `Language changed to ${lang.toUpperCase()}`
       );
       if ('vibrate' in navigator) {
         navigator.vibrate(15); // Dynamic haptic tick on setting toggle

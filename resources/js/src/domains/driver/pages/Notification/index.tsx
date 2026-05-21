@@ -40,7 +40,7 @@ const formatRelativeTime = (dateString: string) => {
 };
 
 const DriverNotifications = () => {
-    const { t } = useTranslation(['driver', 'admin', 'system']);
+    const { t } = useTranslation();
     const navigate = useNavigate();
     
     // Deletion states
@@ -77,7 +77,7 @@ const DriverNotifications = () => {
 
     useEffect(() => {
         setHeader({
-            title: t('driver:notifications') || 'Notifications',
+            title: t('notifications') || 'Notifications',
             showBackButton: true,
             backTarget: '/driver',
             rightAction: notifications.length > 0 ? (
@@ -89,7 +89,7 @@ const DriverNotifications = () => {
                             className="size-9 rounded-xl text-primary hover:bg-primary/5 shrink-0 transition-all"
                             onClick={handleMarkAllRead}
                             disabled={markAllAsReadMutation.isPending}
-                            title={t('driver:mark_all_read') || 'Mark all read'}
+                            title={t('mark_all_read') || 'Mark all read'}
                         >
                             <Check size={18} strokeWidth={3} />
                         </Button>
@@ -100,7 +100,7 @@ const DriverNotifications = () => {
                         className="size-9 rounded-xl text-destructive hover:bg-destructive/5 shrink-0 transition-all"
                         onClick={() => setIsConfirmDeleteOpen(true)}
                         disabled={deleteAllMutation.isPending}
-                        title={t('driver:delete_all') || 'Delete all'}
+                        title={t('delete_all') || 'Delete all'}
                     >
                         <Trash2 size={18} />
                     </Button>
@@ -133,9 +133,9 @@ const DriverNotifications = () => {
                         <div className='flex flex-col items-center justify-center'>
                             <div className="space-y-2">
                             <Iconsvg name="box" />
-                                <h3 className="font-semibold text-sm text-center">{t('driver:all_caught_up') || 'All Caught Up!'}</h3>
+                                <h3 className="font-semibold text-sm text-center">{t('all_caught_up') || 'All Caught Up!'}</h3>
                                 <p className="text-[11px] text-muted-foreground font-medium">
-                                    {t('driver:no_notifications_desc') || "You don't have any notifications at the moment."}
+                                    {t('no_notifications_desc') || "You don't have any notifications at the moment."}
                                 </p>
                             </div>
                         </div>
@@ -174,7 +174,7 @@ const DriverNotifications = () => {
                                                 data.priority === 'normal' && "bg-slate-500/10 text-slate-600 border border-slate-500/20",
                                                 data.priority === 'low' && "bg-blue-500/10 text-blue-600 border border-blue-500/20"
                                             )}>
-                                                {t(`admin:${data.priority}`) || data.priority}
+                                                {t(`priority_${data.priority}`) || data.priority}
                                             </span>
                                         )}
                                         
@@ -210,7 +210,7 @@ const DriverNotifications = () => {
                                                 disabled={markAsReadMutation.isPending}
                                             >
                                                 <Eye size={12} />
-                                                {t('driver:mark_read') || 'Mark Read'}
+                                                {t('mark_read') || 'Mark Read'}
                                             </Button>
                                         )}
                                         
@@ -225,7 +225,7 @@ const DriverNotifications = () => {
                                             onClick={() => navigate({ to: '/driver/tasks' })}
                                         >
                                             <ExternalLink size={12} />
-                                            {t('driver:view_task') || 'View Task'}
+                                            {t('view_task') || 'View Task'}
                                         </Button>
 
                                         {/* Individual Trash Button */}
@@ -235,7 +235,7 @@ const DriverNotifications = () => {
                                             className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/5 rounded-lg transition-all shrink-0 ml-auto"
                                             onClick={() => deleteMutation.mutate(notification.id)}
                                             disabled={deleteMutation.isPending}
-                                            title={t('driver:delete') || 'Delete'}
+                                            title={t('delete') || 'Delete'}
                                         >
                                             <Trash2 size={13} />
                                         </Button>
@@ -255,10 +255,10 @@ const DriverNotifications = () => {
 
                         <div className="flex flex-col gap-1">
                             <h3 className="text-base font-black tracking-tight text-foreground">
-                                {t('driver:delete_all') || 'Delete all notifications?'}
+                                {t('delete_all') || 'Delete all notifications?'}
                             </h3>
                             <p className="text-xs text-muted-foreground leading-relaxed px-4">
-                                {t('driver:delete_all_warning') || 'Are you sure you want to delete all notifications? This action cannot be undone.'}
+                                {t('delete_all_warning') || 'Are you sure you want to delete all notifications? This action cannot be undone.'}
                             </p>
                         </div>
 
@@ -269,7 +269,7 @@ const DriverNotifications = () => {
                                 onClick={handleDeleteAllConfirm}
                                 disabled={deleteAllMutation.isPending}
                             >
-                                {deleteAllMutation.isPending ? t('system:deleting') || 'Deleting...' : t('driver:delete') || 'Delete'}
+                                {deleteAllMutation.isPending ? t('deleting') || 'Deleting...' : t('delete') || 'Delete'}
                             </Button>
                             <Button 
                                 variant="ghost" 
@@ -277,7 +277,7 @@ const DriverNotifications = () => {
                                 onClick={() => setIsConfirmDeleteOpen(false)}
                                 disabled={deleteAllMutation.isPending}
                             >
-                                {t('driver:cancel') || 'Cancel'}
+                                {t('cancel') || 'Cancel'}
                             </Button>
                         </div>
                     </div>

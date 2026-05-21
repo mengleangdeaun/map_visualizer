@@ -19,7 +19,7 @@ interface HistoryCardProps {
 }
 
 export const HistoryCard = React.memo(({ route, onViewStops }: HistoryCardProps) => {
-  const { t } = useTranslation(['driver', 'delivery']);
+  const { t } = useTranslation();
 
   const formattedDate = new Date(route.date).toLocaleDateString(undefined, {
     weekday: 'short',
@@ -58,7 +58,7 @@ export const HistoryCard = React.memo(({ route, onViewStops }: HistoryCardProps)
           </div>
           <div className="flex flex-col">
             <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider leading-none mb-1">
-              {t('driver:route_date') || 'Route Run'}
+              {t('route_date') || 'Route Run'}
             </span>
             <span className="text-xs font-black text-gray-800 leading-none">{formattedDate}</span>
           </div>
@@ -73,8 +73,8 @@ export const HistoryCard = React.memo(({ route, onViewStops }: HistoryCardProps)
           )}
         >
           {route.status === 'completed'
-            ? t('driver:completed') || 'Completed'
-            : t('driver:in_progress') || 'Active'}
+            ? t('completed') || 'Completed'
+            : t('in_progress') || 'Active'}
         </span>
       </div>
 
@@ -92,7 +92,7 @@ export const HistoryCard = React.memo(({ route, onViewStops }: HistoryCardProps)
         <div className="grid grid-cols-3 gap-2 pt-1">
           <div className="flex flex-col">
             <span className="text-[8px] font-semibold uppercase text-gray-400 tracking-wider">
-              {t('delivery:total_weight') || 'Cargo'}
+              {t('total_weight') || 'Cargo'}
             </span>
             <div className="flex items-center gap-1 text-xs font-black text-gray-700 mt-0.5">
               <Truck size={11} className="text-gray-400" />
@@ -102,7 +102,7 @@ export const HistoryCard = React.memo(({ route, onViewStops }: HistoryCardProps)
 
           <div className="flex flex-col">
             <span className="text-[8px] font-semibold uppercase text-gray-400 tracking-wider">
-              {t('delivery:est_distance') || 'Distance'}
+              {t('est_distance') || 'Distance'}
             </span>
             <div className="flex items-center gap-1 text-xs font-black text-gray-700 mt-0.5">
               <Clock size={11} className="text-gray-400" />
@@ -112,7 +112,7 @@ export const HistoryCard = React.memo(({ route, onViewStops }: HistoryCardProps)
 
           <div className="flex flex-col">
             <span className="text-[8px] font-semibold uppercase text-gray-400 tracking-wider">
-              {t('delivery:est_duration') || 'Duration'}
+              {t('est_duration') || 'Duration'}
             </span>
             <div className="flex items-center gap-1 text-xs font-black text-gray-700 mt-0.5">
               <Clock size={11} className="text-gray-400" />
@@ -142,13 +142,13 @@ export const HistoryCard = React.memo(({ route, onViewStops }: HistoryCardProps)
             </div>
           )}
           <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest ml-0.5">
-            / {totalStops} {t('delivery:stops') || 'stops'}
+            / {totalStops} {t('stops') || 'stops'}
           </span>
         </div>
 
         <div className="text-right">
           <span className="text-[8px] font-semibold text-gray-400 uppercase tracking-wider block">
-            {t('delivery:cod_remitted') || 'COD'}
+            {t('cod_remitted') || 'COD'}
           </span>
           <div className="flex items-center gap-0.5 text-xs font-black text-emerald-600 justify-end mt-0.5">
             <DollarSign size={12} strokeWidth={2.5} />

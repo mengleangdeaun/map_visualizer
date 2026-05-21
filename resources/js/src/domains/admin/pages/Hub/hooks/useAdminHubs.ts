@@ -24,7 +24,7 @@ export const useCreateAdminHub = () => {
 
     return useMutation({
         mutationFn: (data: Partial<Location>) => 
-            locationService.createLocation({ ...data, company_id: user?.company_id }),
+            locationService.createLocation({ ...data, company_id: user?.company_id || undefined }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['admin-hubs'] });
             toast.success(t('location_created_successfully'));

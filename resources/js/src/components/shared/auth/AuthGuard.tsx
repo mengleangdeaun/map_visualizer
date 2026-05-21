@@ -13,10 +13,14 @@ export const AuthGuard = ({ children, allowedRoles }: AuthGuardProps) => {
     const { isAuthenticated, isLocked, user } = useAuthStore();
 
     useEffect(() => {
+        const isDriverPath = window.location.pathname.startsWith('/driver');
+        const loginPath = isDriverPath ? '/driver/login' : '/auth/login';
+        const lockscreenPath = isDriverPath ? '/driver/lockscreen' : '/auth/lockscreen';
+
         if (!isAuthenticated) {
-            navigate({ to: '/auth/login' });
+            navigate({ to: loginPath });
         } else if (isLocked) {
-            navigate({ to: '/auth/lockscreen' });
+            navigate({ to: lockscreenPath });
         } else if (allowedRoles && !allowedRoles.includes(user?.role || '')) {
             // Redirect based on role if trying to access unauthorized domain
             if (user?.role === 'driver') {

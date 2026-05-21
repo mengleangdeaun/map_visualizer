@@ -59,7 +59,7 @@ const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: numbe
 };
 
 const DriverMapPage = () => {
-    const { t } = useTranslation(['delivery', 'driver']);
+    const { t } = useTranslation();
     const { user } = useAuthStore();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
@@ -141,7 +141,7 @@ const DriverMapPage = () => {
     // Set page header title and right menu actions
     useEffect(() => {
         setHeader({ 
-            title: t('delivery:live_map') || 'Live Map',
+            title: t('live_map') || 'Live Map',
             showBackButton: true,
             backTarget: '/driver',
             rightAction: (

@@ -6,8 +6,13 @@ use App\Http\Controllers\Controller;
 
 class AppController extends Controller
 {
-    public function index()
+    public function adminIndex()
     {
         return view('app');
+    }
+
+    public function driverIndex()
+    {
+        return view('driver');
     }
 }
