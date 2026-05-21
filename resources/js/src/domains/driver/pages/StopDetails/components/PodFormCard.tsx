@@ -37,9 +37,11 @@ export const PodFormCard: React.FC<PodFormCardProps> = ({
     return (
         <>
             {/* Photo Capture */}
-            <Card className="p-4 border-none shadow-md bg-card space-y-4">
+            <div className="p-4 bg-white rounded-2xl shadow-sm shadow-black/5 transition-all duration-300 flex flex-col gap-3.5 border-none">
                 <div className="flex items-center gap-2 border-b border-border/50 pb-3">
-                    <Camera size={18} className="text-primary" />
+                    <div className='bg-primary/10 p-1.5 rounded-lg '>
+                        <Camera size={18} className="text-primary" />
+                    </div>
                     <h3 className="font-bold text-base text-foreground">Proof of Delivery</h3>
                 </div>
 
@@ -78,10 +80,10 @@ export const PodFormCard: React.FC<PodFormCardProps> = ({
                         className="hidden"
                     />
                 </div>
-            </Card>
+            </div>
 
             {/* Delivery Notes */}
-            <Card className="p-4 border-none shadow-md bg-card space-y-2">
+            <div className="p-4 bg-white rounded-2xl shadow-sm shadow-black/5 transition-all duration-300 flex flex-col gap-3.5 border-none">
                 <label className="text-xs font-bold text-muted-foreground uppercase block">
                     Completion Notes (Optional)
                 </label>
@@ -91,7 +93,7 @@ export const PodFormCard: React.FC<PodFormCardProps> = ({
                     placeholder="Enter delivery completion notes..."
                     className="w-full h-24 rounded-xl bg-muted/50 border border-border/50 p-3 text-sm focus:outline-none resize-none"
                 />
-            </Card>
+            </div>
         </>
     );
 };

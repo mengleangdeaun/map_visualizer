@@ -6,7 +6,7 @@ export const TasksSkeleton = React.memo(() => {
             {[1, 2, 3].map((idx) => (
                 <div
                     key={idx}
-                    className="h-[210px] w-full animate-pulse bg-white shadow-sm rounded-2xl border border-gray-100"
+                    className="h-[210px] w-full animate-pulse bg-white shadow-sm shadow-black/5 rounded-2xl border-none"
                 />
             ))}
         </div>

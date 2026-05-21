@@ -63,7 +63,7 @@ export const TaskCard = React.memo(({
     };
 
     return (
-        <div className="p-4 bg-white rounded-2xl shadow-md shadow-black/5 hover:bg-gray-50/50 transition-all duration-300 flex flex-col gap-3.5 border border-gray-100">
+        <div className="p-4 bg-white rounded-2xl shadow-sm shadow-black/5 transition-all duration-300 flex flex-col gap-3.5 border-none">
             {/* Header: Status and Time */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">

@@ -18,9 +18,11 @@ export const StopTimelineCard: React.FC<StopTimelineCardProps> = ({ stop, curren
     if (!dl.started_at && !dl.scheduled_at) return null;
 
     return (
-        <Card className="p-4 border-none shadow-md bg-card space-y-4">
+        <div className="p-4 bg-white rounded-2xl shadow-sm shadow-black/5 transition-all duration-300 flex flex-col gap-3.5 border-none">
             <div className="flex items-center gap-2 border-b border-border/50 pb-3">
-                <Clock size={18} className="text-primary" />
+                <div className='bg-primary/10 p-1.5 rounded-lg '>
+                    <Clock size={18} className="text-primary " />
+                </div>
                 <h3 className="font-bold text-base text-foreground">Stop Timeline & Duration</h3>
             </div>
 
@@ -39,7 +41,7 @@ export const StopTimelineCard: React.FC<StopTimelineCardProps> = ({ stop, curren
                 {/* Started Route */}
                 {dl.started_at && (
                     <div className="relative">
-                        <span className="absolute -left-[31px] top-1.5 w-3.5 h-3.5 rounded-full bg-sky-400 border-4 border-background" />
+                        <span className="absolute -left-[32px] top-1.5 w-3.5 h-3.5 rounded-full bg-sky-400 border-4 border-background" />
                         <p className="font-bold text-xs text-foreground">Started Route</p>
                         <p className="text-[10px] text-muted-foreground">
                             {new Date(dl.started_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -108,6 +110,6 @@ export const StopTimelineCard: React.FC<StopTimelineCardProps> = ({ stop, curren
                     </div>
                 )}
             </div>
-        </Card>
+        </div>
     );
 };

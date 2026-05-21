@@ -90,7 +90,7 @@ export const StopCard: React.FC<StopCardProps> = React.memo(({
         <div 
             onClick={() => navigate({ to: `/driver/route/stop/${stop.id}` })}
             className={cn(
-                "p-4 border border-gray-100 dark:border-gray-800 shadow-md shadow-black/5 bg-white dark:bg-card hover:bg-gray-50/50 transition-all duration-300 active:scale-[0.99] cursor-pointer rounded-2xl flex flex-col gap-3 select-none",
+                "p-4 shadow shadow-black/5 border-none bg-white dark:bg-card hover:bg-gray-50/50 transition-all duration-300 active:scale-[0.99] cursor-pointer rounded-2xl flex flex-col gap-3 select-none",
                 isCompleted && "opacity-70"
             )}
         >

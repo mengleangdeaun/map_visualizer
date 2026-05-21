@@ -46,7 +46,7 @@ export const StopActionBar: React.FC<StopActionBarProps> = ({
                     <Button
                         onClick={onOpenExceptionModal}
                         variant="destructive"
-                        className="w-[120px] h-12 rounded-2xl font-bold flex items-center justify-center gap-2"
+                        className="w-[120px] h-11 rounded-xl font-bold flex items-center justify-center gap-2"
                     >
                         <AlertTriangle size={16} />
                         Exception
@@ -55,7 +55,7 @@ export const StopActionBar: React.FC<StopActionBarProps> = ({
                     <Button
                         onClick={onMarkDelivered}
                         disabled={isCompletePending}
-                        className="flex-1 h-12 rounded-2xl font-bold flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg disabled:opacity-70"
+                        className="flex-1 h-11 rounded-xl font-bold flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-70"
                     >
                         {isCompletePending ? (
                             <Loader2 size={18} className="animate-spin" />

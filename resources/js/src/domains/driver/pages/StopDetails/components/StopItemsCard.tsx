@@ -11,9 +11,11 @@ export const StopItemsCard: React.FC<StopItemsCardProps> = ({ stop }) => {
     const dl = stop.delivery;
 
     return (
-        <Card className="p-4 border-none shadow-md bg-card space-y-4">
+        <div className="p-4 bg-white rounded-2xl shadow-sm shadow-black/5 transition-all duration-300 flex flex-col gap-3.5 border-none">
             <div className="flex items-center gap-2 border-b border-border/50 pb-3">
-                <Package size={18} className="text-primary" />
+                <div className='bg-primary/10 p-1.5 rounded-lg '>
+                    <Package size={18} className="text-primary" />
+                </div>
                 <h3 className="font-bold text-base text-foreground">Items to Deliver</h3>
             </div>
 
@@ -37,6 +39,6 @@ export const StopItemsCard: React.FC<StopItemsCardProps> = ({ stop }) => {
                 <span>Parcel Weight:</span>
                 <span className="font-semibold">{dl.weight_kg.toFixed(2)} kg</span>
             </div>
-        </Card>
+        </div>
     );
 };

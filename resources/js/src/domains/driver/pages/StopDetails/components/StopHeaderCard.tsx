@@ -18,7 +18,7 @@ export const StopHeaderCard: React.FC<StopHeaderCardProps> = ({ stop, onOpenNavi
     const showNavButton = stop.status === 'pending' || stop.status === 'arrived';
 
     return (
-        <Card className="p-4 border-none shadow-md bg-card flex flex-col gap-4">
+        <div className="p-4 bg-white rounded-2xl shadow-sm shadow-black/5 transition-all duration-300 flex flex-col gap-3.5 border-none">
             <div className="flex items-start justify-between gap-2 border-b border-border/50 pb-3">
                 <div>
                     <div className="flex items-center gap-2">
@@ -54,13 +54,13 @@ export const StopHeaderCard: React.FC<StopHeaderCardProps> = ({ stop, onOpenNavi
                     <Button
                         onClick={onOpenNavigation}
                         variant="outline"
-                        className="w-full h-11 rounded-2xl flex items-center justify-center gap-2 font-bold"
+                        className="w-full h-11 rounded-xl flex items-center justify-center gap-2 font-bold"
                     >
                         <Navigation size={16} className="text-primary" />
                         Open Map Navigation
                     </Button>
                 )}
             </div>
-        </Card>
+        </div>
     );
 };
