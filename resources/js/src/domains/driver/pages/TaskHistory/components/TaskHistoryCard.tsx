@@ -1,5 +1,4 @@
 import React from 'react';
-import { Card } from '@/components/ui/card';
 import { MapPin, Clock, CheckCircle2, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { HistoryTask } from '../types';
@@ -24,8 +23,8 @@ const getPriorityStyles = (priority: string) => {
 };
 
 export const TaskHistoryCard = React.memo(({ task, t }: TaskHistoryCardProps) => {
-  const formattedDate = task.scheduled_at
-    ? new Date(task.scheduled_at).toLocaleDateString(undefined, {
+  const formattedDate = task.scheduled_at || task.created_at
+    ? new Date(task.scheduled_at || task.created_at).toLocaleDateString(undefined, {
         month: 'short',
         day: 'numeric',
         hour: '2-digit',
@@ -34,23 +33,23 @@ export const TaskHistoryCard = React.memo(({ task, t }: TaskHistoryCardProps) =>
     : 'No Date';
 
   return (
-    <Card className="p-4 border bg-card/60 backdrop-blur-xl shadow-sm hover:shadow-md transition-all rounded-2xl flex flex-col gap-3 h-full justify-between animate-fade-in">
+    <div className="p-4 bg-white rounded-2xl shadow-sm shadow-black/5 hover:bg-gray-50 active:scale-[0.99] transition-all cursor-pointer flex flex-col gap-3">
       {/* Top: Customer & Priority Badge */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex flex-col min-w-0">
-          <span className="text-[10px] font-black uppercase text-muted-foreground tracking-wider leading-none mb-1">
+          <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider leading-none mb-1">
             {task.contact_name || 'Anonymous Customer'}
           </span>
-          <span className="text-sm font-bold tracking-tight text-foreground leading-snug truncate">
+          <span className="text-sm font-bold text-gray-800 leading-tight truncate">
             {task.title || 'Untitled Delivery Task'}
           </span>
         </div>
 
-        {/* Task Priority & Status Badges */}
+        {/* Priority & Status Badges */}
         <div className="flex items-center gap-1.5 shrink-0">
           <span
             className={cn(
-              'text-[8px] font-black uppercase tracking-widest px-2 py-0.5 border rounded-full',
+              'text-[9px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full',
               getPriorityStyles(task.priority || 'LOW')
             )}
           >
@@ -58,44 +57,48 @@ export const TaskHistoryCard = React.memo(({ task, t }: TaskHistoryCardProps) =>
           </span>
 
           {task.status === 'completed' ? (
-            <span className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 rounded-full flex items-center gap-0.5">
-              <CheckCircle2 size={8} />
+            <span className="text-[9px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-primary/10 text-primary inline-flex items-center gap-0.5">
+              <CheckCircle2 size={10} strokeWidth={2.5} />
               {t('driver:completed') || 'Done'}
             </span>
           ) : (
-            <span className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 bg-rose-500/10 text-rose-600 border border-rose-500/20 rounded-full flex items-center gap-0.5">
-              <XCircle size={8} />
+            <span className="text-[9px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-600 inline-flex items-center gap-0.5">
+              <XCircle size={10} strokeWidth={2.5} />
               {t('driver:cancelled') || 'Void'}
             </span>
           )}
         </div>
       </div>
 
-      {/* Middle: Addresses */}
-      <div className="flex flex-col gap-1.5 text-[11px] text-muted-foreground bg-muted/20 p-2.5 rounded-xl border border-muted/30">
+      {/* Addresses */}
+      <div className="flex flex-col gap-2 bg-gray-50 p-3 rounded-xl border border-gray-100/60 text-xs">
         <div className="flex items-center gap-1.5 min-w-0">
-          <MapPin size={11} className="text-primary shrink-0" />
-          <span className="truncate">{task.pickup_address || 'No pickup address'}</span>
+          <MapPin size={14} className="text-primary shrink-0" strokeWidth={2} />
+          <span className="font-semibold text-gray-700 truncate">
+            {task.pickup_address || 'No pickup address'}
+          </span>
         </div>
-        <div className="flex items-center gap-1.5 min-w-0 border-t pt-1.5 border-muted/40">
-          <MapPin size={11} className="text-muted-foreground shrink-0" />
-          <span className="truncate">{task.dropoff_address || 'No dropoff address'}</span>
+        <div className="flex items-center gap-1.5 min-w-0 border-t pt-2 border-gray-100">
+          <MapPin size={14} className="text-gray-400 shrink-0" strokeWidth={2} />
+          <span className="font-semibold text-gray-700 truncate">
+            {task.dropoff_address || 'No dropoff address'}
+          </span>
         </div>
       </div>
 
-      {/* Bottom: Date Time stamp & Details */}
-      <div className="flex items-center justify-between text-[10px] text-muted-foreground font-semibold border-t pt-2.5">
-        <span className="flex items-center gap-1">
-          <Clock size={11} />
+      {/* Bottom: Date & Plate */}
+      <div className="flex items-center justify-between text-[10px] font-bold border-t border-gray-100 pt-2.5">
+        <span className="flex items-center gap-1 text-gray-500">
+          <Clock size={11} strokeWidth={2} />
           {formattedDate}
         </span>
         {task.vehicle?.plate_number && (
-          <span className="bg-muted px-2 py-0.5 rounded font-black tracking-wide">
+          <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md font-black tracking-wide">
             {task.vehicle.plate_number}
           </span>
         )}
       </div>
-    </Card>
+    </div>
   );
 });
 

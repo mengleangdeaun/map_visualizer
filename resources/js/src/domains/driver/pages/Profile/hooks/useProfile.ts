@@ -1,10 +1,11 @@
-import { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from '@tanstack/react-router';
 import { useAuthStore } from '@/domains/auth/store/useAuthStore';
 import { useActiveShift, useCheckOutVehicle } from '@/domains/driver/hooks/useDriverShift';
 import { useHeaderStore } from '@/domains/driver/store/useHeaderStore';
 import { pwaToast as toast } from '@/domains/driver/store/usePwaToastStore';
+import { Settings } from 'lucide-react';
 
 export const useProfile = () => {
   const { t, i18n } = useTranslation(['driver', 'system']);
@@ -25,9 +26,18 @@ export const useProfile = () => {
       title: t('driver:my_profile') || 'My Profile',
       showBackButton: true,
       backTarget: '/driver',
+      rightAction: React.createElement(
+        'button',
+        {
+          onClick: () => navigate({ to: '/driver/settings' }),
+          className: 'p-2 text-muted-foreground hover:text-primary transition-colors shrink-0',
+          'aria-label': 'Settings',
+        },
+        React.createElement(Settings, { size: 20 })
+      ),
     });
     return () => setHeader({});
-  }, [setHeader, t]);
+  }, [setHeader, t, navigate]);
 
   const handleSignOut = useCallback(() => {
     setIsSignOutOpen(true);

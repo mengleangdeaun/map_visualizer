@@ -54,7 +54,7 @@ const TaskHistoryPage = React.memo(() => {
 
   return (
     <PullToRefresh onRefresh={async () => { await refetch(); }}>
-      <div className="p-3 flex flex-col gap-4 max-w-md mx-auto animate-in fade-in duration-500 h-[calc(100vh-140px)]">
+      <div className="px-4 py-3 flex flex-col gap-4 max-w-md mx-auto animate-in fade-in duration-500 h-[calc(100vh-140px)]">
         {/* Visual active filters alert strip */}
         <ActiveFilterAlert
           hasActiveFilters={hasActiveFilters}
