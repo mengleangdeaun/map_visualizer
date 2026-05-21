@@ -23,6 +23,7 @@ import { BottomSheet } from '@/domains/driver/components/BottomSheet';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { Iconsvg } from '@/components/shared/svg/IconState';
 
 const formatRelativeTime = (dateString: string) => {
     const now = new Date();
@@ -129,17 +130,16 @@ const DriverNotifications = () => {
                         ))
                     ) : notifications.length === 0 ? (
                         // Elegant Empty State
-                        <Card className="flex flex-col items-center justify-center p-12 text-center border-dashed border-2 bg-card/50 gap-4 mt-6">
-                            <div className="size-16 rounded-3xl bg-muted/50 flex items-center justify-center text-muted-foreground shadow-inner">
-                                <BellOff size={28} />
-                            </div>
-                            <div className="space-y-1">
-                                <h3 className="font-black text-sm tracking-tight">{t('driver:all_caught_up') || 'All Caught Up!'}</h3>
-                                <p className="text-[11px] text-muted-foreground font-medium max-w-[200px]">
+                        <div className='flex flex-col items-center justify-center'>
+                            <div className="space-y-2">
+                            <Iconsvg name="box" />
+                                <h3 className="font-semibold text-sm text-center">{t('driver:all_caught_up') || 'All Caught Up!'}</h3>
+                                <p className="text-[11px] text-muted-foreground font-medium">
                                     {t('driver:no_notifications_desc') || "You don't have any notifications at the moment."}
                                 </p>
                             </div>
-                        </Card>
+                        </div>
+                        
                     ) : (
                         // Notifications Listing
                         notifications.map((notification) => {

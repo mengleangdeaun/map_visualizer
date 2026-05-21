@@ -8,6 +8,7 @@ import { RoadRoute } from '@/components/shared/map/RoadRoute';
 import { useAuthStore } from '@/domains/auth/store/useAuthStore';
 import { useHeaderStore } from '../../store/useHeaderStore';
 import { useLocationStore } from '../../store/useLocationStore';
+import { useNavigationStore } from '../../store/useNavigationStore';
 import { pwaToast as toast } from '../../store/usePwaToastStore';
 import { echo } from '@/lib/echo';
 import api from '@/lib/api';
@@ -104,10 +105,16 @@ const DriverMapPage = () => {
     // Roadblock interactive placement states
     const [pinPlacementMode, setPinPlacementMode] = useState(false);
 
-    // Active navigation states for Errand Tasks & Deliveries
-    const [activeNavTask, setActiveNavTask] = useState<any | null>(null);
-    const [activeNavRoute, setActiveNavRoute] = useState<any | null>(null);
-    const [activeNavLeg, setActiveNavLeg] = useState<'pickup' | 'dropoff'>('pickup');
+    // Active navigation states for Errand Tasks & Deliveries — persisted globally so they survive page transitions
+    const {
+        activeNavTask,
+        setActiveNavTask,
+        activeNavRoute,
+        setActiveNavRoute,
+        activeNavLeg,
+        setActiveNavLeg,
+        clearNavigation,
+    } = useNavigationStore();
     const [planningLeg2Route, setPlanningLeg2Route] = useState<any | null>(null);
 
     const googleKhmerStyle = useMemo(() => ({
@@ -262,19 +269,55 @@ const DriverMapPage = () => {
         }
     });
 
-    // Mutation to register arrival at a delivery stop
+    // Mutation to register arrival at a delivery stop — navigates directly to Stop Details on success
     const arriveMutation = useMutation({
         mutationFn: async (stopId: string) => {
             const { data } = await api.post(`/driver/route/stops/${stopId}/arrive`);
             return data.data;
         },
-        onSuccess: (res, stopId) => {
-            toast.success("Arrived at stop! You can now resolve this delivery.");
+        onSuccess: (_res, stopId) => {
+            toast.success('Arrived at stop!');
+
+            // Optimistically update the cache so StopDetails sees 'arrived' immediately
+            // without waiting for the background refetch to complete
+            queryClient.setQueryData(['driver', 'route', 'active'], (old: any) => {
+                if (!old?.stops) return old;
+                return {
+                    ...old,
+                    stops: old.stops.map((s: any) =>
+                        s.id === stopId
+                            ? { ...s, status: 'arrived', arrived_at: new Date().toISOString() }
+                            : s
+                    ),
+                };
+            });
+
+            // Then invalidate to trigger a background sync
             queryClient.invalidateQueries({ queryKey: ['driver', 'route', 'active'] });
-            setActiveNavTask(prev => prev ? { ...prev, status: 'arrived' } : null);
+            clearNavigation();
+            navigate({ to: '/driver/route/stop/$id', params: { id: stopId } });
         },
         onError: () => {
-            toast.error("Failed to register arrival. Please try again.");
+            toast.error('Failed to register arrival. Please try again.');
+        },
+    });
+
+    // Mutation to register starting delivery route navigation
+    const startDeliveryMutation = useMutation({
+        mutationFn: async (stopId: string) => {
+            const { latitude, longitude } = useLocationStore.getState();
+            const { data } = await api.post(`/driver/route/stops/${stopId}/start`, {
+                latitude,
+                longitude
+            });
+            return data.data;
+        },
+        onSuccess: (res, stopId) => {
+            toast.success("Delivery route started!");
+            queryClient.invalidateQueries({ queryKey: ['driver', 'route', 'active'] });
+        },
+        onError: () => {
+            toast.error("Failed to start delivery route. Please try again.");
         }
     });
 
@@ -284,7 +327,7 @@ const DriverMapPage = () => {
     const roadblocks = useMemo(() => roadblocksData || [], [roadblocksData]);
 
     const nextImmediateStop = useMemo(() => {
-        return deliveries.find((stop: any) => stop.status === 'pending' || stop.status === 'arrived');
+        return deliveries.find((stop: any) => stop.status === 'in_transit' || stop.status === 'pending' || stop.status === 'arrived');
     }, [deliveries]);
 
     // Echo listener for real-time roadblocks
@@ -434,17 +477,32 @@ const DriverMapPage = () => {
         const isDelivery = !!item.delivery;
 
         if (isDelivery) {
-            // For deliveries, directly start navigation overlay
-            setActiveNavTask(item);
-            setActiveNavRoute(selectedRoute);
-            setActiveNavLeg('dropoff');
+            startDeliveryMutation.mutate(item.id, {
+                onSuccess: (res) => {
+                    const updatedItem = {
+                        ...item,
+                        status: 'in_transit',
+                        delivery: {
+                            ...item.delivery,
+                            started_at: res?.started_at || new Date().toISOString()
+                        }
+                    };
+                    setActiveNavTask(updatedItem);
 
-            setRoutePlanningMode(false);
-            setCustomRoutes([]);
-            setCustomRouteDestination(null);
-            setSelectedItem(null);
-            setSelectedType(null);
-            setIsDrawerOpen(false);
+                    // Dynamic live route tracing: use the OSRM path computed from actual current location if available,
+                    // otherwise gracefully fallback to the pre-calculated selectedRoute.
+                    const routeToUse = res?.actual_leg_geometry || selectedRoute;
+                    setActiveNavRoute(routeToUse);
+                    setActiveNavLeg('dropoff');
+
+                    setRoutePlanningMode(false);
+                    setCustomRoutes([]);
+                    setCustomRouteDestination(null);
+                    setSelectedItem(null);
+                    setSelectedType(null);
+                    setIsDrawerOpen(false);
+                }
+            });
         } else {
             // Errand Tasks status update mutation
             updateTaskStatusMutation.mutate({
@@ -477,8 +535,7 @@ const DriverMapPage = () => {
             status: 'completed'
         }, {
             onSuccess: () => {
-                setActiveNavTask(null);
-                setActiveNavRoute(null);
+                clearNavigation();
                 queryClient.invalidateQueries({ queryKey: ['driver', 'tasks'] });
             }
         });
@@ -665,6 +722,7 @@ const DriverMapPage = () => {
                                             "w-9 h-9 rounded-full flex items-center justify-center font-bold border-2 border-white shadow-lg text-sm transition-all duration-200",
                                             (stop.status === 'completed' || stop.status === 'skipped') ? "bg-muted text-muted-foreground" : 
                                             stop.status === 'arrived' ? "bg-amber-500 text-white" :
+                                            stop.status === 'in_transit' ? "bg-sky-500 text-white animate-pulse" :
                                             "bg-primary text-primary-foreground"
                                         )}>
                                             {stop.sequence_number}
@@ -938,16 +996,14 @@ const DriverMapPage = () => {
                         if (isDelivery) {
                             // Navigate to stop details screen to let the driver complete/fail it
                             navigate({ to: '/driver/route/stop/$id', params: { id: String(id) } });
-                            setActiveNavTask(null);
-                            setActiveNavRoute(null);
+                            clearNavigation();
                         } else {
                             handleCompleteTask(id);
                         }
                     }}
                     onArriveAtDeliveryStop={(id) => arriveMutation.mutate(id)}
                     onStop={() => {
-                        setActiveNavTask(null);
-                        setActiveNavRoute(null);
+                        clearNavigation();
                     }}
                 />
             </div>
@@ -968,7 +1024,7 @@ const DriverMapPage = () => {
                 onSelectTaskRoute={handleSelectTaskRoute}
                 onStartTaskNavigation={handleStartTaskNavigation}
                 hasRoutesPlanned={customRoutes.length > 0}
-                isTaskInProgress={updateTaskStatusMutation.isPending || arriveMutation.isPending}
+                isTaskInProgress={updateTaskStatusMutation.isPending || arriveMutation.isPending || startDeliveryMutation.isPending}
             />
 
             {/* 6. Custom Report Roadblock/Hazard Dialog Overlay */}

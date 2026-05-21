@@ -10,7 +10,9 @@ return new class extends Migration {
             $table->foreignUlid('company_id')->constrained('companies')->cascadeOnDelete();
             $table->foreignUlid('delivery_id')->constrained('deliveries')->cascadeOnDelete();
             $table->foreignUlid('driver_id')->constrained('users')->cascadeOnDelete();
-            $table->enum('issue_type', ['severe_weather', 'vehicle_breakdown', 'customer_unreachable', 'package_damaged']);
+            $table->string('issue_type');
+            $table->text('description')->nullable();
+            $table->timestamp('reported_at')->nullable();
             $table->string('photo_url')->nullable();
             $table->enum('status', ['open', 'investigating', 'resolved'])->default('open');
             $table->timestamps();

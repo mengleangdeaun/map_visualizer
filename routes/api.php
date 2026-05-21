@@ -100,6 +100,8 @@ Route::middleware('auth:sanctum')->group(function () {
         // Multi-Stop Delivery Routes
         Route::prefix('route')->group(function () {
             Route::get('active', [\App\Http\Controllers\Api\Driver\Delivery\RouteController::class, 'getActiveRoute']);
+            Route::get('history', [\App\Http\Controllers\Api\Driver\Delivery\RouteController::class, 'getRouteHistory']);
+            Route::post('stops/{id}/start', [\App\Http\Controllers\Api\Driver\Delivery\RouteController::class, 'start']);
             Route::post('stops/{id}/arrive', [\App\Http\Controllers\Api\Driver\Delivery\RouteController::class, 'arrive']);
             Route::post('stops/{id}/complete', [\App\Http\Controllers\Api\Driver\Delivery\RouteController::class, 'complete']);
             Route::post('stops/{id}/fail', [\App\Http\Controllers\Api\Driver\Delivery\RouteController::class, 'fail']);

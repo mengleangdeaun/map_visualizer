@@ -20,10 +20,12 @@ import {
 import { cn } from '@/lib/utils';
 import api from '@/lib/api';
 import { Badge } from '@/components/ui/badge';
+import { useNavigate } from '@tanstack/react-router';
 
 const RouteFeedPage = () => {
     const { t } = useTranslation(['delivery', 'driver']);
     const queryClient = useQueryClient();
+    const navigate = useNavigate();
     const setHeader = useHeaderStore(s => s.setHeader);
 
     // Real-time tick stopwatch for arrived stops
@@ -46,6 +48,12 @@ const RouteFeedPage = () => {
             return {
                 label: t('delivery:failed') || 'Failed',
                 className: 'bg-destructive hover:bg-destructive text-destructive-foreground border-none'
+            };
+        }
+        if (stopStatus === 'in_transit') {
+            return {
+                label: t('delivery:in_transit') || 'In Transit',
+                className: 'bg-sky-500 hover:bg-sky-600 text-white border-none'
             };
         }
         if (stopStatus === 'arrived') {
@@ -117,17 +125,17 @@ const RouteFeedPage = () => {
         }
     });
 
-    // Setup active ticking for arrived stops
+    // Setup active ticking for transit/arrived stops
     const stopsList = route?.stops || [];
-    const hasArrivedStop = stopsList.some((s: any) => s.status === 'arrived');
+    const hasActiveStop = stopsList.some((s: any) => s.status === 'arrived' || s.status === 'in_transit');
     useEffect(() => {
-        if (hasArrivedStop) {
+        if (hasActiveStop) {
             const timer = setInterval(() => {
                 setCurrentTime(Date.now());
             }, 1000);
             return () => clearInterval(timer);
         }
-    }, [hasArrivedStop]);
+    }, [hasActiveStop]);
 
     if (isLoading) {
         return (
@@ -148,7 +156,7 @@ const RouteFeedPage = () => {
                     No active deliveries or route assigned for you today.
                 </p>
                 <Button 
-                    onClick={() => window.location.href = '/driver/map'}
+                    onClick={() => navigate({ to: '/driver/map' })}
                     className="h-11 rounded-2xl px-6 font-bold"
                 >
                     <Map size={18} className="mr-2" />
@@ -199,7 +207,7 @@ const RouteFeedPage = () => {
                         return (
                             <Card 
                                 key={stop.id} 
-                                onClick={() => window.location.href = `/driver/route/stop/${stop.id}`}
+                                onClick={() => navigate({ to: '/driver/route/stop/$id', params: { id: stop.id } })}
                                 className={cn(
                                     "p-0 overflow-hidden border-none shadow-lg bg-card transition-all duration-200 active:scale-[0.98] cursor-pointer",
                                     isCompleted && "opacity-75"
@@ -210,6 +218,7 @@ const RouteFeedPage = () => {
                                     <div className={cn(
                                         "w-12 self-stretch flex items-center justify-center font-black text-sm shrink-0 select-none",
                                         isCompleted ? "bg-muted text-muted-foreground border-r border-border" :
+                                        stop.status === 'in_transit' ? "bg-sky-500 text-white animate-pulse" :
                                         isArrived ? "bg-amber-500 text-white animate-pulse" :
                                         "bg-primary text-primary-foreground"
                                     )}>
@@ -261,6 +270,15 @@ const RouteFeedPage = () => {
                                                                     </div>
                                                                 </>
                                                             )}
+                                                            {stop.status === 'in_transit' && dl.started_at && (
+                                                                <>
+                                                                    <span className="text-[8px] text-muted-foreground">•</span>
+                                                                    <div className="flex items-center gap-0.5 text-[8px] font-bold text-sky-600 bg-sky-50 dark:bg-sky-950/20 px-1 rounded shrink-0 animate-pulse">
+                                                                        <Clock size={8} />
+                                                                        <span>{formatDuration(dl.started_at, null)}</span>
+                                                                    </div>
+                                                                </>
+                                                            )}
                                                             {stop.status === 'arrived' && dl.started_at && (
                                                                 <>
                                                                     <span className="text-[8px] text-muted-foreground">•</span>
@@ -276,18 +294,21 @@ const RouteFeedPage = () => {
                                             </div>
 
                                             {/* Stop actions hit area */}
-                                            {stop.status === 'pending' ? (
+                                            {stop.status === 'pending' || stop.status === 'in_transit' ? (
                                                 <Button
                                                     size="sm"
                                                     onClick={(e) => {
                                                         e.stopPropagation(); // Avoid card click navigate
                                                         arriveMutation.mutate(stop.id);
                                                     }}
-                                                    className="h-8 px-3 rounded-xl font-bold text-[10px] uppercase tracking-wider gap-1 shadow-md shadow-primary/10 transition-all active:scale-95"
+                                                    className={cn(
+                                                        "h-8 px-3 rounded-xl font-bold text-[10px] uppercase tracking-wider gap-1 shadow-md shadow-primary/10 transition-all active:scale-95",
+                                                        stop.status === 'in_transit' && "bg-sky-500 hover:bg-sky-600"
+                                                    )}
                                                     disabled={arriveMutation.isPending}
                                                 >
                                                     <Navigation size={10} />
-                                                    Arrive
+                                                    {stop.status === 'in_transit' ? "Arrived?" : "Arrive"}
                                                 </Button>
                                             ) : (
                                                 <div className="text-[10px] text-muted-foreground flex items-center gap-0.5 font-bold uppercase tracking-wider">

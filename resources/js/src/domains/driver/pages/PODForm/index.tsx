@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useParams } from '@tanstack/react-router';
+import { useParams, useNavigate } from '@tanstack/react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useHeaderStore } from '../../store/useHeaderStore';
 import { pwaToast as toast } from '../../store/usePwaToastStore';
+import { useLocationStore } from '../../store/useLocationStore';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -21,6 +22,7 @@ const PODFormPage = () => {
     const { t } = useTranslation(['delivery', 'driver']);
     const { id } = useParams({ strict: false });
     const queryClient = useQueryClient();
+    const navigate = useNavigate();
     const setHeader = useHeaderStore(s => s.setHeader);
 
     const [notes, setNotes] = useState('');
@@ -51,11 +53,14 @@ const PODFormPage = () => {
     // Mutation to submit successfully completed stop
     const completeMutation = useMutation({
         mutationFn: async () => {
+            const { latitude, longitude } = useLocationStore.getState();
             const formData = new FormData();
             formData.append('notes', notes);
             if (photo) {
                 formData.append('photo', photo);
             }
+            if (latitude !== null) formData.append('latitude', latitude.toString());
+            if (longitude !== null) formData.append('longitude', longitude.toString());
 
             const { data } = await api.post(`/driver/route/stops/${id}/complete`, formData, {
                 headers: {
@@ -73,7 +78,7 @@ const PODFormPage = () => {
             }
 
             // Redirect back to active route list
-            window.location.href = '/driver/route';
+            navigate({ to: '/driver/route' });
             
             queryClient.invalidateQueries({ queryKey: ['driver', 'route', 'active'] });
         },

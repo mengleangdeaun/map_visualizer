@@ -69,6 +69,7 @@ const driverNotificationsRoute = createRoute({ getParentRoute: () => driverLayou
 const driverProfileRoute = createRoute({ getParentRoute: () => driverLayoutRoute, path: 'driver/profile', component: lazyRouteComponent(() => import('../domains/driver/pages/Profile/index')) });
 const driverSettingsRoute = createRoute({ getParentRoute: () => driverLayoutRoute, path: 'driver/settings', component: lazyRouteComponent(() => import('../domains/driver/pages/Settings/index')) });
 const driverTaskHistoryRoute = createRoute({ getParentRoute: () => driverLayoutRoute, path: 'driver/task-history', component: lazyRouteComponent(() => import('../domains/driver/pages/TaskHistory/index')) });
+const driverDeliveryHistoryRoute = createRoute({ getParentRoute: () => driverLayoutRoute, path: 'driver/delivery-history', component: lazyRouteComponent(() => import('../domains/driver/pages/DeliveryHistory/index')) });
 
 // Multi-Stop Delivery & Map Routes
 const driverMapRoute = createRoute({ getParentRoute: () => driverLayoutRoute, path: 'driver/map', component: lazyRouteComponent(() => import('../domains/driver/pages/Map/index')) });
@@ -136,6 +137,7 @@ const routeTree = rootRoute.addChildren([
         driverProfileRoute,
         driverSettingsRoute,
         driverTaskHistoryRoute,
+        driverDeliveryHistoryRoute,
         driverMapRoute,
         driverRouteFeedRoute,
         driverStopDetailsRoute,

@@ -127,28 +127,18 @@ export const ActiveNavigationOverlay: React.FC<ActiveNavigationOverlayProps> = (
                     </div>
 
                     {isDelivery ? (
-                        task.status === 'arrived' ? (
-                            <button
-                                onClick={() => onCompleteTask(task.id)}
-                                disabled={isPending}
-                                className="w-full h-10 rounded-xl bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all shadow-lg shadow-emerald-500/10"
-                            >
-                                <span>Complete Delivery Stop</span>
-                            </button>
-                        ) : (
-                            <button
-                                onClick={() => onArriveAtDeliveryStop?.(task.id)}
-                                disabled={isPending}
-                                className="w-full h-10 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-50 text-white font-semibold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all shadow-lg shadow-primary/10"
-                            >
-                                {isPending ? (
-                                    <Loader2 size={14} className="animate-spin" />
-                                ) : (
-                                    <Target size={14} className="animate-pulse" />
-                                )}
-                                <span>{isPending ? "Arriving..." : "Arrived at Stop"}</span>
-                            </button>
-                        )
+                        <button
+                            onClick={() => onArriveAtDeliveryStop?.(task.id)}
+                            disabled={isPending}
+                            className="w-full h-10 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-50 text-white font-semibold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all shadow-lg shadow-primary/10"
+                        >
+                            {isPending ? (
+                                <Loader2 size={14} className="animate-spin" />
+                            ) : (
+                                <Target size={14} className="animate-pulse" />
+                            )}
+                            <span>{isPending ? 'Arriving...' : 'Arrived at Stop'}</span>
+                        </button>
                     ) : (
                         leg === 'pickup' && task.pickup_lat ? (
                             <button

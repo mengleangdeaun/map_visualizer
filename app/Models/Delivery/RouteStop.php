@@ -22,16 +22,25 @@ class RouteStop extends Model
         'leg_distance_km',
         'leg_duration_min',
         'leg_geometry',
+        'started_at',
+        'actual_start_location',
+        'actual_leg_distance_km',
+        'actual_leg_duration_min',
+        'actual_leg_geometry',
     ];
 
     protected $casts = [
-        'eta'              => 'datetime',
-        'arrived_at'       => 'datetime',
-        'completed_at'     => 'datetime',
-        'sequence_number'  => 'integer',
-        'leg_distance_km'  => 'decimal:2',
-        'leg_duration_min' => 'integer',
-        'leg_geometry'     => 'array',
+        'eta'                     => 'datetime',
+        'arrived_at'              => 'datetime',
+        'completed_at'            => 'datetime',
+        'started_at'              => 'datetime',
+        'sequence_number'         => 'integer',
+        'leg_distance_km'         => 'decimal:2',
+        'leg_duration_min'        => 'integer',
+        'leg_geometry'            => 'array',
+        'actual_leg_distance_km'  => 'decimal:2',
+        'actual_leg_duration_min' => 'integer',
+        'actual_leg_geometry'     => 'array',
     ];
 
     // ── Relationships ──────────────────────────────────────────────────────────

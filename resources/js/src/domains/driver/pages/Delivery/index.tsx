@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
@@ -29,6 +29,9 @@ const DeliveryPage = () => {
     const navigate = useNavigate();
     const setHeader = useHeaderStore(s => s.setHeader);
 
+    // Real-time tick stopwatch for active/arrived stops
+    const [currentTime, setCurrentTime] = useState(Date.now());
+
     const getStatusLabelAndColor = (stopStatus: string, deliveryStatus: string) => {
         if (stopStatus === 'completed') {
             return {
@@ -48,6 +51,12 @@ const DeliveryPage = () => {
                 className: 'bg-destructive hover:bg-destructive text-destructive-foreground border-none'
             };
         }
+        if (stopStatus === 'in_transit') {
+            return {
+                label: t('delivery:in_transit') || 'In Transit',
+                className: 'bg-sky-500 hover:bg-sky-600 text-white border-none'
+            };
+        }
         if (stopStatus === 'arrived') {
             return {
                 label: t('delivery:arrived') || 'Arrived',
@@ -63,7 +72,7 @@ const DeliveryPage = () => {
     const formatDuration = (startedAt: string | null, completedAt: string | null) => {
         if (!startedAt) return '';
         const start = new Date(startedAt).getTime();
-        const end = completedAt ? new Date(completedAt).getTime() : Date.now();
+        const end = completedAt ? new Date(completedAt).getTime() : currentTime;
         const diffMs = end - start;
         if (diffMs < 0) return '0s';
         
@@ -126,6 +135,18 @@ const DeliveryPage = () => {
             toast.error(err.response?.data?.message || "Failed to confirm arrival");
         }
     });
+
+    // Setup active ticking for transit/arrived stops
+    const stopsList = route?.stops || [];
+    const hasActiveStop = stopsList.some((s: any) => s.status === 'arrived' || s.status === 'in_transit');
+    useEffect(() => {
+        if (hasActiveStop) {
+            const timer = setInterval(() => {
+                setCurrentTime(Date.now());
+            }, 1000);
+            return () => clearInterval(timer);
+        }
+    }, [hasActiveStop]);
 
     if (isLoading) {
         return (
@@ -230,6 +251,7 @@ const DeliveryPage = () => {
                                     <div className={cn(
                                         "w-12 self-stretch flex items-center justify-center font-black text-sm shrink-0 select-none",
                                         isCompleted ? "bg-muted text-muted-foreground border-r border-border" :
+                                        stop.status === 'in_transit' ? "bg-sky-500 text-white animate-pulse" :
                                         isArrived ? "bg-amber-500 text-white animate-pulse" :
                                         "bg-primary text-primary-foreground"
                                     )}>
@@ -270,7 +292,7 @@ const DeliveryPage = () => {
                                                         </div>
                                                         <div className="flex items-center gap-1 mt-0.5">
                                                             <span className="text-[8px] font-black text-muted-foreground uppercase tracking-widest">
-                                                                {order.payment_status || 'unpaid'} • {order.payment_method || 'COD'}
+                                                                 {order.payment_status || 'unpaid'} • {order.payment_method || 'COD'}
                                                             </span>
                                                             {dl.started_at && (isCompleted || isSkipped) && dl.completed_at && (
                                                                 <>
@@ -278,6 +300,15 @@ const DeliveryPage = () => {
                                                                     <div className="flex items-center gap-0.5 text-[8px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-950/20 px-1 rounded shrink-0">
                                                                         <Clock size={8} />
                                                                         <span>{formatDuration(dl.started_at, dl.completed_at)}</span>
+                                                                    </div>
+                                                                </>
+                                                            )}
+                                                            {stop.status === 'in_transit' && dl.started_at && (
+                                                                <>
+                                                                    <span className="text-[8px] text-muted-foreground">•</span>
+                                                                    <div className="flex items-center gap-0.5 text-[8px] font-bold text-sky-600 bg-sky-50 dark:bg-sky-950/20 px-1 rounded shrink-0 animate-pulse">
+                                                                        <Clock size={8} />
+                                                                        <span>{formatDuration(dl.started_at, null)}</span>
                                                                     </div>
                                                                 </>
                                                             )}
@@ -296,18 +327,21 @@ const DeliveryPage = () => {
                                             </div>
 
                                             {/* Stop actions hit area */}
-                                            {stop.status === 'pending' ? (
+                                            {stop.status === 'pending' || stop.status === 'in_transit' ? (
                                                 <Button
                                                     size="sm"
                                                     onClick={(e) => {
                                                         e.stopPropagation(); // Avoid card click navigate
                                                         arriveMutation.mutate(stop.id);
                                                     }}
-                                                    className="h-8 px-3 rounded-xl font-bold text-[10px] uppercase tracking-wider gap-1 shadow-md shadow-primary/10 transition-all active:scale-95"
+                                                    className={cn(
+                                                        "h-8 px-3 rounded-xl font-bold text-[10px] uppercase tracking-wider gap-1 shadow-md shadow-primary/10 transition-all active:scale-95",
+                                                        stop.status === 'in_transit' && "bg-sky-500 hover:bg-sky-600"
+                                                    )}
                                                     disabled={arriveMutation.isPending}
                                                 >
                                                     <Navigation size={10} />
-                                                    Arrive
+                                                    {stop.status === 'in_transit' ? "Arrived?" : "Arrive"}
                                                 </Button>
                                             ) : (
                                                 <div className="text-[10px] text-muted-foreground flex items-center gap-0.5 font-bold uppercase tracking-wider">

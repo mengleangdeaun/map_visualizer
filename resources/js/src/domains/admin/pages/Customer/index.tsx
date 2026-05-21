@@ -25,6 +25,7 @@ import CustomerDialog from './components/CustomerDialog';
 import { Customer } from '../../services/customerService';
 import { SearchInput } from '@/components/shared/system/SearchInput';
 import { useDebounce } from '@/hooks/useDebounce';
+import { Iconsvg } from '@/components/shared/svg/IconState';
 
 const CustomerPage = () => {
     const { t } = useTranslation(['admin', 'system']);
