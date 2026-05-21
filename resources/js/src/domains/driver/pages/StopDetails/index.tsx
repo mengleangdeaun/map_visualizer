@@ -17,7 +17,8 @@ import {
     DollarSign,
     Package,
     ArrowLeft,
-    FileText
+    FileText,
+    Clock
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import api from '@/lib/api';
@@ -53,6 +54,71 @@ const StopDetailsPage = () => {
 
     // Find our specific stop
     const stop = routeData?.stops?.find((s: any) => s.id === id);
+
+    // Real-time tick stopwatch for arrived stops
+    const [currentTime, setCurrentTime] = useState(Date.now());
+    const isArrived = stop?.status === 'arrived';
+
+    useEffect(() => {
+        if (isArrived) {
+            const timer = setInterval(() => {
+                setCurrentTime(Date.now());
+            }, 1000);
+            return () => clearInterval(timer);
+        }
+    }, [isArrived]);
+
+    const getStatusLabelAndColor = (stopStatus: string, deliveryStatus: string) => {
+        if (stopStatus === 'completed') {
+            return {
+                label: t('delivery:delivered') || 'Delivered',
+                className: 'bg-emerald-500 hover:bg-emerald-600 text-white border-none'
+            };
+        }
+        if (stopStatus === 'skipped') {
+            if (deliveryStatus === 'rescheduled') {
+                return {
+                    label: t('delivery:rescheduled') || 'Rescheduled',
+                    className: 'bg-amber-500 hover:bg-amber-600 text-white border-none'
+                };
+            }
+            return {
+                label: t('delivery:failed') || 'Failed',
+                className: 'bg-destructive hover:bg-destructive text-destructive-foreground border-none'
+            };
+        }
+        if (stopStatus === 'arrived') {
+            return {
+                label: t('delivery:arrived') || 'Arrived',
+                className: 'bg-blue-500 hover:bg-blue-600 text-white border-none animate-pulse'
+            };
+        }
+        return {
+            label: t('delivery:pending') || 'Pending',
+            className: 'bg-muted hover:bg-muted text-muted-foreground border-none'
+        };
+    };
+
+    const formatDuration = (startedAt: string | null, completedAt: string | null) => {
+        if (!startedAt) return '';
+        const start = new Date(startedAt).getTime();
+        const end = completedAt ? new Date(completedAt).getTime() : currentTime;
+        const diffMs = end - start;
+        if (diffMs < 0) return '0s';
+        
+        const diffSecs = Math.floor(diffMs / 1000);
+        const hours = Math.floor(diffSecs / 3600);
+        const mins = Math.floor((diffSecs % 3600) / 60);
+        const secs = diffSecs % 60;
+        
+        if (hours > 0) {
+            return `${hours}h ${mins}m ${secs}s`;
+        }
+        if (mins > 0) {
+            return `${mins}m ${secs}s`;
+        }
+        return `${secs}s`;
+    };
 
     // Mutation to mark arrived
     const arriveMutation = useMutation({
@@ -115,7 +181,7 @@ const StopDetailsPage = () => {
 
     const dl = stop.delivery;
     const isPending = stop.status === 'pending';
-    const isArrived = stop.status === 'arrived';
+    // isArrived is declared above
     const isCompleted = stop.status === 'completed';
     const isSkipped = stop.status === 'skipped';
 
@@ -139,15 +205,11 @@ const StopDetailsPage = () => {
                             <span className="text-[10px] font-black uppercase text-muted-foreground">
                                 Stop #{stop.sequence_number}
                             </span>
-                            <Badge variant={
-                                isCompleted ? "outline" :
-                                isArrived ? "default" :
-                                isSkipped ? "destructive" :
-                                "secondary"
-                            } className={cn(
-                                isArrived && "bg-amber-500 hover:bg-amber-600 text-white"
+                            <Badge className={cn(
+                                "text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full",
+                                getStatusLabelAndColor(stop.status, dl.status).className
                             )}>
-                                {t(`delivery:${stop.status}`)}
+                                {getStatusLabelAndColor(stop.status, dl.status).label}
                             </Badge>
                         </div>
                         <h2 className="text-xl font-black text-foreground tracking-tight mt-1">
@@ -181,6 +243,72 @@ const StopDetailsPage = () => {
                     )}
                 </div>
             </Card>
+
+            {/* Stop Timeline & Duration Card */}
+            {(dl.started_at || dl.scheduled_at) && (
+                <Card className="p-4 border-none shadow-md bg-card space-y-4">
+                    <div className="flex items-center gap-2 border-b border-border/50 pb-3">
+                        <Clock size={18} className="text-primary" />
+                        <h3 className="font-bold text-base text-foreground">
+                            {t('driver:stop_timeline') || 'Stop Timeline & Duration'}
+                        </h3>
+                    </div>
+                    <div className="relative pl-6 border-l-2 border-primary/20 space-y-4 text-sm">
+                        {/* Scheduled point */}
+                        {dl.scheduled_at && (
+                            <div className="relative">
+                                <span className="absolute -left-[31px] top-1.5 w-3.5 h-3.5 rounded-full bg-slate-400 border-4 border-background" />
+                                <p className="font-bold text-xs text-foreground">
+                                    {t('driver:scheduled') || 'Scheduled Time'}
+                                </p>
+                                <p className="text-[10px] text-muted-foreground">
+                                    {new Date(dl.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </p>
+                            </div>
+                        )}
+                        {/* Arrival point */}
+                        {dl.started_at && (
+                            <div className="relative">
+                                <span className="absolute -left-[31px] top-1.5 w-3.5 h-3.5 rounded-full bg-primary border-4 border-background" />
+                                <p className="font-bold text-xs text-foreground">
+                                    {t('driver:arrived_stop') || 'Arrived at Stop'}
+                                </p>
+                                <p className="text-[10px] text-muted-foreground">
+                                    {new Date(dl.started_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </p>
+                            </div>
+                        )}
+                        {/* Completion / Active timer point */}
+                        {stop.status === 'arrived' && dl.started_at && (
+                            <div className="relative">
+                                <span className="absolute -left-[31px] top-1.5 w-3.5 h-3.5 rounded-full bg-amber-500 border-4 border-background animate-ping" />
+                                <span className="absolute -left-[31px] top-1.5 w-3.5 h-3.5 rounded-full bg-amber-500 border-4 border-background" />
+                                <p className="font-bold text-xs text-foreground flex items-center gap-1.5">
+                                    {t('driver:in_progress') || 'In Progress'}
+                                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                </p>
+                                <p className="text-xs font-black text-amber-500 mt-1">
+                                    {t('driver:elapsed') || 'Elapsed'}: {formatDuration(dl.started_at, null)}
+                                </p>
+                            </div>
+                        )}
+                        {(isCompleted || isSkipped) && dl.started_at && dl.completed_at && (
+                            <div className="relative">
+                                <span className="absolute -left-[31px] top-1.5 w-3.5 h-3.5 rounded-full bg-emerald-500 border-4 border-background" />
+                                <p className="font-bold text-xs text-foreground">
+                                    {t('driver:resolved') || 'Resolved'} ({getStatusLabelAndColor(stop.status, dl.status).label})
+                                </p>
+                                <p className="text-[10px] text-muted-foreground">
+                                    {new Date(dl.completed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </p>
+                                <p className="text-xs font-black text-emerald-600 mt-1">
+                                    {t('driver:total_duration') || 'Total Duration'}: {formatDuration(dl.started_at, dl.completed_at)}
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                </Card>
+            )}
 
             {/* 2. Parcel Items List Card */}
             <Card className="p-4 border-none shadow-md bg-card space-y-4">

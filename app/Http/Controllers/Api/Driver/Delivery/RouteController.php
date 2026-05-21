@@ -98,6 +98,9 @@ class RouteController extends Controller
                     'lng' => $coords ? (float) $coords->lng : null,
                     'lat' => $coords ? (float) $coords->lat : null,
                     'status' => $delivery->status,
+                    'started_at' => $delivery->started_at ? $delivery->started_at->toIso8601String() : null,
+                    'completed_at' => $delivery->completed_at ? $delivery->completed_at->toIso8601String() : null,
+                    'scheduled_at' => $delivery->scheduled_at ? $delivery->scheduled_at->toIso8601String() : null,
                     'order' => $order ? [
                         'id' => $order->id,
                         'order_number' => $order->order_number,
