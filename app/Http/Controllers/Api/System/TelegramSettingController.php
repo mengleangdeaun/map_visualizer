@@ -18,6 +18,33 @@ class TelegramSettingController extends Controller
     {
         $company = Company::findOrFail($companyId);
         
+        $defaultEvents = [
+            'admin_announcement',
+            'admin_assign_task',
+            'admin_update_task',
+            'admin_assign_delivery',
+            'admin_update_delivery',
+            'admin_create_roadblock',
+            'admin_publish_route',
+            'driver_start_shift',
+            'driver_end_shift',
+            'driver_start_task',
+            'driver_update_task',
+            'driver_start_delivery',
+            'driver_update_delivery',
+            'driver_create_roadblock',
+            'driver_log_exception'
+        ];
+
+        $defaultEventSettings = [];
+        foreach ($defaultEvents as $event) {
+            $defaultEventSettings[$event] = [
+                'enabled' => true,
+                'chat_id' => null,
+                'topic_id' => null,
+            ];
+        }
+
         $settings = CompanyTelegramSettings::firstOrCreate(
             ['company_id' => $company->id],
             [
@@ -26,8 +53,18 @@ class TelegramSettingController extends Controller
                 'notify_pwa' => true,
                 'notify_driver_telegram' => true,
                 'notify_company_telegram' => true,
+                'event_settings' => $defaultEventSettings,
+                'allowed_events' => $defaultEvents,
             ]
         );
+
+        // Ensure backward compatibility for existing records without these columns
+        if (is_null($settings->allowed_events)) {
+            $settings->update([
+                'allowed_events' => $defaultEvents,
+                'event_settings' => $settings->event_settings ?? $defaultEventSettings
+            ]);
+        }
 
         return response()->json($settings);
     }
@@ -46,6 +83,8 @@ class TelegramSettingController extends Controller
             'notify_pwa' => 'required|boolean',
             'notify_driver_telegram' => 'required|boolean',
             'notify_company_telegram' => 'required|boolean',
+            'allowed_events' => 'nullable|array',
+            'allowed_events.*' => 'string',
         ]);
 
         if (!empty($validated['bot_token'])) {

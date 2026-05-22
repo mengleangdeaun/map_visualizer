@@ -24,7 +24,7 @@ Because we are using Laravel Reverb:
 
 ## ⏱️ 4. Task Scheduling (`artisan schedule`)
 The `artisan schedule` (cron) is responsible for automated system oversight.
-- **SLA Monitors:** The scheduler must run every 5 minutes to check the `delivery_time_windows` table. If a driver is about to miss a strict SLA delivery, the scheduler automatically dispatches a queued `SlaBreachWarningNotification` to the Dispatcher's Telegram group.
+
 - **Automated Broadcasts:** If an admin schedules a Broadcast for 8:00 AM tomorrow, the scheduler picks it up and pushes it to the Queue at exactly 8:00 AM.
 - **Telemetry Cleanup:** Schedule nightly jobs to archive old `driver_telemetry` rows, keeping the main PostgreSQL database blazing fast.
 

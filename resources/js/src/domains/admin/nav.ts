@@ -18,6 +18,7 @@ export const adminNav: MenuItem[] = [
             { id: 'deliveries-list', title: 'deliveries', path: '/admin/fleet/deliveries' },
             { id: 'tasks', title: 'tasks', path: '/admin/fleet/tasks' },
             { id: 'dispatch', title: 'dispatch', path: '/admin/fleet/dispatch' },
+            { id: 'tracking', title: 'tracking', path: '/admin/fleet/tracking' },
         ]
     },
     {
@@ -38,6 +39,7 @@ export const adminNav: MenuItem[] = [
         icon: Settings,
         children: [
              { id: 'document-numbering', title: 'document_numbering', path: '/admin/fleet/document-numbering' },
+             { id: 'telegram-settings', title: 'telegram_settings', path: '/admin/fleet/telegram-settings' },
         ]
     }
 ];

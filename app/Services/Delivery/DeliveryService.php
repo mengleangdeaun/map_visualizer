@@ -41,6 +41,11 @@ class DeliveryService
                   ->selectRaw('ST_X(dropoff_location::geometry) as dropoff_longitude');
             },
             'driver',
+            'driver.vehicles' => function ($q) {
+                $q->select('*')
+                  ->selectRaw('ST_Y(last_location::geometry) as latitude')
+                  ->selectRaw('ST_X(last_location::geometry) as longitude');
+            },
             'originHub',
             'currentHub'
         ])->findOrFail($id);
@@ -69,6 +74,11 @@ class DeliveryService
                       ->selectRaw('ST_X(dropoff_location::geometry) as dropoff_longitude');
                 },
                 'driver',
+                'driver.vehicles' => function ($q) {
+                    $q->select('*')
+                      ->selectRaw('ST_Y(last_location::geometry) as latitude')
+                      ->selectRaw('ST_X(last_location::geometry) as longitude');
+                },
                 'originHub',
                 'currentHub'
             ]);

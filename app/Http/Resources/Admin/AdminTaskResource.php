@@ -51,12 +51,22 @@ class AdminTaskResource extends JsonResource
                 'type' => $this->vehicle->type,
                 'plate_number' => $this->vehicle->plate_number,
                 'is_active' => (bool) $this->vehicle->is_active,
+                'latitude' => $this->vehicle->latitude ?? (isset($this->vehicle->attributes['latitude']) ? (float) $this->vehicle->attributes['latitude'] : null),
+                'longitude' => $this->vehicle->longitude ?? (isset($this->vehicle->attributes['longitude']) ? (float) $this->vehicle->attributes['longitude'] : null),
             ] : null,
             'driver' => $this->relationLoaded('driver') && $this->driver ? [
                 'id' => $this->driver->id,
                 'name' => $this->driver->name,
                 'phone' => $this->driver->phone,
                 'email' => $this->driver->email,
+                'vehicles' => $this->driver->relationLoaded('vehicles') ? $this->driver->vehicles->map(function ($vehicle) {
+                    return [
+                        'id' => $vehicle->id,
+                        'plate_number' => $vehicle->plate_number,
+                        'latitude' => $vehicle->latitude ?? (isset($vehicle->attributes['latitude']) ? (float) $vehicle->attributes['latitude'] : null),
+                        'longitude' => $vehicle->longitude ?? (isset($vehicle->attributes['longitude']) ? (float) $vehicle->attributes['longitude'] : null),
+                    ];
+                }) : [],
             ] : null,
         ];
     }

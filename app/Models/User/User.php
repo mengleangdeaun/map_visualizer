@@ -108,4 +108,12 @@ class User extends Authenticatable
     {
         return $this->hasOne(\App\Models\Fleet\VehicleShift::class, 'driver_id')->whereNull('ended_at');
     }
+
+    /**
+     * Get the vehicles assigned to this driver.
+     */
+    public function vehicles()
+    {
+        return $this->hasMany(\App\Models\Fleet\Vehicle::class, 'driver_id');
+    }
 }

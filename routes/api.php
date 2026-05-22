@@ -69,6 +69,12 @@ Route::middleware('auth:sanctum')->group(function () {
         // Geospatial road alerts
         Route::post('road-alerts', [\App\Http\Controllers\Api\Admin\Delivery\RoadAlertController::class, 'store']);
         Route::get('road-alerts', [\App\Http\Controllers\Api\Admin\Delivery\RoadAlertController::class, 'index']);
+        Route::delete('road-alerts/{id}', [\App\Http\Controllers\Api\Admin\Delivery\RoadAlertController::class, 'destroy']);
+
+        // Company Telegram Event Rules Configurator
+        Route::get('company/telegram-rules', [\App\Http\Controllers\Api\Admin\CompanyTelegramRulesController::class, 'show']);
+        Route::put('company/telegram-rules', [\App\Http\Controllers\Api\Admin\CompanyTelegramRulesController::class, 'update']);
+        Route::post('company/telegram-rules/test-action', [\App\Http\Controllers\Api\Admin\CompanyTelegramRulesController::class, 'testAction']);
     });
 
     // Driver Domain

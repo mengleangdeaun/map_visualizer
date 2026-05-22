@@ -30,5 +30,7 @@
     "deliveries": "Deliveries",
     "tasks": "Tasks",
     "dispatch": "Dispatch",
-    "settings":"Settings"
+    "tracking": "Tracking",
+    "settings":"Settings",
+    "telegram_settings": "Telegram Settings"
 }

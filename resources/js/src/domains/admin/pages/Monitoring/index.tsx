@@ -11,13 +11,15 @@ import { TaskPanel } from './components/TaskPanel';
 import { DeliveryPanel } from './components/DeliveryPanel';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/domains/auth/store/useAuthStore';
 import { echo } from '@/lib/echo';
+import api from '@/lib/api';
+import { toast } from 'sonner';
 import TaskDialog from '@/domains/admin/pages/Tasks/components/TaskDialog';
 import DeliveryDialog from '@/domains/admin/pages/Delivery/components/DeliveryDialog';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
-import { MousePointer2, Plus, X, Flag, ClipboardList, Package, MapPin } from 'lucide-react';
+import { MousePointer2, Plus, X, Flag, ClipboardList, Package, MapPin, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
@@ -31,9 +33,10 @@ const MonitoringPage = () => {
     const [pendingPickup, setPendingPickup] = React.useState<{ lat: number, lng: number } | null>(null);
     const [pendingDropoff, setPendingDropoff] = React.useState<{ lat: number, lng: number } | null>(null);
     const [pendingDeliveryDropoff, setPendingDeliveryDropoff] = React.useState<{ lat: number, lng: number } | null>(null);
+    const [pendingRoadAlert, setPendingRoadAlert] = React.useState<{ lat: number, lng: number } | null>(null);
     const [isCreateDialogOpen, setIsCreateDialogOpen] = React.useState(false);
     const [isDeliveryCreateDialogOpen, setIsDeliveryCreateDialogOpen] = React.useState(false);
-    const [selectionMode, setSelectionMode] = React.useState<'none' | 'task_pickup' | 'task_dropoff' | 'delivery_dropoff'>('none');
+    const [selectionMode, setSelectionMode] = React.useState<'none' | 'task_pickup' | 'task_dropoff' | 'delivery_dropoff' | 'road_alert'>('none');
 
     const handleFocusTarget = React.useCallback((target: { id: string; type: 'vehicle' | 'hub' | 'task' | 'delivery'; center: [number, number] }) => {
         setFocusTarget({ ...target });
@@ -50,6 +53,8 @@ const MonitoringPage = () => {
             setPendingDropoff({ lat, lng });
         } else if (selectionMode === 'delivery_dropoff') {
             setPendingDeliveryDropoff({ lat, lng });
+        } else if (selectionMode === 'road_alert') {
+            setPendingRoadAlert({ lat, lng });
         }
     }, [selectionMode]);
 
@@ -57,6 +62,7 @@ const MonitoringPage = () => {
         setPendingPickup(null);
         setPendingDropoff(null);
         setPendingDeliveryDropoff(null);
+        setPendingRoadAlert(null);
         setSelectionMode('none');
     };
 
@@ -98,15 +104,45 @@ const MonitoringPage = () => {
         return deliveriesData.data.filter((d: any) => d.status !== 'delivered' && d.status !== 'failed');
     }, [deliveriesData]);
 
+    // Fetch Geospatial Roadblocks/Road Alerts
+    const {
+        data: roadblocksData,
+        isLoading: isRoadblocksLoading,
+        isFetching: isRoadblocksFetching,
+        refetch: refetchRoadblocks
+    } = useQuery({
+        queryKey: ['admin', 'road-alerts'],
+        queryFn: async () => {
+            const { data } = await api.get('/admin/road-alerts');
+            return data.data;
+        }
+    });
+
+    // Resolve Roadblock Mutation (Delete)
+    const resolveRoadblockMutation = useMutation({
+        mutationFn: async (id: string | number) => {
+            await api.delete(`/admin/road-alerts/${id}`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['admin', 'road-alerts'] });
+            toast.success("Roadblock resolved successfully.");
+        },
+        onError: (err: any) => {
+            toast.error(err.response?.data?.message || "Failed to resolve roadblock.");
+        }
+    });
+
     const handleRefresh = React.useCallback(() => {
         refetchHubs();
         refetchVehicles();
         refetchTasks();
         refetchDeliveries();
-        // Force refresh for any task/delivery queries
+        refetchRoadblocks();
+        // Force refresh for any task/delivery/road-alert queries
         queryClient.invalidateQueries({ queryKey: ['tasks'] });
         queryClient.invalidateQueries({ queryKey: ['admin-deliveries'] });
-    }, [refetchHubs, refetchVehicles, refetchTasks, refetchDeliveries, queryClient]);
+        queryClient.invalidateQueries({ queryKey: ['admin', 'road-alerts'] });
+    }, [refetchHubs, refetchVehicles, refetchTasks, refetchDeliveries, refetchRoadblocks, queryClient]);
 
     // Real-time synchronization
     useEffect(() => {
@@ -137,13 +173,25 @@ const MonitoringPage = () => {
         const activeChannelNames: string[] = [];
 
         companyIds.forEach(id => {
-            const channelName = `fleet.${id}`;
-            activeChannelNames.push(channelName);
-            console.log('MonitoringPage: Subscribing to company channel', channelName);
+            const fleetChannel = `fleet.${id}`;
+            activeChannelNames.push(fleetChannel);
+            console.log('MonitoringPage: Subscribing to company fleet channel', fleetChannel);
             
-            echo.private(channelName)
+            echo.private(fleetChannel)
                 .listen('.task.updated', (e: any) => {
                     queryClient.invalidateQueries({ queryKey: ['tasks'] });
+                });
+
+            const companyChannel = `company.${id}`;
+            activeChannelNames.push(companyChannel);
+            console.log('MonitoringPage: Subscribing to company events channel', companyChannel);
+
+            echo.private(companyChannel)
+                .listen('.road-alert.created', (e: any) => {
+                    queryClient.invalidateQueries({ queryKey: ['admin', 'road-alerts'] });
+                })
+                .listen('.road-alert.deleted', (e: any) => {
+                    queryClient.invalidateQueries({ queryKey: ['admin', 'road-alerts'] });
                 });
         });
 
@@ -171,8 +219,11 @@ const MonitoringPage = () => {
                             vehicles={vehiclesData?.data || []}
                             tasks={tasksData?.data || []}
                             deliveries={activeDeliveries}
-                            isLoading={isHubsLoading || isVehiclesLoading || isTasksLoading || isDeliveriesLoading}
-                            isFetching={isHubsFetching || isVehiclesFetching || isTasksFetching || isDeliveriesFetching}
+                            roadblocks={roadblocksData || []}
+                            pendingRoadAlert={pendingRoadAlert}
+                            onResolveRoadblock={resolveRoadblockMutation.mutate}
+                            isLoading={isHubsLoading || isVehiclesLoading || isTasksLoading || isDeliveriesLoading || isRoadblocksLoading}
+                            isFetching={isHubsFetching || isVehiclesFetching || isTasksFetching || isDeliveriesFetching || isRoadblocksFetching}
                             focusTarget={focusTarget}
                             onClick={handleMapClick}
                             pendingPickup={pendingPickup}
@@ -180,6 +231,7 @@ const MonitoringPage = () => {
                             pendingDeliveryDropoff={pendingDeliveryDropoff}
                             onCreateTask={() => setIsCreateDialogOpen(true)}
                             onCreateDelivery={() => setIsDeliveryCreateDialogOpen(true)}
+                            onResetSelection={resetSelection}
                         />
 
                         {/* Interactive Selection Overlays */}
@@ -191,8 +243,10 @@ const MonitoringPage = () => {
                                             <MapPin className="size-4 text-emerald-500" />
                                         ) : selectionMode === 'task_dropoff' ? (
                                             <Flag className="size-4 text-red-500" />
-                                        ) : (
+                                        ) : selectionMode === 'delivery_dropoff' ? (
                                             <Package className="size-4 text-indigo-500" />
+                                        ) : (
+                                            <AlertTriangle className="size-4 text-red-500 animate-bounce" />
                                         )}
                                     </div>
                                     <div className="flex flex-col">
@@ -201,7 +255,9 @@ const MonitoringPage = () => {
                                                 ? t('admin:click_to_set_pickup') || 'Click to set Pickup' 
                                                 : selectionMode === 'task_dropoff' 
                                                 ? t('admin:click_to_set_dropoff') || 'Click to set Destination' 
-                                                : t('admin:click_to_set_delivery_destination') || 'Click on map to set Destination'}
+                                                : selectionMode === 'delivery_dropoff'
+                                                ? t('admin:click_to_set_delivery_destination') || 'Click on map to set Destination'
+                                                : 'Click on map to place Road Block warning'}
                                         </span>
                                         <span className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Interactive Mode</span>
                                     </div>
@@ -214,7 +270,7 @@ const MonitoringPage = () => {
 
 
                         {/* Quick Action Button to Start Selection */}
-                        {selectionMode === 'none' && !pendingPickup && !pendingDeliveryDropoff && (
+                        {selectionMode === 'none' && !pendingPickup && !pendingDeliveryDropoff && !pendingRoadAlert && (
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button 
@@ -239,6 +295,13 @@ const MonitoringPage = () => {
                                     >
                                         <ClipboardList className="size-4 text-emerald-500" />
                                         <span>{t('admin:create_task_by_map') || 'Create Task by Map'}</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem 
+                                        onClick={() => setSelectionMode('road_alert')}
+                                        className="cursor-pointer flex items-center gap-2"
+                                    >
+                                        <AlertTriangle className="size-4 text-red-500" />
+                                        <span>Report Road Block</span>
                                     </DropdownMenuItem>
 
                                 </DropdownMenuContent>

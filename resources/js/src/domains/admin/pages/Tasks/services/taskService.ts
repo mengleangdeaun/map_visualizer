@@ -5,6 +5,7 @@ export type TaskStatus = 'pending' | 'assigned' | 'in_progress' | 'completed' | 
 export interface Task {
     id: string;
     company_id: string;
+    tracking_number: string;
     vehicle_id: string | null;
     driver_id: string | null;
     title: string;

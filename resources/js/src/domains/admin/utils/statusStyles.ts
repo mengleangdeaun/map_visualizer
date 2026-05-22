@@ -42,3 +42,24 @@ export const getDeliveryStatusStyle = (status: DeliveryStatus): string => {
             return 'bg-muted text-muted-foreground border-muted';
     }
 };
+
+export const statusColors: Record<string, string> = {
+    pending: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
+    assigned: 'bg-sky-500/10 text-sky-500 border-sky-500/20',
+    in_progress: 'bg-indigo-500/10 text-indigo-500 border-indigo-500/20',
+    completed: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
+    delivered: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
+    failed: 'bg-red-500/10 text-red-500 border-red-500/20',
+    cancelled: 'bg-red-500/10 text-red-500 border-red-500/20',
+    at_hub: 'bg-purple-500/10 text-purple-500 border-purple-500/20',
+    linehaul: 'bg-pink-500/10 text-pink-500 border-pink-500/20',
+    out_for_delivery: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
+    rescheduled: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
+};
+
+export const priorityColors: Record<string, string> = {
+    low: 'bg-slate-500/10 text-slate-500 border-slate-500/20',
+    normal: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
+    high: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
+    urgent: 'bg-red-500/10 text-red-500 border-red-500/20',
+};

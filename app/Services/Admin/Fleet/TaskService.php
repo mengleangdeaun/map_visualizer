@@ -59,7 +59,9 @@ class TaskService
                         'type',
                         'plate_number',
                         'is_active'
-                    ]);
+                    ])
+                    ->selectRaw('ST_Y(last_location::geometry) as latitude')
+                    ->selectRaw('ST_X(last_location::geometry) as longitude');
                 },
                 'driver' => function($q) {
                     $q->select([
@@ -68,6 +70,11 @@ class TaskService
                         'phone',
                         'email'
                     ]);
+                },
+                'driver.vehicles' => function($q) {
+                    $q->select('*')
+                      ->selectRaw('ST_Y(last_location::geometry) as latitude')
+                      ->selectRaw('ST_X(last_location::geometry) as longitude');
                 }
             ])
             ->findOrFail($id);
@@ -119,7 +126,9 @@ class TaskService
                         'type',
                         'plate_number',
                         'is_active'
-                    ]);
+                    ])
+                    ->selectRaw('ST_Y(last_location::geometry) as latitude')
+                    ->selectRaw('ST_X(last_location::geometry) as longitude');
                 },
                 'driver' => function($q) {
                     $q->select([
@@ -128,6 +137,11 @@ class TaskService
                         'phone',
                         'email'
                     ]);
+                },
+                'driver.vehicles' => function($q) {
+                    $q->select('*')
+                      ->selectRaw('ST_Y(last_location::geometry) as latitude')
+                      ->selectRaw('ST_X(last_location::geometry) as longitude');
                 }
             ]);
 
@@ -150,7 +164,10 @@ class TaskService
         }
 
         if ($search) {
-            $query->where('title', 'LIKE', "%{$search}%");
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'LIKE', "%{$search}%")
+                  ->orWhere('tracking_number', 'LIKE', "%{$search}%");
+            });
         }
 
         return $query->latest()->paginate($perPage);

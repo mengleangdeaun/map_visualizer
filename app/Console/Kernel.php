@@ -19,6 +19,9 @@ class Kernel extends ConsoleKernel
         $schedule->command('exchange-rate:sync')
             ->dailyAt('15:00')
             ->timezone('Asia/Phnom_Penh');
+
+        $schedule->command('fleet:dispatch-broadcasts')
+            ->everyMinute();
     }
 
 

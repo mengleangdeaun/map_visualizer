@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Delivery\RoadAlert;
 use App\Events\Delivery\RoadAlertCreated;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 
 class RoadAlertController extends Controller
@@ -48,6 +49,26 @@ class RoadAlertController extends Controller
         // Trigger real-time broadcast via Reverb
         broadcast(new RoadAlertCreated($alert))->toOthers();
 
+        // Dispatch Dynamic Action Notification
+        $actionKey = $user->role === 'driver' ? 'driver_create_roadblock' : 'admin_create_roadblock';
+        $targetUsers = $user->role === 'driver' 
+            ? \App\Models\User\User::where('company_id', $companyId)->whereIn('role', ['admin', 'dispatcher'])->get()
+            : \App\Models\User\User::where('company_id', $companyId)->where('role', 'driver')->get();
+
+        foreach ($targetUsers as $targetUser) {
+            $targetUser->notify(new \App\Notifications\DynamicActionNotification(
+                $actionKey,
+                $companyId,
+                [
+                    'title' => 'Roadblock Warn Alert',
+                    'hazard_type' => $alert->type,
+                    'description' => $alert->description,
+                    'lng' => $request->input('lng'),
+                    'lat' => $request->input('lat'),
+                ]
+            ));
+        }
+
         // Parse coordinate fields to return clean representation
         $responseAlert = [
             'id' => $alert->id,
@@ -81,9 +102,32 @@ class RoadAlertController extends Controller
              FROM road_alerts 
              WHERE company_id = ? 
              ORDER BY created_at DESC",
-            [$companyId]
+             [$companyId]
         );
 
         return response()->json(['data' => $alerts]);
+    }
+
+    /**
+     * Resolve and delete a road alert, broadcasting the removal in real time.
+     */
+    public function destroy(Request $request, string $id): JsonResponse
+    {
+        $user = $request->user();
+        $companyId = $user->company_id;
+
+        if (!$companyId) {
+            return response()->json(['message' => 'Unauthorized scope.'], 403);
+        }
+
+        $alert = RoadAlert::where('company_id', $companyId)->findOrFail($id);
+        $alert->delete();
+
+        // Broadcast deletion event via Reverb
+        broadcast(new \App\Events\Delivery\RoadAlertDeleted($id, $companyId))->toOthers();
+
+        return response()->json([
+            'message' => 'Road alert resolved and cleared successfully.'
+        ]);
     }
 }

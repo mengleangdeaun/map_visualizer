@@ -26,9 +26,9 @@ export default defineConfig({
                 maximumFileSizeToCacheInBytes: 3000000, // 3MB
             },
             manifest: {
-                name: 'MapCN Driver',
+                name: 'DLVR Driver',
                 short_name: 'Driver',
-                description: 'Driver App for MapCN Delivery Tracking System',
+                description: 'Driver App for SCCG Delivery Tracking System',
                 theme_color: '#000000',
                 background_color: '#ffffff',
                 display: 'standalone',

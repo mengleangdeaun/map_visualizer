@@ -26,7 +26,7 @@ const LandingPage = () => {
             <header className={`fixed top-0 w-full z-50 transition-all duration-300 border-b ${scrolled ? 'bg-background/70 backdrop-blur-xl border-border/50 shadow-sm py-3' : 'bg-transparent border-transparent py-5'}`}>
                 <div className="container mx-auto px-6 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <span className="text-2xl font-black tracking-tighter">SC<span className="text-primary">CG</span></span>
+                        <span className="text-2xl font-black tracking-tighter text-primary">SCCG</span>
                     </div>
                     <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-muted-foreground">
                         <a href="#features" className="hover:text-foreground transition-colors hover:scale-105 transform">Features</a>
@@ -53,15 +53,7 @@ const LandingPage = () => {
             {/* Hero Section */}
             <main className="flex-1 pt-32 relative z-10">
                 <section className="container mx-auto px-6 pt-20 pb-32 text-center">
-                    <div 
-                        className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 text-primary px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-widest mb-8 shadow-[0_0_15px_rgba(var(--primary),0.1)] backdrop-blur-sm animate-in fade-in slide-in-from-bottom-4 duration-1000"
-                    >
-                        <span className="relative flex h-2 w-2">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
-                        </span>
-                        Enterprise Logistics Platform v2.0
-                    </div>
+
                     
                     <h1 className="text-5xl md:text-7xl lg:text-[5.5rem] font-black tracking-tighter mb-8 max-w-5xl mx-auto leading-[0.95] animate-in fade-in slide-in-from-bottom-8 duration-1000" style={{ animationFillMode: 'both', animationDelay: '100ms' }}>
                         Command the Fleet.<br/>
@@ -74,12 +66,12 @@ const LandingPage = () => {
                     
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-in fade-in slide-in-from-bottom-12 duration-1000" style={{ animationFillMode: 'both', animationDelay: '300ms' }}>
                         <Link to="/admin" className="w-full sm:w-auto">
-                            <Button size="lg" className="w-full sm:w-auto font-black text-sm uppercase tracking-widest px-8 h-14 gap-3 shadow-[0_8px_30px_rgb(var(--primary)/0.25)] hover:shadow-[0_8px_40px_rgb(var(--primary)/0.4)] transition-all hover:-translate-y-1 group rounded-xl">
+                            <Button size="lg" className="w-full sm:w-auto font-bold text-sm uppercase tracking-wide px-8 h-14 gap-3 transition-all hover:-translate-y-1 group rounded-xl">
                                 Launch Platform
                                 <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                             </Button>
                         </Link>
-                        <Button size="lg" variant="outline" className="w-full sm:w-auto font-black text-sm uppercase tracking-widest px-8 h-14 bg-background/50 backdrop-blur-sm border-border/50 hover:bg-muted/50 rounded-xl">
+                        <Button size="lg" variant="outline" className="w-full sm:w-auto font-semibold text-sm uppercase tracking-wide px-8 h-14 bg-background/50 backdrop-blur-sm border-border/50 hover:bg-muted/50 rounded-xl">
                             Request Demo
                         </Button>
                     </div>
@@ -153,7 +145,7 @@ const LandingPage = () => {
                                 <div className="bg-card border border-border/50 rounded-2xl p-5 flex-1 relative overflow-hidden group hover:border-info/50 transition-colors">
                                     <div className="absolute right-0 top-0 w-32 h-32 bg-info/5 rounded-bl-full -z-10 group-hover:bg-info/10 transition-colors"></div>
                                     <div className="text-sm font-bold text-muted-foreground uppercase tracking-widest mb-2 flex items-center gap-2">
-                                        <Globe size={16} className="text-info" /> Active Regions
+                                        <Globe size={16} className="text-info" /> Active Deliveries
                                     </div>
                                     <div className="text-3xl font-black">24</div>
                                     <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
@@ -194,7 +186,7 @@ const LandingPage = () => {
                             </div>
                             <h3 className="text-xl font-black tracking-tight mb-3">Laravel Octane</h3>
                             <p className="text-muted-foreground">
-                                High-performance application server utilizing Swoole to keep your application in memory, drastically reducing response times.
+                                High-performance application server utilizing <a href="https://frankenphp.dev/" target="_blank" className="text-info hover:underline">FrankenPHP</a> to keep your application in memory, drastically reducing response times.
                             </p>
                         </div>
 
@@ -216,7 +208,7 @@ const LandingPage = () => {
                             </div>
                             <h3 className="text-2xl font-black tracking-tight mb-3">TanStack Ecosystem</h3>
                             <p className="text-muted-foreground leading-relaxed max-w-md">
-                                Built natively on TanStack Router and React Query for lightning-fast, predictable state management and strict type-safe navigation.
+                                Built natively on TanStack Router, TanStack Query, TanStack Table, TanStack Form, and TanStack Virtual for lightning-fast, predictable state management and strict type-safe navigation.
                             </p>
                         </div>
 
@@ -259,7 +251,7 @@ const LandingPage = () => {
                     </div>
                     <div className="text-xs text-muted-foreground font-medium text-center md:text-right space-y-1">
                         <p>Powered by the <span className="font-bold text-foreground">TanStack</span> Ecosystem & Laravel <span className="font-bold text-foreground">Octane</span></p>
-                        <p>© {new Date().getFullYear()} SCCG Logistics Ecosystem. All rights reserved.</p>
+                        <p>© {new Date().getFullYear()} SCCG. All rights reserved.</p>
                     </div>
                 </div>
             </footer>

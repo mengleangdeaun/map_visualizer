@@ -21,12 +21,16 @@ class CompanyTelegramSettings extends Model
         'notify_company_telegram',
         'bot_username',
         'bot_name',
+        'event_settings',
+        'allowed_events',
     ];
 
     protected $casts = [
         'notify_pwa' => 'boolean',
         'notify_driver_telegram' => 'boolean',
         'notify_company_telegram' => 'boolean',
+        'event_settings' => 'array',
+        'allowed_events' => 'array',
     ];
 
     /**
