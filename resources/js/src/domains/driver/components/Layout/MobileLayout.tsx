@@ -6,9 +6,17 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { useLocationService } from '../../hooks/useLocationService';
 import { useActiveShift } from '../../hooks/useDriverShift';
 import { PwaToast } from '../PwaToast';
+import { useAuthStore } from '@/domains/auth/store/useAuthStore';
+import { useDriverNotificationSocket } from '../../pages/Notification/hooks/useDriverNotificationSocket';
 
 export const MobileLayout = () => {
+    const { user } = useAuthStore();
     const { isTracking, startTracking, stopTracking, error } = useLocationService();
+
+    // Register global websocket listener for real-time alerts & queries invalidations
+    useDriverNotificationSocket({
+        userId: user?.id,
+    });
     const { data: activeShiftData } = useActiveShift();
     const activeVehicle = activeShiftData?.vehicle || null;
 

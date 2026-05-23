@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Map, MapControls, MapMarker, MarkerContent, MarkerLabel } from '@/components/ui/map';
+import { Map, MapControls, MapMarker, MarkerContent, MarkerPopup, MarkerLabel } from '@/components/ui/map';
 import { RoadRoute } from '@/components/shared/map/RoadRoute';
 import { Location } from '@/domains/fleet/services/locationService';
 import { Vehicle } from '@/domains/admin/services/vehicleService';
@@ -9,7 +9,7 @@ import { Card } from '@/components/ui/card';
 import { MapLoading } from '@/components/shared/map/MapLoading';
 import { UserLocationMarker } from '@/components/shared/map/UserLocationMarker';
 import { useTranslation } from 'react-i18next';
-import { Truck, MapPin, Activity, ShieldAlert, ClipboardList, Plus, AlertTriangle } from 'lucide-react';
+import { Truck, MapPin, Activity, ShieldAlert, ClipboardList, Plus, AlertTriangle, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { useQueryClient } from '@tanstack/react-query';
@@ -22,135 +22,35 @@ import { MonitoringStats } from './MonitoringStats';
 import { useMonitoringTelemetry } from '../hooks/useMonitoringTelemetry';
 import { MapSearch } from '@/components/shared/map/MapSearch';
 import { PickupMarker, DropoffMarker, DeliveryMarker } from '@/components/shared/map/TaskMarkers';
+import { getRoadblockTypeStyles, RoadblockType } from '@/domains/admin/utils/roadBlockType';
+import { Roadblock, MonitoringFocusTarget, MonitoringViewport } from '../types';
+import { HeroLabel } from './HeroLabel';
 import { Button } from '@/components/ui/button';
+
+
 
 interface MonitoringMapProps {
     locations: Location[];
     vehicles: Vehicle[];
     tasks: Task[];
     deliveries: Delivery[];
-    roadblocks: any[];
+    roadblocks: Roadblock[];
     pendingRoadAlert?: { lat: number, lng: number } | null;
     onResolveRoadblock?: (id: string | number) => void;
     onResetSelection?: () => void;
     isLoading?: boolean;
     isFetching?: boolean;
-    focusTarget?: { id: string; type: 'vehicle' | 'hub' | 'task' | 'delivery'; center: [number, number] } | null;
+    focusTarget?: MonitoringFocusTarget | null;
     onClick?: (e: any) => void;
     pendingPickup?: { lat: number, lng: number } | null;
     pendingDropoff?: { lat: number, lng: number } | null;
     pendingDeliveryDropoff?: { lat: number, lng: number } | null;
     onCreateTask?: () => void;
     onCreateDelivery?: () => void;
+    onCreateRoadblock?: () => void;
 }
 
-const RoadBlockCreationCard = ({ 
-    lat, 
-    lng, 
-    onCancel, 
-    onSuccess 
-}: { 
-    lat: number; 
-    lng: number; 
-    onCancel: () => void; 
-    onSuccess: () => void;
-}) => {
-    const queryClient = useQueryClient();
-    const [description, setDescription] = useState('');
-    const [type, setType] = useState<'blockage' | 'accident' | 'flood' | 'traffic'>('blockage');
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!description.trim()) {
-            toast.error("Please enter a description for the hazard.");
-            return;
-        }
-
-        setIsSubmitting(true);
-        try {
-            await api.post('/admin/road-alerts', {
-                description: description.trim(),
-                type,
-                lat,
-                lng
-            });
-            toast.success("Road roadblock reported successfully.");
-            queryClient.invalidateQueries({ queryKey: ['admin', 'road-alerts'] });
-            onSuccess();
-        } catch (err: any) {
-            toast.error(err.response?.data?.message || "Failed to create road alert.");
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    return (
-        <Card className="p-4 w-80 bg-background/95 backdrop-blur-md border shadow-2xl rounded-2xl flex flex-col gap-3 font-sans animate-in zoom-in slide-in-from-bottom-2 duration-300 text-left">
-            <div className="flex items-center gap-2">
-                <div className="size-7 rounded-full flex items-center justify-center bg-red-500/10 text-red-500 animate-pulse">
-                    <AlertTriangle className="size-4" />
-                </div>
-                <div className="flex flex-col">
-                    <span className="text-xs font-black uppercase tracking-wider text-foreground">
-                        Report Roadblock
-                    </span>
-                    <span className="text-[9px] text-muted-foreground uppercase font-semibold">
-                        Interactive Placement
-                    </span>
-                </div>
-            </div>
-
-            <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-                <div className="flex flex-col gap-1">
-                    <label className="text-[10px] uppercase font-black text-muted-foreground">Hazard Type</label>
-                    <select
-                        value={type}
-                        onChange={(e) => setType(e.target.value as any)}
-                        className="w-full text-xs rounded-xl border bg-background px-3 py-2.5 font-medium focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-foreground"
-                    >
-                        <option value="blockage">Blockage / Road Closed</option>
-                        <option value="accident">Accident</option>
-                        <option value="flood">Flood / Water Accumulation</option>
-                        <option value="traffic">Severe Traffic Jam</option>
-                    </select>
-                </div>
-
-                <div className="flex flex-col gap-1">
-                    <label className="text-[10px] uppercase font-black text-muted-foreground">Description</label>
-                    <textarea
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        placeholder="Enter roadblock details (e.g. tree fell down, deep water)..."
-                        className="w-full min-h-[70px] text-xs rounded-xl border bg-background p-3 font-medium placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-foreground"
-                        maxLength={1000}
-                    />
-                </div>
-
-                <div className="flex items-center gap-2 border-t pt-2 mt-1">
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={onCancel}
-                        disabled={isSubmitting}
-                        className="flex-1 rounded-xl py-3 font-bold text-xs"
-                    >
-                        Cancel
-                    </Button>
-                    <Button
-                        type="submit"
-                        size="sm"
-                        disabled={isSubmitting}
-                        className="flex-1 rounded-xl py-3 font-bold text-xs shadow-md bg-destructive hover:bg-destructive/90 text-white"
-                    >
-                        {isSubmitting ? 'Publishing...' : 'Confirm Hazard'}
-                    </Button>
-                </div>
-            </form>
-        </Card>
-    );
-};
+// RoadBlockCreationCard removed as creation has been refactored to RoadblockDialog modal.
 
 export const MonitoringMap = React.memo(({ 
     locations, 
@@ -169,12 +69,13 @@ export const MonitoringMap = React.memo(({
     pendingDropoff,
     pendingDeliveryDropoff,
     onCreateTask,
-    onCreateDelivery
+    onCreateDelivery,
+    onCreateRoadblock
 }: MonitoringMapProps) => {
     const { t } = useTranslation(['admin', 'system']);
     const mapRef = React.useRef<any>(null);
 
-    const [viewport, setViewport] = useState({
+    const [viewport, setViewport] = useState<MonitoringViewport>({
         center: [104.9282, 11.5564] as [number, number], // Default to Phnom Penh
         zoom: 12,
         bearing: 0,
@@ -265,7 +166,7 @@ export const MonitoringMap = React.memo(({
                                 <Button 
                                     size="sm" 
                                     className="rounded-full py-4 px-3 shadow-2xl bg-primary hover:bg-primary/90 text-white font-bold animate-in zoom-in slide-in-from-bottom-2 duration-500"
-                                    onClick={(e) => {
+                                    onClick={(e: React.MouseEvent) => {
                                         e.stopPropagation();
                                         onCreateTask?.();
                                     }}
@@ -289,7 +190,7 @@ export const MonitoringMap = React.memo(({
                             <Button 
                                 size="sm" 
                                 className="rounded-full py-4 px-3 shadow-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold animate-in zoom-in slide-in-from-bottom-2 duration-500"
-                                onClick={(e) => {
+                                onClick={(e: React.MouseEvent) => {
                                     e.stopPropagation();
                                     onCreateDelivery?.();
                                 }}
@@ -307,19 +208,11 @@ export const MonitoringMap = React.memo(({
                         latitude={pendingRoadAlert.lat}
                     >
                         <MarkerContent className="animate-bounce">
-                            <div className="relative size-9 rounded-full bg-red-600 border-2 border-white shadow-2xl flex items-center justify-center">
+                            <div className="relative size-9 rounded-full bg-red-600 border-2 border-white shadow-2xl flex items-center justify-center animate-in zoom-in duration-300">
                                 <AlertTriangle className="size-4 text-white" />
                                 <span className="absolute inset-0 rounded-full animate-ping bg-red-600 opacity-40" />
                             </div>
                         </MarkerContent>
-                        <MarkerLabel position="top" className="mb-12 pointer-events-auto z-50">
-                            <RoadBlockCreationCard 
-                                lat={pendingRoadAlert.lat} 
-                                lng={pendingRoadAlert.lng} 
-                                onCancel={onResetSelection || (() => {})} 
-                                onSuccess={onResetSelection || (() => {})} 
-                            />
-                        </MarkerLabel>
                     </MapMarker>
                 )}
 
@@ -351,27 +244,11 @@ export const MonitoringMap = React.memo(({
 
                 {/* Render Roadblocks */}
                 {roadblocks.map((roadblock) => {
-                    const isSelected = selectedType === 'road_alert' && selectedId === roadblock.id;
+                    const isSelected = selectedType === 'road_alert' && selectedId === String(roadblock.id);
                     const coords = [Number(roadblock.lng), Number(roadblock.lat)];
                     if (isNaN(coords[0]) || isNaN(coords[1])) return null;
 
-                    let hazardColor = "bg-red-500 text-red-500";
-                    let hazardBorder = "border-red-500";
-                    let pulseRingColor = "bg-red-500";
-                    
-                    if (roadblock.type === 'accident') {
-                        hazardColor = "bg-orange-500 text-orange-500";
-                        hazardBorder = "border-orange-500";
-                        pulseRingColor = "bg-orange-500";
-                    } else if (roadblock.type === 'flood') {
-                        hazardColor = "bg-blue-500 text-blue-500";
-                        hazardBorder = "border-blue-500";
-                        pulseRingColor = "bg-blue-500";
-                    } else if (roadblock.type === 'traffic') {
-                        hazardColor = "bg-amber-500 text-amber-500";
-                        hazardBorder = "border-amber-500";
-                        pulseRingColor = "bg-amber-500";
-                    }
+                    const styles = getRoadblockTypeStyles(roadblock.type as RoadblockType);
 
                     return (
                         <MapMarker
@@ -379,83 +256,105 @@ export const MonitoringMap = React.memo(({
                             longitude={coords[0]}
                             latitude={coords[1]}
                             onClick={() => {
-                                setSelectedId(roadblock.id);
-                                setSelectedType('road_alert');
+                                if (selectedType === 'road_alert' && selectedId === String(roadblock.id)) {
+                                    setSelectedId(null);
+                                    setSelectedType(null);
+                                } else {
+                                    setSelectedId(String(roadblock.id));
+                                    setSelectedType('road_alert');
+                                }
                             }}
                         >
                             <MarkerContent className="group">
                                 <div className={cn(
                                     "relative size-9 rounded-full bg-background/90 border-2 shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-110",
-                                    isSelected ? "border-primary scale-115 ring-2 ring-primary/40" : hazardBorder
+                                    isSelected ? "border-primary scale-115 ring-2 ring-primary/40" : styles.border
                                 )}>
                                     <span className={cn(
                                         "absolute inset-0 rounded-full animate-ping opacity-30",
-                                        pulseRingColor
+                                        styles.pulse
                                     )} />
-                                    <AlertTriangle className={cn("size-4", isSelected ? "text-primary" : hazardColor)} />
+                                    <AlertTriangle className={cn("size-4", isSelected ? "text-primary" : styles.color)} />
                                 </div>
                             </MarkerContent>
 
-                            {isSelected && (
-                                <MarkerLabel position="top" className="mb-12 pointer-events-auto z-40">
-                                    <Card className="p-4 w-72 bg-background/95 backdrop-blur-md border shadow-2xl rounded-2xl flex flex-col gap-3 font-sans animate-in zoom-in slide-in-from-bottom-2 duration-300">
-                                        <div className="flex items-start justify-between">
-                                            <div className="flex items-center gap-2">
-                                                <div className="size-6 rounded-full flex items-center justify-center bg-destructive/10 text-destructive">
-                                                    <AlertTriangle className="size-3.5" />
-                                                </div>
-                                                <div className="flex flex-col">
-                                                    <span className="text-xs font-black uppercase tracking-wider text-foreground">
-                                                        {roadblock.type || 'Hazard'} Alert
-                                                    </span>
-                                                    <span className="text-[9px] text-muted-foreground">
-                                                        {new Date(roadblock.created_at).toLocaleString()}
-                                                    </span>
-                                                </div>
+                            <MarkerPopup 
+                                className="p-0 border-none mb-4 bg-transparent shadow-none overflow-visible z-50"
+                                open={isSelected}
+                                onClose={() => {
+                                    if (selectedType === 'road_alert' && selectedId === String(roadblock.id)) {
+                                        setSelectedId(null);
+                                        setSelectedType(null);
+                                    }
+                                }}
+                            >
+                                <Card className="p-4 w-72 bg-background/95 backdrop-blur-md shadow-2xl rounded-2xl flex flex-col gap-3 font-sans animate-in zoom-in-95 duration-200">
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <div className="size-6 rounded-full flex items-center justify-center bg-destructive/10 text-destructive">
+                                                <AlertTriangle className="size-3.5" />
                                             </div>
-                                            <Badge variant="outline" className={cn("text-[9px] uppercase px-1.5 font-black", 
-                                                roadblock.type === 'accident' ? 'border-orange-500/20 text-orange-500 bg-orange-500/5' :
-                                                roadblock.type === 'flood' ? 'border-blue-500/20 text-blue-500 bg-blue-500/5' :
-                                                roadblock.type === 'traffic' ? 'border-amber-500/20 text-amber-500 bg-amber-500/5' :
-                                                'border-red-500/20 text-red-500 bg-red-500/5'
-                                            )}>
+                                            <div className="flex flex-col">
+                                                <span className="text-xs font-black uppercase tracking-wider text-foreground">
+                                                    {roadblock.type || 'Hazard'} Alert
+                                                </span>
+                                                <span className="text-[9px] text-muted-foreground">
+                                                    {new Date(roadblock.created_at).toLocaleString()}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-1.5">
+                                            <Badge variant="outline" className={cn("text-[9px] uppercase px-1.5 font-black", styles.badge)}>
                                                 {roadblock.type || 'Blockage'}
                                             </Badge>
-                                        </div>
-
-                                        <p className="text-xs text-muted-foreground leading-relaxed italic bg-muted/50 p-2.5 rounded-xl border border-dashed text-left">
-                                            "{roadblock.description || 'No description provided'}"
-                                        </p>
-
-                                        <div className="flex flex-col gap-1 text-[10px] text-muted-foreground border-t pt-2">
-                                            <div className="flex justify-between">
-                                                <span>Latitude:</span>
-                                                <span className="font-mono text-foreground">{Number(roadblock.lat).toFixed(6)}</span>
-                                            </div>
-                                            <div className="flex justify-between">
-                                                <span>Longitude:</span>
-                                                <span className="font-mono text-foreground">{Number(roadblock.lng).toFixed(6)}</span>
-                                            </div>
-                                        </div>
-
-                                        <Button
-                                            size="sm"
-                                            variant="destructive"
-                                            className="w-full rounded-xl py-4 font-bold text-xs shadow-md mt-1"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                if (onResolveRoadblock) {
-                                                    onResolveRoadblock(roadblock.id);
+                                            <Button
+                                                type="button"
+                                                size="icon"
+                                                variant="ghost"
+                                                className="h-5 w-5 rounded-md hover:bg-muted p-0 shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+                                                onClick={(e: React.MouseEvent) => {
+                                                    e.stopPropagation();
                                                     setSelectedId(null);
                                                     setSelectedType(null);
-                                                }
-                                            }}
-                                        >
-                                            Resolve Roadblock
-                                        </Button>
-                                    </Card>
-                                </MarkerLabel>
-                            )}
+                                                }}
+                                            >
+                                                <X className="size-3" />
+                                            </Button>
+                                        </div>
+                                    </div>
+
+                                    <p className="text-xs text-muted-foreground leading-relaxed italic bg-muted/50 p-2.5 rounded-xl border border-dashed text-left">
+                                        "{roadblock.description || 'No description provided'}"
+                                    </p>
+
+                                    <div className="flex flex-col gap-1 text-[10px] text-muted-foreground border-t pt-2">
+                                        <div className="flex justify-between">
+                                            <span>Latitude:</span>
+                                            <span className="font-mono text-foreground">{Number(roadblock.lat).toFixed(6)}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>Longitude:</span>
+                                            <span className="font-mono text-foreground">{Number(roadblock.lng).toFixed(6)}</span>
+                                        </div>
+                                    </div>
+
+                                    <Button
+                                        size="sm"
+                                        variant="destructive"
+                                        className="w-full rounded-xl py-4 font-bold text-xs mt-1"
+                                        onClick={(e: React.MouseEvent) => {
+                                            e.stopPropagation();
+                                            if (onResolveRoadblock) {
+                                                onResolveRoadblock(roadblock.id);
+                                                setSelectedId(null);
+                                                setSelectedType(null);
+                                            }
+                                        }}
+                                    >
+                                        Resolve Roadblock
+                                    </Button>
+                                </Card>
+                            </MarkerPopup>
                         </MapMarker>
                     );
                 })}
@@ -560,6 +459,8 @@ export const MonitoringMap = React.memo(({
                     placeholder={t('admin:search_locations') || "Search locations..."}
                 />
             </div>
+
+            <HeroLabel />
         </div>
     );
 });

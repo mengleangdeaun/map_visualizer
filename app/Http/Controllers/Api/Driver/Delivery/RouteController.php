@@ -476,11 +476,11 @@ class RouteController extends Controller
             return response()->json(['message' => 'Unauthorized company scope.'], 403);
         }
 
-        // Retrieve alerts published in the last 24 hours to keep the map clean and snappy
+        // Retrieve active alerts for the driver map (aligned with admin UI)
         $alerts = DB::select(
             "SELECT id, description, type, ST_X(location::geometry) as lng, ST_Y(location::geometry) as lat, created_at 
              FROM road_alerts 
-             WHERE company_id = ? AND created_at >= NOW() - INTERVAL '24 HOURS'
+             WHERE company_id = ?
              ORDER BY created_at DESC",
             [$companyId]
         );

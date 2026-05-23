@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { roadblockTypeOptions, RoadblockType } from '@/domains/admin/utils/roadBlockType';
 
 interface ReportRoadblockModalProps {
     isOpen: boolean;
     onClose: () => void;
     clickedCoords: { lng: number; lat: number } | null;
-    onSubmit: (description: string, type: 'blockage' | 'accident' | 'flood' | 'traffic') => void;
+    onSubmit: (description: string, type: RoadblockType) => void;
     isPending: boolean;
 }
 
@@ -20,7 +21,7 @@ export const ReportRoadblockModal: React.FC<ReportRoadblockModalProps> = ({
 }) => {
     const { t } = useTranslation();
     const [reportDescription, setReportDescription] = useState('');
-    const [reportType, setReportType] = useState<'blockage' | 'accident' | 'flood' | 'traffic'>('blockage');
+    const [reportType, setReportType] = useState<RoadblockType>('blockage');
 
     if (!isOpen || !clickedCoords) return null;
 
@@ -52,13 +53,14 @@ export const ReportRoadblockModal: React.FC<ReportRoadblockModalProps> = ({
                     </label>
                     <select
                         value={reportType}
-                        onChange={(e) => setReportType(e.target.value as any)}
-                        className="w-full h-10 rounded-xl bg-muted/50 border border-border/50 px-3 text-sm focus:outline-none"
+                        onChange={(e) => setReportType(e.target.value as RoadblockType)}
+                        className="w-full h-10 rounded-xl bg-muted/50 border border-border/50 px-3 text-sm focus:outline-none bg-background text-foreground"
                     >
-                        <option value="blockage">Road Blocked / Construction</option>
-                        <option value="accident">Traffic Accident</option>
-                        <option value="flood">Severe Flooding</option>
-                        <option value="traffic">Heavy Traffic Jam</option>
+                        {Object.values(roadblockTypeOptions).map((option) => (
+                            <option key={option.value} value={option.value}>
+                                {option.label}
+                            </option>
+                        ))}
                     </select>
                 </div>
 

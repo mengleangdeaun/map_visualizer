@@ -18,16 +18,20 @@ import api from '@/lib/api';
 import { toast } from 'sonner';
 import TaskDialog from '@/domains/admin/pages/Tasks/components/TaskDialog';
 import DeliveryDialog from '@/domains/admin/pages/Delivery/components/DeliveryDialog';
+import RoadblockDialog from './components/RoadblockDialog';
+import { SelectionOverlay } from './components/SelectionOverlay';
+import { monitoringService } from './services/monitoringService';
+import { SelectionMode, MonitoringFocusTarget } from './types';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
-import { MousePointer2, Plus, X, Flag, ClipboardList, Package, MapPin, AlertTriangle } from 'lucide-react';
+import { Plus, ClipboardList, Package, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+
 
 const MonitoringPage = () => {
     const { t } = useTranslation(['admin']);
     const queryClient = useQueryClient();
     const { user } = useAuthStore();
-    const [focusTarget, setFocusTarget] = React.useState<{ id: string; type: 'vehicle' | 'hub' | 'task' | 'delivery'; center: [number, number] } | null>(null);
+    const [focusTarget, setFocusTarget] = React.useState<MonitoringFocusTarget | null>(null);
 
     // Interactive Creation State
     const [pendingPickup, setPendingPickup] = React.useState<{ lat: number, lng: number } | null>(null);
@@ -36,9 +40,10 @@ const MonitoringPage = () => {
     const [pendingRoadAlert, setPendingRoadAlert] = React.useState<{ lat: number, lng: number } | null>(null);
     const [isCreateDialogOpen, setIsCreateDialogOpen] = React.useState(false);
     const [isDeliveryCreateDialogOpen, setIsDeliveryCreateDialogOpen] = React.useState(false);
-    const [selectionMode, setSelectionMode] = React.useState<'none' | 'task_pickup' | 'task_dropoff' | 'delivery_dropoff' | 'road_alert'>('none');
+    const [isRoadblockDialogOpen, setIsRoadblockDialogOpen] = React.useState(false);
+    const [selectionMode, setSelectionMode] = React.useState<SelectionMode>('none');
 
-    const handleFocusTarget = React.useCallback((target: { id: string; type: 'vehicle' | 'hub' | 'task' | 'delivery'; center: [number, number] }) => {
+    const handleFocusTarget = React.useCallback((target: MonitoringFocusTarget) => {
         setFocusTarget({ ...target });
     }, []);
 
@@ -55,6 +60,7 @@ const MonitoringPage = () => {
             setPendingDeliveryDropoff({ lat, lng });
         } else if (selectionMode === 'road_alert') {
             setPendingRoadAlert({ lat, lng });
+            setIsRoadblockDialogOpen(true);
         }
     }, [selectionMode]);
 
@@ -113,15 +119,14 @@ const MonitoringPage = () => {
     } = useQuery({
         queryKey: ['admin', 'road-alerts'],
         queryFn: async () => {
-            const { data } = await api.get('/admin/road-alerts');
-            return data.data;
+            return await monitoringService.getRoadblocks();
         }
     });
 
     // Resolve Roadblock Mutation (Delete)
     const resolveRoadblockMutation = useMutation({
         mutationFn: async (id: string | number) => {
-            await api.delete(`/admin/road-alerts/${id}`);
+            await monitoringService.resolveRoadblock(id);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['admin', 'road-alerts'] });
@@ -213,7 +218,7 @@ const MonitoringPage = () => {
 
             <ResizablePanelGroup direction="horizontal" className="flex-1 min-h-0 gap-4">
                 <ResizablePanel defaultSize={75} minSize={30}>
-                    <div className="h-full rounded-2xl overflow-hidden border bg-card shadow-sm relative">
+                    <div className="h-full rounded-2xl overflow-hidden border border-border bg-card shadow-sm relative">
                         <MonitoringMap 
                             locations={hubsData?.data || []}
                             vehicles={vehiclesData?.data || []}
@@ -231,42 +236,12 @@ const MonitoringPage = () => {
                             pendingDeliveryDropoff={pendingDeliveryDropoff}
                             onCreateTask={() => setIsCreateDialogOpen(true)}
                             onCreateDelivery={() => setIsDeliveryCreateDialogOpen(true)}
+                            onCreateRoadblock={() => setIsRoadblockDialogOpen(true)}
                             onResetSelection={resetSelection}
                         />
 
                         {/* Interactive Selection Overlays */}
-                        {selectionMode !== 'none' && (
-                            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 z-30">
-                                <div className="bg-background/90 backdrop-blur-md px-6 py-3 rounded-2xl border shadow-2xl flex items-center gap-4 animate-in slide-in-from-bottom-4 duration-500 ring-1 ring-primary/20">
-                                    <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center">
-                                        {selectionMode === 'task_pickup' ? (
-                                            <MapPin className="size-4 text-emerald-500" />
-                                        ) : selectionMode === 'task_dropoff' ? (
-                                            <Flag className="size-4 text-red-500" />
-                                        ) : selectionMode === 'delivery_dropoff' ? (
-                                            <Package className="size-4 text-indigo-500" />
-                                        ) : (
-                                            <AlertTriangle className="size-4 text-red-500 animate-bounce" />
-                                        )}
-                                    </div>
-                                    <div className="flex flex-col">
-                                        <span className="text-sm font-bold">
-                                            {selectionMode === 'task_pickup' 
-                                                ? t('admin:click_to_set_pickup') || 'Click to set Pickup' 
-                                                : selectionMode === 'task_dropoff' 
-                                                ? t('admin:click_to_set_dropoff') || 'Click to set Destination' 
-                                                : selectionMode === 'delivery_dropoff'
-                                                ? t('admin:click_to_set_delivery_destination') || 'Click on map to set Destination'
-                                                : 'Click on map to place Road Block warning'}
-                                        </span>
-                                        <span className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Interactive Mode</span>
-                                    </div>
-                                    <Button size="icon-sm" variant="ghost" onClick={resetSelection} className="ml-2 hover:bg-destructive/10 hover:text-destructive">
-                                        <X size={14} />
-                                    </Button>
-                                </div>
-                            </div>
-                        )}
+                        <SelectionOverlay selectionMode={selectionMode} onCancel={resetSelection} />
 
 
                         {/* Quick Action Button to Start Selection */}
@@ -364,6 +339,17 @@ const MonitoringPage = () => {
                     dropoff_latitude: pendingDeliveryDropoff?.lat,
                     dropoff_longitude: pendingDeliveryDropoff?.lng,
                     dropoff_address: pendingDeliveryDropoff ? `${pendingDeliveryDropoff.lat.toFixed(6)}, ${pendingDeliveryDropoff.lng.toFixed(6)}` : '',
+                }}
+            />
+            <RoadblockDialog
+                open={isRoadblockDialogOpen}
+                onOpenChange={(open) => {
+                    setIsRoadblockDialogOpen(open);
+                    if (!open) resetSelection();
+                }}
+                initialValues={{
+                    lat: pendingRoadAlert?.lat,
+                    lng: pendingRoadAlert?.lng,
                 }}
             />
         </div>

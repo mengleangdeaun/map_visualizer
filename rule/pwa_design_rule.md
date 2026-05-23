@@ -38,4 +38,4 @@ To keep the translation files manageable and performant, they MUST be separated 
 
 ## 🗺️ 5. Map UI Overlays
 - **Floating Action Buttons (FABs):** Use FABs for primary map actions (e.g., "Recenter", "Current Location"). Ensure they float safely above the map using `z-index` and have a subtle drop shadow (`shadow-md`) to distinguish them from the map tiles.
-- **Glassmorphism:** Use clean glassmorphic effects (e.g., `bg-background/85 backdrop-blur-md border border-border/50`) for map overlay cards (like the active delivery bottom-sheet) so the driver can still maintain context of the map underneath.
+

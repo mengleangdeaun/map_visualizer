@@ -18,7 +18,7 @@ class RoadAlertController extends Controller
     {
         $request->validate([
             'description' => 'required|string|max:1000',
-            'type' => 'nullable|string|in:blockage,accident,flood,traffic',
+            'type' => 'nullable|string|in:blockage,accident,flood,traffic,other',
             'lng' => 'required|numeric|between:-180,180',
             'lat' => 'required|numeric|between:-90,90',
         ]);

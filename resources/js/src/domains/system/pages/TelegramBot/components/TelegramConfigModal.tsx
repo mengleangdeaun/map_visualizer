@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2, Send } from 'lucide-react';
 import { toast } from 'sonner';
-
+import SettingSkeleton from './SettingSkeleton';    
 import { Company } from '../../../services/companyService';
 import { 
     useTelegramSettings, 
@@ -17,7 +17,7 @@ import {
 import { ConnectionSettingsSection } from './ConnectionSettingsSection';
 import { TriggerSettingsSection } from './TriggerSettingsSection';
 import { EventGatekeepingSection, DRIVER_ACTIONS, ADMIN_ALERTS } from './EventGatekeepingSection';
-import { IntegrationGuideSection } from './IntegrationGuideSection';
+
 
 interface TelegramConfigModalProps {
     open: boolean;
@@ -162,9 +162,7 @@ export const TelegramConfigModal: React.FC<TelegramConfigModalProps> = ({ open, 
 
                 {/* Content body */}
                 {isLoadingSettings ? (
-                    <div className="h-full flex items-center justify-center">
-                        <Loader2 className="size-8 text-primary animate-spin" />
-                    </div>
+                    <SettingSkeleton />
                 ) : (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6 min-h-0 overflow-hidden">
                         {/* Left Column (Connection & Toggles & Guides) */}
@@ -192,7 +190,7 @@ export const TelegramConfigModal: React.FC<TelegramConfigModalProps> = ({ open, 
                                     setNotifyCompanyTelegram={setNotifyCompanyTelegram}
                                 />
 
-                                <IntegrationGuideSection />
+                
                             </div>
                         </ScrollArea>
 

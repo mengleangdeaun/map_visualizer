@@ -9,6 +9,7 @@ import {
     UserCheck, AlertCircle, ChevronUp, ChevronDown, Loader2 
 } from 'lucide-react';
 import { EventConfig } from '../types';
+import { EmptyState } from '@/components/shared/system/EmptyState';
 
 export const eventMetaData: Record<string, { label: string; desc: string; icon: React.ReactNode; group: 'driver' | 'admin' }> = {
     // Driver Directed Actions (Admin Dispatches)
@@ -148,7 +149,7 @@ export const GranularEventAccordion: React.FC<GranularEventAccordionProps> = ({
             <button 
                 type="button"
                 onClick={onToggle}
-                className="w-full py-4 px-1 flex items-center justify-between bg-transparent border-b border-border hover:bg-muted/10 transition-all text-left"
+                className="w-full py-4 flex items-center justify-between bg-transparent border-b border-border transition-all text-left"
             >
                 <div className="flex items-center gap-3">
                     <div className={`p-2 rounded-lg shrink-0 ${type === 'driver' ? 'bg-blue-500/10 text-blue-600' : 'bg-rose-500/10 text-rose-600'}`}>
@@ -169,7 +170,7 @@ export const GranularEventAccordion: React.FC<GranularEventAccordionProps> = ({
                         const config = eventSettings[key] || { enabled: true, chat_id: null, topic_id: null };
                         
                         return (
-                            <div key={key} className="py-5 px-1 space-y-4 hover:bg-muted/5 transition-all border-b border-border/40 last:border-b-0">
+                            <div key={key} className="py-5 space-y-4 transition-all border-b border-border/40 last:border-b-0">
                                 <div className="flex items-start justify-between gap-4">
                                     <div className="flex gap-2.5 items-start">
                                         <div className="p-2 bg-muted rounded-md shrink-0 mt-0.5">
@@ -229,8 +230,11 @@ export const GranularEventAccordion: React.FC<GranularEventAccordionProps> = ({
                     })}
 
                     {filteredKeys.length === 0 && (
-                        <div className="p-6 text-center text-xs text-muted-foreground italic">
-                            No notifications whitelisted by platform administration in this group.
+                        <div className=" text-center text-xs text-muted-foreground">
+                            <EmptyState 
+                                type="no-data"
+                                description='No notifications whitelisted by platform administration in this group.'
+                            />
                         </div>
                     )}
                 </div>

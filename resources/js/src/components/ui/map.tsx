@@ -622,6 +622,8 @@ function PopupCloseButton({ onClick }: { onClick: () => void }) {
 type MarkerPopupProps = {
   /** Popup content */
   children: ReactNode;
+  /** Programmatic open control */
+  open?: boolean;
   /** Callback when popup is closed */
   onClose?: () => void;
   /** Additional CSS classes for the popup container */
@@ -635,6 +637,7 @@ function MarkerPopup({
   className,
   closeButton = false,
   onClose,
+  open,
   ...popupOptions
 }: MarkerPopupProps) {
   const { marker, map } = useMarkerContext();
@@ -670,6 +673,21 @@ function MarkerPopup({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, onClose]);
+
+  // Programmatic open/close control effect
+  useEffect(() => {
+    if (!map || open === undefined) return;
+
+    if (open) {
+      if (!popup.isOpen()) {
+        marker.togglePopup();
+      }
+    } else {
+      if (popup.isOpen()) {
+        popup.remove();
+      }
+    }
+  }, [map, open, popup, marker]);
 
   if (popup.isOpen()) {
     const prev = prevPopupOptions.current;

@@ -4,16 +4,13 @@ import { Vehicle } from '@/domains/admin/services/vehicleService';
 import { useAuthStore } from '@/domains/auth/store/useAuthStore';
 import { echo } from '@/lib/echo';
 
+import { MonitoringFocusTarget, MonitoringViewport } from '../types';
+
 interface UseMonitoringTelemetryProps {
     vehicles: Vehicle[];
     locations: Location[];
-    focusTarget?: { id: string; type: string; center: [number, number] } | null;
-    setViewport: React.Dispatch<React.SetStateAction<{
-        center: [number, number];
-        zoom: number;
-        bearing: number;
-        pitch: number;
-    }>>;
+    focusTarget?: MonitoringFocusTarget | null;
+    setViewport: React.Dispatch<React.SetStateAction<MonitoringViewport>>;
 }
 
 export const useMonitoringTelemetry = ({

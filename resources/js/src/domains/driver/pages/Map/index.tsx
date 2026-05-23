@@ -1,22 +1,14 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from '@tanstack/react-router';
-import { Map, MapControls, MapMarker, MarkerContent, MapRoute } from '@/components/ui/map';
+import { Map, MapMarker, MarkerContent, MapRoute } from '@/components/ui/map';
 import { UserLocationMarker } from '@/components/shared/map/UserLocationMarker';
 import { RoadRoute } from '@/components/shared/map/RoadRoute';
 import { useAuthStore } from '@/domains/auth/store/useAuthStore';
 import { useHeaderStore } from '../../store/useHeaderStore';
-import { useLocationStore } from '../../store/useLocationStore';
-import { useNavigationStore } from '../../store/useNavigationStore';
-import { pwaToast as toast } from '../../store/usePwaToastStore';
-import { echo } from '@/lib/echo';
-import api from '@/lib/api';
 import { 
     AlertTriangle, 
     ClipboardList, 
     Compass,
-    Navigation,
     Target,
     MapPin
 } from 'lucide-react';
@@ -34,88 +26,79 @@ import { AlternatePathsList } from './components/AlternatePathsList';
 import { FloatingErrandTrigger } from './components/FloatingErrandTrigger';
 import { ActiveNavigationOverlay } from './components/ActiveNavigationOverlay';
 
-import { useDriverTasks, useUpdateTaskStatus } from '../../hooks/useDriverTasks';
-
-interface RoadblockAlert {
-    id: string;
-    description: string;
-    type: string;
-    lng: number;
-    lat: number;
-    created_at: string;
-}
-
-// Global Haversine Distance helper
-const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-    const R = 6371; // Earth's radius in km
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = 
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-        Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-};
+// Import hooks & types
+import { useDriverMapState } from './hooks/useDriverMapState';
+import { useDriverMapSocket } from './hooks/useDriverMapSocket';
+import { StopItem, ErrandTask, RoadblockAlert } from './types';
 
 const DriverMapPage = () => {
     const { t } = useTranslation();
     const { user } = useAuthStore();
-    const navigate = useNavigate();
-    const queryClient = useQueryClient();
     const setHeader = useHeaderStore(s => s.setHeader);
-    const updateTaskStatusMutation = useUpdateTaskStatus();
-    
-    // Track user location from background location store
-    const { latitude: userLat, longitude: userLng } = useLocationStore();
-    const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
 
-    // Active tab: 'deliveries' or 'tasks'
-    const [activeFilter, setActiveFilter] = useState<'deliveries' | 'tasks'>('deliveries');
-    
-    // Bottom drawer selection state
-    const [selectedItem, setSelectedItem] = useState<any>(null);
-    const [selectedType, setSelectedType] = useState<'delivery' | 'task' | 'roadblock' | null>(null);
-    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    // Mount state and query telemetry hook
+    const mapState = useDriverMapState();
 
-    // Report roadblock state
-    const [showReportModal, setShowReportModal] = useState(false);
-    const [clickedCoords, setClickedCoords] = useState<{ lng: number; lat: number } | null>(null);
-
-    // Map viewport state
-    const [viewport, setViewport] = useState({
-        center: [104.883628, 11.564134] as [number, number],
-        zoom: 13,
-        bearing: 0,
-        pitch: 0,
-    });
-
-    const isInteracting = useRef(false);
-
-    // Map style state and custom Google Khmer tiles definition
-    const [mapStyleOption, setMapStyleOption] = useState<'default' | 'google_khmer_hybrid'>('google_khmer_hybrid');
-    
-    // OSRM Custom routing planning states
-    const [routePlanningMode, setRoutePlanningMode] = useState(false);
-    const [customRouteDestination, setCustomRouteDestination] = useState<[number, number] | null>(null);
-    const [customRoutes, setCustomRoutes] = useState<any[]>([]);
-    const [selectedCustomRouteIndex, setSelectedCustomRouteIndex] = useState(0);
-    const [isRoutingLoading, setIsRoutingLoading] = useState(false);
-
-    // Roadblock interactive placement states
-    const [pinPlacementMode, setPinPlacementMode] = useState(false);
-
-    // Active navigation states for Errand Tasks & Deliveries — persisted globally so they survive page transitions
     const {
+        viewport,
+        setViewport,
+        userLocation,
+        activeFilter,
+        setActiveFilter,
+        selectedItem,
+        setSelectedItem,
+        selectedType,
+        setSelectedType,
+        isDrawerOpen,
+        setIsDrawerOpen,
+        showReportModal,
+        setShowReportModal,
+        clickedCoords,
+        setClickedCoords,
+        mapStyleOption,
+        setMapStyleOption,
+        routePlanningMode,
+        setRoutePlanningMode,
+        customRouteDestination,
+        setCustomRouteDestination,
+        customRoutes,
+        setCustomRoutes,
+        selectedCustomRouteIndex,
+        setSelectedCustomRouteIndex,
+        isRoutingLoading,
+        pinPlacementMode,
+        setPinPlacementMode,
+        planningLeg2Route,
+        setPlanningLeg2Route,
+        isInteracting,
+
         activeNavTask,
-        setActiveNavTask,
         activeNavRoute,
-        setActiveNavRoute,
         activeNavLeg,
-        setActiveNavLeg,
         clearNavigation,
-    } = useNavigationStore();
-    const [planningLeg2Route, setPlanningLeg2Route] = useState<any | null>(null);
+
+        deliveries,
+        tasks,
+        roadblocks,
+
+        handleSelectTaskRoute,
+        handleStartTaskNavigation,
+        handleCompleteTask,
+        handleArriveAtPickup,
+        recenterToUser,
+        handleMapClick,
+
+        updateTaskStatusMutation,
+        arriveMutation,
+        startDeliveryMutation,
+        reportRoadblockMutation,
+    } = mapState;
+
+    // Connect WebSocket listeners
+    useDriverMapSocket({
+        userId: user?.id,
+        companyId: user?.company_id,
+    });
 
     const googleKhmerStyle = useMemo(() => ({
         version: 8 as const,
@@ -169,191 +152,6 @@ const DriverMapPage = () => {
         return () => setHeader({});
     }, [setHeader, t, mapStyleOption, routePlanningMode, viewport.center]);
 
-    // Update center when user location becomes available
-    useEffect(() => {
-        if (userLat && userLng) {
-            const loc: [number, number] = [userLng, userLat];
-            setUserLocation(loc);
-            setViewport(prev => ({
-                ...prev,
-                center: loc
-            }));
-        }
-    }, [userLat, userLng]);
-
-    // Proximity watcher: automatically transition from Leg 1 (Pickup) to Leg 2 (Drop-off) when within 50m of Pickup
-    useEffect(() => {
-        if (activeNavTask && activeNavLeg === 'pickup' && activeNavTask.pickup_lat && activeNavTask.pickup_lng && userLat && userLng) {
-            const distance = calculateDistance(
-                userLat, userLng,
-                activeNavTask.pickup_lat, activeNavTask.pickup_lng
-            );
-
-            // If within 50 meters, trigger automatic transition
-            if (distance <= 0.05) {
-                handleArriveAtPickup();
-            }
-        }
-    }, [userLat, userLng, activeNavTask, activeNavLeg]);
-
-    // Query active route stops (deliveries)
-    const { data: routeData } = useQuery({
-        queryKey: ['driver', 'route', 'active'],
-        queryFn: async () => {
-            const { data } = await api.get('/driver/route/active');
-            return data.data;
-        }
-    });
-
-    // Query active tasks (errands)
-    const { data: tasksData } = useDriverTasks();
-
-    // Query active roadblocks (road alerts in last 24h)
-    const { data: roadblocksData } = useQuery<RoadblockAlert[]>({
-        queryKey: ['driver', 'road-alerts'],
-        queryFn: async () => {
-            const { data } = await api.get('/driver/road-alerts');
-            return data.data;
-        }
-    });
-
-    // Listen for Reverb broadcast when admin assigns a route to this driver
-    useEffect(() => {
-        if (!user?.id) return;
-
-        const channel = echo.private(`driver.${user.id}`);
-
-        channel.listen('.route.assigned', (event: any) => {
-            // Refetch the active route query so the map updates immediately
-            queryClient.invalidateQueries({ queryKey: ['driver', 'route', 'active'] });
-
-            const stopCount = event?.route?.stop_count ?? 0;
-            const distance  = event?.route?.estimated_distance_km
-                ? ` · ${event.route.estimated_distance_km} km`
-                : '';
-
-            toast.success(`📦 New route assigned — ${stopCount} stops${distance}`);
-
-            if ('vibrate' in navigator) navigator.vibrate([150, 80, 150]);
-        });
-
-        return () => {
-            channel.stopListening('.route.assigned');
-        };
-    }, [user?.id]);
-
-
-    // Mutation to submit a newly reported roadblock hazard
-    const reportRoadblockMutation = useMutation({
-        mutationFn: async ({ description, type }: { description: string; type: string }) => {
-            if (!clickedCoords) return;
-            const { data } = await api.post('/driver/road-alerts', {
-                description,
-                type,
-                lng: clickedCoords.lng,
-                lat: clickedCoords.lat
-            });
-            return data;
-        },
-        onSuccess: () => {
-            toast.success("Road hazard reported successfully!");
-            if ('vibrate' in navigator) {
-                navigator.vibrate([100, 50, 100]);
-            }
-            setShowReportModal(false);
-            setClickedCoords(null);
-            queryClient.invalidateQueries({ queryKey: ['driver', 'road-alerts'] });
-        },
-        onError: (err: any) => {
-            toast.error(err.response?.data?.message || "Failed to submit hazard report");
-        }
-    });
-
-    // Mutation to register arrival at a delivery stop — navigates directly to Stop Details on success
-    const arriveMutation = useMutation({
-        mutationFn: async (stopId: string) => {
-            const { data } = await api.post(`/driver/route/stops/${stopId}/arrive`);
-            return data.data;
-        },
-        onSuccess: (_res, stopId) => {
-            toast.success('Arrived at stop!');
-
-            // Optimistically update the cache so StopDetails sees 'arrived' immediately
-            // without waiting for the background refetch to complete
-            queryClient.setQueryData(['driver', 'route', 'active'], (old: any) => {
-                if (!old?.stops) return old;
-                return {
-                    ...old,
-                    stops: old.stops.map((s: any) =>
-                        s.id === stopId
-                            ? { ...s, status: 'arrived', arrived_at: new Date().toISOString() }
-                            : s
-                    ),
-                };
-            });
-
-            // Then invalidate to trigger a background sync
-            queryClient.invalidateQueries({ queryKey: ['driver', 'route', 'active'] });
-            clearNavigation();
-            navigate({ to: '/driver/route/stop/$id', params: { id: stopId } });
-        },
-        onError: () => {
-            toast.error('Failed to register arrival. Please try again.');
-        },
-    });
-
-    // Mutation to register starting delivery route navigation
-    const startDeliveryMutation = useMutation({
-        mutationFn: async (stopId: string) => {
-            const { latitude, longitude } = useLocationStore.getState();
-            const { data } = await api.post(`/driver/route/stops/${stopId}/start`, {
-                latitude,
-                longitude
-            });
-            return data.data;
-        },
-        onSuccess: (res, stopId) => {
-            toast.success("Delivery route started!");
-            queryClient.invalidateQueries({ queryKey: ['driver', 'route', 'active'] });
-        },
-        onError: () => {
-            toast.error("Failed to start delivery route. Please try again.");
-        }
-    });
-
-    // Extract markers list
-    const deliveries = useMemo(() => routeData?.stops || [], [routeData]);
-    const tasks = useMemo(() => tasksData?.data || [], [tasksData]);
-    const roadblocks = useMemo(() => roadblocksData || [], [roadblocksData]);
-
-    const nextImmediateStop = useMemo(() => {
-        return deliveries.find((stop: any) => stop.status === 'in_transit' || stop.status === 'pending' || stop.status === 'arrived');
-    }, [deliveries]);
-
-    // Echo listener for real-time roadblocks
-    useEffect(() => {
-        if (!user?.company_id) return;
-
-        const channelName = `company.${user.company_id}`;
-        
-        echo.private(channelName)
-            .listen('.road-alert.created', (e: any) => {
-                toast.warning(`Road Alert: ${e.alertData.description}`, {
-                    description: "Dispatched by Command Center"
-                });
-
-                if ('vibrate' in navigator) {
-                    navigator.vibrate([200, 100, 200]);
-                }
-
-                queryClient.invalidateQueries({ queryKey: ['driver', 'road-alerts'] });
-            });
-
-        return () => {
-            echo.leave(channelName);
-        };
-    }, [user?.company_id, queryClient]);
-
     // Lock parent main container scrolling and padding on mount, restore on unmount
     useEffect(() => {
         const mainEl = document.querySelector('main');
@@ -379,266 +177,11 @@ const DriverMapPage = () => {
         }
     }, []);
 
-    const handleSelectTaskRoute = async (item: any) => {
-        const isDelivery = !!item.delivery;
-
-        let destLng = 0;
-        let destLat = 0;
-
-        if (isDelivery) {
-            destLng = item.delivery.lng;
-            destLat = item.delivery.lat;
-        } else {
-            // Determine errand task destination
-            let usePickup = false;
-            if (item.pickup_lng && item.pickup_lat) {
-                if (item.status === 'assigned' || item.status === 'pending') {
-                    usePickup = true;
-                } else if (item.status === 'in_progress') {
-                    const startPoint: [number, number] = (userLng && userLat) 
-                        ? [userLng, userLat] 
-                        : (userLocation || viewport.center);
-                    
-                    const distanceToPickup = calculateDistance(
-                        startPoint[1], startPoint[0], 
-                        item.pickup_lat, item.pickup_lng
-                    );
-                    
-                    if (distanceToPickup > 0.05) {
-                        usePickup = true;
-                    }
-                }
-            }
-            destLng = usePickup ? item.pickup_lng : (item.dropoff_lng || item.pickup_lng);
-            destLat = usePickup ? item.pickup_lat : (item.dropoff_lat || item.pickup_lat);
-        }
-
-        if (!destLat || !destLng) {
-            toast.error(isDelivery ? "Delivery Stop has no valid coordinates." : "Errand Task has no valid coordinates.");
-            return;
-        }
-
-        const dest: [number, number] = [destLng, destLat];
-        setCustomRouteDestination(dest);
-        setIsRoutingLoading(true);
-        setRoutePlanningMode(true);
-
-        const startPoint: [number, number] = (userLng && userLat) 
-            ? [userLng, userLat] 
-            : (userLocation || viewport.center);
-
-        try {
-            const response = await fetch(`https://router.project-osrm.org/route/v1/driving/${startPoint[0]},${startPoint[1]};${dest[0]},${dest[1]}?overview=full&geometries=geojson&alternatives=true`);
-            const data = await response.json();
-            
-            if (data.code === 'Ok' && data.routes?.length > 0) {
-                const routesList = data.routes.map((r: any) => ({
-                    coordinates: r.geometry.coordinates,
-                    distance: r.distance,
-                    duration: r.duration
-                }));
-                setCustomRoutes(routesList);
-                setSelectedCustomRouteIndex(0);
-
-                // Fetch Leg 2 only for Errand Tasks if pickup is used
-                let leg2Route = null;
-                if (!isDelivery && item.pickup_lng && item.pickup_lat && item.dropoff_lng && item.dropoff_lat) {
-                    try {
-                        const response2 = await fetch(`https://router.project-osrm.org/route/v1/driving/${item.pickup_lng},${item.pickup_lat};${item.dropoff_lng},${item.dropoff_lat}?overview=full&geometries=geojson`);
-                        const data2 = await response2.json();
-                        if (data2.code === 'Ok' && data2.routes?.length > 0) {
-                            leg2Route = {
-                                coordinates: data2.routes[0].geometry.coordinates,
-                                distance: data2.routes[0].distance,
-                                duration: data2.routes[0].duration
-                            };
-                        }
-                    } catch (e2) {
-                        console.error("OSRM planning Leg 2 route failure:", e2);
-                    }
-                }
-                setPlanningLeg2Route(leg2Route);
-            } else {
-                toast.error(isDelivery ? "Could not trace route to this stop." : "Could not trace route to this errand destination.");
-                setPlanningLeg2Route(null);
-            }
-        } catch (err) {
-            console.error("OSRM route planning failure:", err);
-            toast.error("Routing server error. Please try again.");
-            setPlanningLeg2Route(null);
-        } finally {
-            setIsRoutingLoading(false);
-        }
-    };
-
-    const handleStartTaskNavigation = (item: any) => {
-        if (customRoutes.length === 0) return;
-        const selectedRoute = customRoutes[selectedCustomRouteIndex];
-        const isDelivery = !!item.delivery;
-
-        if (isDelivery) {
-            startDeliveryMutation.mutate(item.id, {
-                onSuccess: (res) => {
-                    const updatedItem = {
-                        ...item,
-                        status: 'in_transit',
-                        delivery: {
-                            ...item.delivery,
-                            started_at: res?.started_at || new Date().toISOString()
-                        }
-                    };
-                    setActiveNavTask(updatedItem);
-
-                    // Dynamic live route tracing: use the OSRM path computed from actual current location if available,
-                    // otherwise gracefully fallback to the pre-calculated selectedRoute.
-                    const routeToUse = res?.actual_leg_geometry || selectedRoute;
-                    setActiveNavRoute(routeToUse);
-                    setActiveNavLeg('dropoff');
-
-                    setRoutePlanningMode(false);
-                    setCustomRoutes([]);
-                    setCustomRouteDestination(null);
-                    setSelectedItem(null);
-                    setSelectedType(null);
-                    setIsDrawerOpen(false);
-                }
-            });
-        } else {
-            // Errand Tasks status update mutation
-            updateTaskStatusMutation.mutate({
-                taskId: item.id,
-                status: 'in_progress'
-            }, {
-                onSuccess: (updatedTask) => {
-                    setActiveNavTask(updatedTask);
-                    setActiveNavRoute(selectedRoute);
-                    
-                    const hasPickup = !!(updatedTask.pickup_lat && updatedTask.pickup_lng);
-                    setActiveNavLeg(hasPickup ? 'pickup' : 'dropoff');
-                    setPlanningLeg2Route(null);
-
-                    setRoutePlanningMode(false);
-                    setCustomRoutes([]);
-                    setCustomRouteDestination(null);
-                    setSelectedItem(null);
-                    setSelectedType(null);
-                    setIsDrawerOpen(false);
-                    queryClient.invalidateQueries({ queryKey: ['driver', 'tasks'] });
-                }
-            });
-        }
-    };
-
-    const handleCompleteTask = (taskId: string) => {
-        updateTaskStatusMutation.mutate({
-            taskId,
-            status: 'completed'
-        }, {
-            onSuccess: () => {
-                clearNavigation();
-                queryClient.invalidateQueries({ queryKey: ['driver', 'tasks'] });
-            }
-        });
-    };
-
-    const handleArriveAtPickup = async () => {
-        if (!activeNavTask) return;
-        
-        toast.success("Arrived at Pickup! Routing to Drop-off location...");
-        setActiveNavLeg('dropoff');
-
-        const destLng = activeNavTask.dropoff_lng || activeNavTask.pickup_lng;
-        const destLat = activeNavTask.dropoff_lat || activeNavTask.pickup_lat;
-
-        if (!destLat || !destLng) {
-            toast.error("Errand Task has no valid drop-off coordinates.");
-            return;
-        }
-
-        const startPoint: [number, number] = (userLng && userLat) 
-            ? [userLng, userLat] 
-            : (userLocation || viewport.center);
-
-        try {
-            const response = await fetch(`https://router.project-osrm.org/route/v1/driving/${startPoint[0]},${startPoint[1]};${destLng},${destLat}?overview=full&geometries=geojson`);
-            const data = await response.json();
-            
-            if (data.code === 'Ok' && data.routes?.length > 0) {
-                const selectedRoute = {
-                    coordinates: data.routes[0].geometry.coordinates,
-                    distance: data.routes[0].distance,
-                    duration: data.routes[0].duration
-                };
-                setActiveNavRoute(selectedRoute);
-            } else {
-                toast.error("Failed to fetch route to Drop-off.");
-            }
-        } catch (err) {
-            console.error("OSRM drop-off routing failure:", err);
-            toast.error("Error fetching route to Drop-off.");
-        }
-    };
-
-    const recenterToUser = () => {
-        if (userLocation) {
-            setViewport(prev => ({
-                ...prev,
-                center: userLocation,
-                zoom: 14
-            }));
-            toast.info("Centered to current position");
-        } else {
-            toast.error("Waiting for GPS coordinates...");
-        }
-    };
-
-    const handleMapClick = async (e: any) => {
-        if (isInteracting.current) {
-            isInteracting.current = false;
-            return;
-        }
-
-        if (selectedItem) {
-            setSelectedItem(null);
-            setSelectedType(null);
-            return;
-        }
-
-        if (routePlanningMode) {
-            const coords = e.lngLat;
-            if (!coords) return;
-            
-            const dest: [number, number] = [coords.lng, coords.lat];
-            setCustomRouteDestination(dest);
-            setIsRoutingLoading(true);
-
-            // Active GPS start position (fallback to map center)
-            const startPoint: [number, number] = userLocation || viewport.center;
-            
-            try {
-                const response = await fetch(`https://router.project-osrm.org/route/v1/driving/${startPoint[0]},${startPoint[1]};${dest[0]},${dest[1]}?overview=full&geometries=geojson&alternatives=true`);
-                const data = await response.json();
-                
-                if (data.code === 'Ok' && data.routes?.length > 0) {
-                    const routesList = data.routes.map((r: any) => ({
-                        coordinates: r.geometry.coordinates,
-                        duration: r.duration,
-                        distance: r.distance,
-                    }));
-                    setCustomRoutes(routesList);
-                    setSelectedCustomRouteIndex(0);
-                    toast.success(`Found ${routesList.length} route options!`);
-                } else {
-                    toast.error("Could not trace route to this destination.");
-                }
-            } catch (err) {
-                console.error("OSRM Route planning failure:", err);
-                toast.error("Routing server error. Please try again.");
-            } finally {
-                setIsRoutingLoading(false);
-            }
-        }
-    };
+    const nextImmediateStop = useMemo(() => {
+        return (deliveries as StopItem[]).find(
+            (stop) => stop.status === 'in_transit' || stop.status === 'pending' || stop.status === 'arrived'
+        );
+    }, [deliveries]);
 
     return (
         <div className="flex flex-col w-full h-[calc(100vh-136px)] relative overflow-hidden bg-background">
@@ -659,9 +202,9 @@ const DriverMapPage = () => {
                     <UserLocationMarker coordinates={userLocation} />
 
                     {/* 1B. Draw Snap-To-Road Sequential Snapped Delivery Polylines */}
-                    {activeFilter === 'deliveries' && !activeNavTask && deliveries.length > 1 && deliveries.map((stop: any, idx: number) => {
+                    {activeFilter === 'deliveries' && !activeNavTask && deliveries.length > 1 && (deliveries as StopItem[]).map((stop, idx) => {
                         if (idx === deliveries.length - 1) return null;
-                        const nextStop = deliveries[idx + 1];
+                        const nextStop = deliveries[idx + 1] as StopItem;
                         const fromCoords: [number, number] = [stop.delivery.lng, stop.delivery.lat];
                         const toCoords: [number, number] = [nextStop.delivery.lng, nextStop.delivery.lat];
                         
@@ -695,7 +238,7 @@ const DriverMapPage = () => {
                     )}
 
                     {/* 2A. Render Deliveries Markers */}
-                    {activeFilter === 'deliveries' && deliveries.map((stop: any) => {
+                    {activeFilter === 'deliveries' && (deliveries as StopItem[]).map((stop) => {
                         const dl = stop.delivery;
                         if (!dl.lng || !dl.lat) return null;
 
@@ -734,7 +277,7 @@ const DriverMapPage = () => {
                     })}
 
                     {/* 2B. Render Tasks Markers */}
-                    {activeFilter === 'tasks' && tasks.flatMap((task: any) => {
+                    {activeFilter === 'tasks' && (tasks as ErrandTask[]).flatMap((task) => {
                         const markers = [];
                         const isSelected = selectedType === 'task' && selectedItem?.id === task.id;
 
@@ -815,7 +358,7 @@ const DriverMapPage = () => {
                     )}
 
                     {/* 2C. Render Roadblock Hazards */}
-                    {roadblocks.map((rb) => {
+                    {(roadblocks as RoadblockAlert[]).map((rb) => {
                         if (!rb.lng || !rb.lat) return null;
                         const isSelected = selectedType === 'roadblock' && selectedItem?.id === rb.id;
 
@@ -995,7 +538,6 @@ const DriverMapPage = () => {
                         const isDelivery = !!activeNavTask?.delivery;
                         if (isDelivery) {
                             // Navigate to stop details screen to let the driver complete/fail it
-                            navigate({ to: '/driver/route/stop/$id', params: { id: String(id) } });
                             clearNavigation();
                         } else {
                             handleCompleteTask(id);
