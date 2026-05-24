@@ -60,17 +60,67 @@ class RouteService
 
     public function update(Route $route, array $data): Route
     {
-        $wasPublished = $route->status !== 'optimized' && ($data['status'] ?? null) === 'in_progress';
+        $wasPublished = $route->status !== 'in_progress' && ($data['status'] ?? null) === 'in_progress';
+        $driverChanged = isset($data['driver_id']) && $data['driver_id'] !== $route->driver_id;
+        
+        // Notify if either:
+        // a) The route is being published and has an assigned driver
+        // b) The route is already in progress and the driver is reassigned
+        $shouldNotify = ($wasPublished && ($data['driver_id'] ?? $route->driver_id)) ||
+                        (($route->status === 'in_progress' || ($data['status'] ?? null) === 'in_progress') && $driverChanged && $data['driver_id']);
 
         $route->update($data);
 
         // Synchronize driver_id and statuses down to deliveries
         $this->syncStopsToDeliveries($route);
 
-        // Broadcast to driver when route transitions to in_progress (published)
-        if ($wasPublished && $route->driver_id) {
+        // Broadcast and dispatch multi-channel notifications
+        if ($shouldNotify) {
             $route->refresh();
-            event(new RouteAssignedToDriver($route));
+            $route->load(['driver', 'stops.delivery' => function ($q) {
+                $q->select('*')
+                  ->selectRaw('ST_Y(dropoff_location::geometry) as dropoff_latitude')
+                  ->selectRaw('ST_X(dropoff_location::geometry) as dropoff_longitude')
+                  ->with('order.customer');
+            }]);
+
+            if ($route->driver) {
+                // 1. Broadcast Echo Event via Reverb (forces active map client refresh)
+                event(new RouteAssignedToDriver($route));
+
+                // 2. Dispatch Database/Broadcast/Telegram Notification for route publish
+                $route->driver->notify(new \App\Notifications\DynamicActionNotification(
+                    'admin_publish_route',
+                    $route->company_id,
+                    [
+                        'title' => 'New Route Dispatched',
+                        'description' => "Admin published your route with {$route->stop_count} stops.",
+                        'route_code' => $route->id,
+                        'driver_name' => $route->driver->name,
+                        'stops_count' => $route->stop_count,
+                    ]
+                ));
+
+                // 3. Dispatch Database/Broadcast/Telegram Notification for each assigned stop
+                foreach ($route->stops as $stop) {
+                    if ($stop->delivery) {
+                        $route->driver->notify(new \App\Notifications\DynamicActionNotification(
+                            'admin_assign_delivery',
+                            $route->company_id,
+                            [
+                                'title' => 'New Delivery Assigned',
+                                'description' => "Delivery stop #{$stop->sequence_number} assigned to you.",
+                                'tracking_number' => $stop->delivery->tracking_number,
+                                'customer_name' => $stop->delivery->order?->customer?->name ?? 'Guest Customer',
+                                'address' => $stop->delivery->dropoff_address,
+                                'lat' => $stop->delivery->dropoff_latitude,
+                                'lng' => $stop->delivery->dropoff_longitude,
+                                'delivery_id' => $stop->delivery->id,
+                            ]
+                        ));
+                    }
+                }
+            }
         }
 
         return $this->findById($route->id, $route->company_id);
@@ -94,22 +144,60 @@ class RouteService
     public function addDeliveries(Route $route, array $deliveryIds): Route
     {
         return DB::transaction(function () use ($route, $deliveryIds) {
+            $newStops = [];
             foreach ($deliveryIds as $deliveryId) {
                 // Avoid duplicate stops — silently skip
                 if (RouteStop::where('route_id', $route->id)->where('delivery_id', $deliveryId)->exists()) {
                     continue;
                 }
 
-                RouteStop::create([
+                $stop = RouteStop::create([
                     'route_id'        => $route->id,
                     'delivery_id'     => $deliveryId,
                     'sequence_number' => $route->stops()->count() + 1, // Temporary, overwritten by optimize
                     'status'          => 'pending',
                 ]);
+                $newStops[] = $stop;
             }
 
             $this->syncStats($route);
             $this->syncStopsToDeliveries($route);
+
+            // Notify driver if route is already active/in_progress
+            if ($route->status === 'in_progress' && $route->driver_id) {
+                $route->refresh();
+                $route->load(['driver']);
+
+                if ($route->driver) {
+                    // Broadcast Echo Event via Reverb to force client UI refresh
+                    event(new RouteAssignedToDriver($route));
+
+                    foreach ($newStops as $stop) {
+                        $stop->load(['delivery' => function ($q) {
+                            $q->select('*')
+                              ->selectRaw('ST_Y(dropoff_location::geometry) as dropoff_latitude')
+                              ->selectRaw('ST_X(dropoff_location::geometry) as dropoff_longitude')
+                              ->with('order.customer');
+                        }]);
+                        if ($stop->delivery) {
+                            $route->driver->notify(new \App\Notifications\DynamicActionNotification(
+                                'admin_assign_delivery',
+                                $route->company_id,
+                                [
+                                    'title' => 'New Delivery Assigned',
+                                    'description' => "Delivery stop #{$stop->sequence_number} assigned to you.",
+                                    'tracking_number' => $stop->delivery->tracking_number,
+                                    'customer_name' => $stop->delivery->order?->customer?->name ?? 'Guest Customer',
+                                    'address' => $stop->delivery->dropoff_address,
+                                    'lat' => $stop->delivery->dropoff_latitude,
+                                    'lng' => $stop->delivery->dropoff_longitude,
+                                    'delivery_id' => $stop->delivery->id,
+                                ]
+                            ));
+                        }
+                    }
+                }
+            }
 
             return $this->findById($route->id, $route->company_id);
         });

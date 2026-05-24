@@ -258,10 +258,60 @@ class TaskService
             }
         }
 
+        // Save old values for comparison
+        $oldStatus = $task->status;
+        $oldPriority = $task->priority;
+        $oldScheduledAt = $task->scheduled_at;
+        $oldPickupAddress = $task->pickup_address;
+        $oldDropoffAddress = $task->dropoff_address;
+        $oldDriverId = $task->driver_id;
+
         $task->update($data);
         $this->updateSpatialData($task->id, $pickupLat, $pickupLng, $dropoffLat, $dropoffLng);
 
-        return $this->findById($task->id);
+        $resolvedTask = $this->findById($task->id);
+
+        // Notify driver if a driver is assigned
+        if ($resolvedTask->driver_id) {
+            $driverChanged = $resolvedTask->driver_id !== $oldDriverId;
+            
+            if ($driverChanged) {
+                // If driver was newly assigned on update, trigger New Task notification!
+                app(\App\Services\Notification\NotificationService::class)->notifyNewTask($resolvedTask);
+            } else {
+                // Check what critical properties changed
+                $isStatusChanged = $resolvedTask->status !== $oldStatus;
+                $isPriorityChanged = $resolvedTask->priority !== $oldPriority;
+                $isScheduledChanged = $resolvedTask->scheduled_at != $oldScheduledAt;
+                $isAddressChanged = $resolvedTask->pickup_address !== $oldPickupAddress || $resolvedTask->dropoff_address !== $oldDropoffAddress;
+
+                $isCritical = $isStatusChanged || $isPriorityChanged || $isScheduledChanged || $isAddressChanged;
+                
+                // Determine if any updates were made (to avoid notifying if nothing changed)
+                $isAnyUpdate = $isCritical || isset($data['title']) || isset($data['description']) || isset($data['contact_name']) || isset($data['contact_phone']);
+
+                if ($isAnyUpdate) {
+                    $resolvedTask->driver->notify(new \App\Notifications\DynamicActionNotification(
+                        'admin_update_task',
+                        $resolvedTask->company_id,
+                        [
+                            'title' => $isStatusChanged ? 'Task Status Updated' : 'Task Details Updated',
+                            'description' => $isStatusChanged 
+                                ? "Task '{$resolvedTask->title}' status changed to " . ucfirst($resolvedTask->status) . "."
+                                : "Task '{$resolvedTask->title}' details have been updated.",
+                            'tracking_number' => $resolvedTask->tracking_number,
+                            'title_text' => $resolvedTask->title,
+                            'status' => $resolvedTask->status,
+                            'priority' => $resolvedTask->priority,
+                            'address' => $resolvedTask->dropoff_address ?: $resolvedTask->pickup_address,
+                        ],
+                        !$isCritical // isSilent if NOT critical
+                    ));
+                }
+            }
+        }
+
+        return $resolvedTask;
     }
 
     /**

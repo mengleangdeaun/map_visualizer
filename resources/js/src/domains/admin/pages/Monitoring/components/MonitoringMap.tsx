@@ -40,6 +40,7 @@ interface MonitoringMapProps {
     onResetSelection?: () => void;
     isLoading?: boolean;
     isFetching?: boolean;
+    isResolvingRoadblock?: boolean;
     focusTarget?: MonitoringFocusTarget | null;
     onClick?: (e: any) => void;
     pendingPickup?: { lat: number, lng: number } | null;
@@ -63,6 +64,7 @@ export const MonitoringMap = React.memo(({
     onResetSelection,
     isLoading, 
     isFetching,
+    isResolvingRoadblock,
     focusTarget,
     onClick,
     pendingPickup,
@@ -115,6 +117,17 @@ export const MonitoringMap = React.memo(({
             setSelectedType(focusTarget.type as any);
         }
     }, [focusTarget]);
+
+    // Clean up selected roadblock if it is resolved and disappears from the roadblocks list
+    useEffect(() => {
+        if (selectedType === 'road_alert' && selectedId) {
+            const stillExists = roadblocks.some(r => String(r.id) === selectedId);
+            if (!stillExists) {
+                setSelectedId(null);
+                setSelectedType(null);
+            }
+        }
+    }, [roadblocks, selectedId, selectedType]);
 
     if (isLoading && vehicles.length === 0 && locations.length === 0) {
         return (
@@ -342,16 +355,22 @@ export const MonitoringMap = React.memo(({
                                         size="sm"
                                         variant="destructive"
                                         className="w-full rounded-xl py-4 font-bold text-xs mt-1"
+                                        disabled={isResolvingRoadblock}
                                         onClick={(e: React.MouseEvent) => {
                                             e.stopPropagation();
                                             if (onResolveRoadblock) {
                                                 onResolveRoadblock(roadblock.id);
-                                                setSelectedId(null);
-                                                setSelectedType(null);
                                             }
                                         }}
                                     >
-                                        Resolve Roadblock
+                                        {isResolvingRoadblock ? (
+                                            <span className="flex items-center justify-center gap-1.5">
+                                                <span className="size-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                                <span>Resolving...</span>
+                                            </span>
+                                        ) : (
+                                            "Resolve Roadblock"
+                                        )}
                                     </Button>
                                 </Card>
                             </MarkerPopup>

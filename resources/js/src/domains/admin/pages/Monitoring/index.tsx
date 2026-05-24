@@ -227,6 +227,7 @@ const MonitoringPage = () => {
                             roadblocks={roadblocksData || []}
                             pendingRoadAlert={pendingRoadAlert}
                             onResolveRoadblock={resolveRoadblockMutation.mutate}
+                            isResolvingRoadblock={resolveRoadblockMutation.isPending}
                             isLoading={isHubsLoading || isVehiclesLoading || isTasksLoading || isDeliveriesLoading || isRoadblocksLoading}
                             isFetching={isHubsFetching || isVehiclesFetching || isTasksFetching || isDeliveriesFetching || isRoadblocksFetching}
                             focusTarget={focusTarget}

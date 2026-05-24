@@ -202,6 +202,30 @@ class DeliveryService
                 $deliveries[] = $newDelivery;
             }
 
+            // Dispatch assignment notification if a driver is assigned during creation
+            foreach ($deliveries as $deliveryRecord) {
+                if ($deliveryRecord->driver_id) {
+                    $deliveryRecord->refresh();
+                    $deliveryRecord->load(['driver', 'order.customer']);
+                    if ($deliveryRecord->driver) {
+                        $deliveryRecord->driver->notify(new \App\Notifications\DynamicActionNotification(
+                            'admin_assign_delivery',
+                            $deliveryRecord->company_id,
+                            [
+                                'title' => 'New Delivery Assigned',
+                                'description' => "Delivery tracking #{$deliveryRecord->tracking_number} has been assigned to you.",
+                                'tracking_number' => $deliveryRecord->tracking_number,
+                                'customer_name' => $deliveryRecord->order?->customer?->name ?? 'Guest Customer',
+                                'address' => $deliveryRecord->dropoff_address,
+                                'lat' => $deliveryRecord->dropoff_latitude,
+                                'lng' => $deliveryRecord->dropoff_longitude,
+                                'delivery_id' => $deliveryRecord->id,
+                            ]
+                        ));
+                    }
+                }
+            }
+
             return $this->findById($deliveries[0]->id, $companyId);
         });
     }
@@ -212,6 +236,12 @@ class DeliveryService
     public function update(Delivery $delivery, array $data): Delivery
     {
         return DB::transaction(function () use ($delivery, $data) {
+            // Save old values for comparison
+            $oldStatus = $delivery->status;
+            $oldAddress = $delivery->dropoff_address;
+            $oldScheduledAt = $delivery->scheduled_at;
+            $oldDriverId = $delivery->driver_id;
+
             // Handle PostGIS Spatial Point updates
             if (isset($data['dropoff_latitude']) && isset($data['dropoff_longitude'])) {
                 $lat = (float) $data['dropoff_latitude'];
@@ -311,7 +341,65 @@ class DeliveryService
             ];
             $deliveryData = array_intersect_key($data, array_flip($deliveryFields));
 
+            $driverChanged = isset($deliveryData['driver_id']) && $deliveryData['driver_id'] !== $delivery->driver_id;
+
             $delivery->update($deliveryData);
+
+            if ($driverChanged && $delivery->driver_id) {
+                $delivery->refresh();
+                $delivery->load(['driver', 'order.customer']);
+                if ($delivery->driver) {
+                    $delivery->driver->notify(new \App\Notifications\DynamicActionNotification(
+                        'admin_assign_delivery',
+                        $delivery->company_id,
+                        [
+                            'title' => 'New Delivery Assigned',
+                            'description' => "Delivery tracking #{$delivery->tracking_number} has been assigned to you.",
+                            'tracking_number' => $delivery->tracking_number,
+                            'customer_name' => $delivery->order?->customer?->name ?? 'Guest Customer',
+                            'address' => $delivery->dropoff_address,
+                            'lat' => $delivery->dropoff_latitude,
+                            'lng' => $delivery->dropoff_longitude,
+                            'delivery_id' => $delivery->id,
+                        ]
+                    ));
+                }
+            } elseif ($delivery->driver_id) {
+                $delivery->refresh();
+                
+                $isStatusChanged = $delivery->status !== $oldStatus;
+                $isAddressChanged = $delivery->dropoff_address !== $oldAddress;
+                $isScheduledChanged = $delivery->scheduled_at != $oldScheduledAt;
+
+                $isCritical = $isStatusChanged || $isAddressChanged || $isScheduledChanged;
+                
+                // Determine if anything actually changed (to avoid blank updates)
+                $isAnyUpdate = $isCritical || isset($data['customer_id']) || isset($data['items']) || !empty($deliveryData);
+
+                if ($isAnyUpdate) {
+                    $delivery->load(['driver', 'order.customer']);
+                    if ($delivery->driver) {
+                        $delivery->driver->notify(new \App\Notifications\DynamicActionNotification(
+                            'admin_update_delivery',
+                            $delivery->company_id,
+                            [
+                                'title' => $isStatusChanged ? 'Delivery Status Updated' : 'Delivery Details Updated',
+                                'description' => $isStatusChanged 
+                                    ? "Delivery tracking #{$delivery->tracking_number} status changed to " . ucfirst($delivery->status) . "."
+                                    : "Delivery tracking #{$delivery->tracking_number} details have been updated.",
+                                'tracking_number' => $delivery->tracking_number,
+                                'status' => $delivery->status,
+                                'customer_name' => $delivery->order?->customer?->name ?? 'Guest Customer',
+                                'address' => $delivery->dropoff_address,
+                                'lat' => $delivery->dropoff_latitude,
+                                'lng' => $delivery->dropoff_longitude,
+                                'delivery_id' => $delivery->id,
+                            ],
+                            !$isCritical // isSilent if NOT critical
+                        ));
+                    }
+                }
+            }
 
             return $this->findById($delivery->id, $delivery->company_id);
         });

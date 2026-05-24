@@ -24,6 +24,7 @@ class NewTaskNotification extends Notification implements ShouldQueue
     public function __construct(Task $task)
     {
         $this->task = $task;
+        $this->afterCommit = true;
     }
 
     /**
@@ -56,6 +57,7 @@ class NewTaskNotification extends Notification implements ShouldQueue
      */
     public function toDatabase($notifiable): array
     {
+        $coords = $this->getCoordinates($this->task->pickup_location ?: $this->task->dropoff_location, $this->task->pickup_lat ?: $this->task->dropoff_lat, $this->task->pickup_lng ?: $this->task->dropoff_lng);
         return [
             'task_id' => $this->task->id,
             'title' => $this->task->title,
@@ -63,6 +65,8 @@ class NewTaskNotification extends Notification implements ShouldQueue
             'priority' => $this->task->priority ?? 'normal',
             'status' => $this->task->status,
             'scheduled_at' => $this->task->scheduled_at,
+            'lat' => $coords ? $coords['lat'] : null,
+            'lng' => $coords ? $coords['lng'] : null,
         ];
     }
 
@@ -71,11 +75,14 @@ class NewTaskNotification extends Notification implements ShouldQueue
      */
     public function toBroadcast($notifiable): BroadcastMessage
     {
+        $coords = $this->getCoordinates($this->task->pickup_location ?: $this->task->dropoff_location, $this->task->pickup_lat ?: $this->task->dropoff_lat, $this->task->pickup_lng ?: $this->task->dropoff_lng);
         return new BroadcastMessage([
             'task_id' => $this->task->id,
             'title' => $this->task->title,
             'priority' => $this->task->priority ?? 'normal',
             'status' => $this->task->status,
+            'lat' => $coords ? $coords['lat'] : null,
+            'lng' => $coords ? $coords['lng'] : null,
         ]);
     }
 

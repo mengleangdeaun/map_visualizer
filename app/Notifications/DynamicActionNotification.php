@@ -18,15 +18,18 @@ class DynamicActionNotification extends Notification implements ShouldQueue
     public string $actionKey;
     public array $payload;
     public string $companyId;
+    public bool $isSilent = false;
 
     /**
      * Create a new notification instance.
      */
-    public function __construct(string $actionKey, string $companyId, array $payload)
+    public function __construct(string $actionKey, string $companyId, array $payload, bool $isSilent = false)
     {
         $this->actionKey = $actionKey;
         $this->companyId = $companyId;
         $this->payload = $payload;
+        $this->isSilent = $isSilent;
+        $this->afterCommit = true;
     }
 
     /**
@@ -43,11 +46,13 @@ class DynamicActionNotification extends Notification implements ShouldQueue
 
         // 1. Database & Broadcast channel (PWA toast/notifications history)
         if ($settings->notify_pwa) {
-            $channels[] = 'database';
+            if (!$this->isSilent) {
+                $channels[] = 'database';
+            }
             $channels[] = 'broadcast';
         }
 
-        // 2. Telegram Whitelist checks (Super Adminallowed_events & Company Admin enabled settings)
+        // 2. Telegram Whitelist checks (Super Admin allowed_events & Company Admin enabled settings)
         $allowedEvents = $settings->allowed_events ?? [];
         $eventSettings = $settings->event_settings ?? [];
 
@@ -55,7 +60,7 @@ class DynamicActionNotification extends Notification implements ShouldQueue
         $isWhitelisted = in_array($this->actionKey, $allowedEvents);
         $isEnabled = ($eventSettings[$this->actionKey]['enabled'] ?? true);
 
-        if ($isWhitelisted && $isEnabled && ($settings->notify_company_telegram || $settings->notify_driver_telegram)) {
+        if (!$this->isSilent && $isWhitelisted && $isEnabled && ($settings->notify_company_telegram || $settings->notify_driver_telegram)) {
             $channels[] = TelegramChannel::class;
         }
 
@@ -102,8 +107,18 @@ class DynamicActionNotification extends Notification implements ShouldQueue
         $eventSettings = $settings->event_settings ?? [];
         $actionSettings = $eventSettings[$this->actionKey] ?? null;
 
-        $targetChatId = $actionSettings['chat_id'] ?? $settings->company_chat_id;
-        $targetTopicId = $actionSettings['topic_id'] ?? null;
+        $targetChatId = null;
+        $targetTopicId = null;
+
+        // Check if driver private telegram routing is allowed and credentials exist
+        if ($settings->notify_driver_telegram && $notifiable instanceof \App\Models\User\User && $notifiable->role === 'driver' && $notifiable->telegram_chat_id) {
+            $targetChatId = $notifiable->telegram_chat_id;
+            $targetTopicId = $notifiable->telegram_topic_id;
+        } else {
+            // Fall back to custom action-specific chat or the company default group
+            $targetChatId = $actionSettings['chat_id'] ?? $settings->company_chat_id;
+            $targetTopicId = $actionSettings['topic_id'] ?? null;
+        }
 
         if (!$targetChatId) {
             return;

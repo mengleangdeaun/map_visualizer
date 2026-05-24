@@ -41,6 +41,10 @@
     "delete_all_warning": "Are you sure you want to delete all notifications? This action cannot be undone.",
     "delete_notification": "Delete Notification",
     "delete": "Delete",
+    "view_task": "View Task",
+    "view_route": "View Route",
+    "view": "View",
+    "mark_read": "Mark Read",
 
     "active_route": "Active Route",
     "route_progress": "Route Progress",

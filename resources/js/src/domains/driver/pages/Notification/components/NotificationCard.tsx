@@ -40,100 +40,110 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({
     const { t } = useTranslation();
     const isUnread = !notification.read_at;
     const data = notification.data;
+    const isRouteAction = data.action?.includes('delivery') || data.action?.includes('route');
+    const isRoadblock = data.action?.includes('roadblock');
 
     return (
         <Card
             className={cn(
-                "p-4 flex flex-col gap-3 relative transition-all shadow-sm",
-                isUnread ? "bg-primary/5 shadow-primary/5" : "bg-card"
+                "relative p-4 pl-7 flex flex-col gap-2 transition-colors duration-200 border-none ring-0 shadow-none rounded-xl",
+                isUnread 
+                    ? "bg-primary/[0.04] dark:bg-primary/[0.02]" 
+                    : "bg-transparent hover:bg-muted/30"
             )}
         >
-            {/* Unread Pulse Indicator */}
+            {/* Minimalist Absolute Unread dot */}
             {isUnread && (
-                <span className="absolute top-2 right-2 flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                <span className="absolute top-[22px] left-3 flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-60"></span>
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
                 </span>
             )}
 
-            {/* Card Header */}
-            <div className="flex items-center justify-between">
-                {data.priority && (
-                    <span
-                        className={cn(
-                            "text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider",
-                            data.priority === 'urgent' && "bg-destructive/10 text-destructive border border-destructive/20 animate-pulse",
-                            data.priority === 'high' && "bg-amber-500/10 text-amber-600 border border-amber-500/20",
-                            data.priority === 'normal' && "bg-slate-500/10 text-slate-600 border border-slate-500/20",
-                            data.priority === 'low' && "bg-blue-500/10 text-blue-600 border border-blue-500/20"
-                        )}
-                    >
-                        {t(`priority_${data.priority}`) || data.priority}
-                    </span>
-                )}
-
-                <span className="text-[9px] text-muted-foreground font-bold flex items-center gap-1">
-                    <Clock size={10} />
+            {/* Header: Priority & Time */}
+            <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5">
+                    {data.priority && (
+                        <span
+                            className={cn(
+                                "text-[9px] font-bold tracking-wider uppercase",
+                                data.priority === 'urgent' && "text-destructive",
+                                data.priority === 'high' && "text-amber-500",
+                                data.priority === 'normal' && "text-muted-foreground/80",
+                                data.priority === 'low' && "text-blue-500"
+                            )}
+                        >
+                            {t(`priority_${data.priority}`) || data.priority}
+                        </span>
+                    )}
+                </div>
+                <span className="text-[10px] text-muted-foreground/60 font-medium flex items-center gap-1">
+                    <Clock size={10} className="opacity-60" />
                     {formatRelativeTime(notification.created_at)}
                 </span>
             </div>
 
-            {/* Body */}
-            <div className="space-y-1 pr-6 text-left">
+            {/* Content Body */}
+            <div className="space-y-0.5 text-left">
                 <h3
                     className={cn(
-                        "font-black text-sm tracking-tight leading-tight",
-                        isUnread ? "text-primary" : "text-foreground"
+                        "text-sm font-semibold tracking-tight leading-tight",
+                        isUnread ? "text-primary" : "text-foreground/90"
                     )}
                 >
                     {data.title}
                 </h3>
                 {data.description && (
-                    <p className="text-[11px] text-muted-foreground font-medium leading-relaxed">
+                    <p className="text-[11.5px] text-muted-foreground/80 font-normal leading-normal">
                         {data.description}
                     </p>
                 )}
             </div>
 
-            {/* Actions */}
-            <div className="flex items-center gap-2 mt-1 border-t border-border/20 pt-3">
+            {/* Actions Footer */}
+            <div className="flex items-center gap-3 mt-1">
                 {isUnread && (
                     <Button
                         variant="ghost"
                         size="sm"
-                        className="h-8 text-[10px] font-medium uppercase tracking-wide text-muted-foreground hover:text-foreground flex items-center gap-1 px-2.5 bg-muted/30 hover:bg-muted/50 rounded-lg transition-all"
+                        className="h-7 text-[10px] font-semibold text-muted-foreground/80 hover:text-foreground flex items-center gap-1 px-2 rounded hover:bg-muted/40 transition-colors"
                         onClick={() => onMarkRead(notification.id)}
                         disabled={isMarkingReadPending}
                     >
-                        <Eye size={12} />
+                        <Eye size={11} />
                         {t('mark_read') || 'Mark Read'}
                     </Button>
                 )}
 
                 <Button
+                    variant="ghost"
                     size="sm"
                     className={cn(
-                        "h-8 text-[10px] font-medium uppercase tracking-wide flex items-center gap-1 px-2.5 rounded-lg transition-all",
+                        "h-7 text-[10px] font-semibold flex items-center gap-1 px-2 rounded transition-colors",
                         isUnread
-                            ? "bg-primary hover:bg-primary/90 text-white shadow-md shadow-primary/10"
-                            : "bg-muted text-muted-foreground hover:bg-muted/80"
+                            ? "text-primary hover:text-primary/80 hover:bg-primary/[0.04]"
+                            : "text-muted-foreground/80 hover:text-foreground hover:bg-muted/40"
                     )}
                     onClick={onViewTask}
                 >
-                    <ExternalLink size={12} />
-                    {t('view_task') || 'View Task'}
+                    <ExternalLink size={11} />
+                    {isRouteAction 
+                        ? (t('view_route') || 'View Route') 
+                        : isRoadblock 
+                            ? (t('view') || 'View') 
+                            : (t('view_task') || 'View Task')}
                 </Button>
 
-                {/* Individual Trash Button */}
+                {/* Individual Trash/Delete Action */}
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/5 rounded-lg transition-all shrink-0 ml-auto"
+                    className="h-7 w-7 text-muted-foreground/60 hover:text-destructive hover:bg-destructive/5 rounded transition-all shrink-0 ml-auto"
                     onClick={() => onDelete(notification.id)}
                     disabled={isDeletingPending}
                     title={t('delete') || 'Delete'}
                 >
-                    <Trash2 size={13} />
+                    <Trash2 size={12} />
                 </Button>
             </div>
         </Card>

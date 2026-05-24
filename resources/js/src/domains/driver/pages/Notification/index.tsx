@@ -111,7 +111,38 @@ const DriverNotifications = () => {
                                 notification={notification}
                                 onMarkRead={(id) => markAsReadMutation.mutate(id)}
                                 onDelete={(id) => deleteMutation.mutate(id)}
-                                onViewTask={() => navigate({ to: '/driver/tasks' })}
+                                onViewTask={() => {
+                                    const data = notification.data as any;
+                                    const action = data.action || '';
+                                    const metadata = data.metadata || {};
+                                    
+                                    const lat = data.lat || metadata.lat;
+                                    const lng = data.lng || metadata.lng;
+                                    const id = data.task_id || data.delivery_id || metadata.delivery_id || metadata.task_id || notification.id;
+
+                                    if (lat && lng) {
+                                        let focusType = 'task';
+                                        if (action.includes('delivery')) {
+                                            focusType = 'delivery';
+                                        } else if (action.includes('roadblock')) {
+                                            focusType = 'roadblock';
+                                        }
+
+                                        navigate({
+                                            to: '/driver/map',
+                                            search: {
+                                                lat: String(lat),
+                                                lng: String(lng),
+                                                type: focusType,
+                                                id: String(id),
+                                            },
+                                        });
+                                    } else if (action.includes('delivery') || action.includes('route')) {
+                                        navigate({ to: '/driver/route' });
+                                    } else {
+                                        navigate({ to: '/driver/tasks' });
+                                    }
+                                }}
                                 isMarkingReadPending={markAsReadMutation.isPending}
                                 isDeletingPending={deleteMutation.isPending}
                             />

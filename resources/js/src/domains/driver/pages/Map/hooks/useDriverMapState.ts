@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from '@tanstack/react-router';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useLocationStore } from '../../../store/useLocationStore';
 import { useNavigationStore } from '../../../store/useNavigationStore';
 import { pwaToast as toast } from '../../../store/usePwaToastStore';
@@ -23,8 +23,14 @@ export const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2
 
 export const useDriverMapState = () => {
     const navigate = useNavigate();
+    const search = useSearch({ strict: false }) as Record<string, string>;
     const queryClient = useQueryClient();
     const updateTaskStatusMutation = useUpdateTaskStatus();
+
+    const focusLat = search.lat ? parseFloat(search.lat) : null;
+    const focusLng = search.lng ? parseFloat(search.lng) : null;
+    const focusType = search.type as 'delivery' | 'task' | 'roadblock' | null;
+    const focusId = search.id || null;
 
     // Track user location from background location store
     const { latitude: userLat, longitude: userLng } = useLocationStore();
@@ -78,17 +84,37 @@ export const useDriverMapState = () => {
 
     const [planningLeg2Route, setPlanningLeg2Route] = useState<CustomRoute | null>(null);
 
-    // 1. Sync current location & auto-recenter once
+    // 1. Sync current location & auto-recenter once if no focus coordinates are specified
     useEffect(() => {
         if (userLat && userLng) {
             const loc: [number, number] = [userLng, userLat];
             setUserLocation(loc);
+            if (!focusLat && !focusLng) {
+                setViewport(prev => ({
+                    ...prev,
+                    center: loc
+                }));
+            }
+        }
+    }, [userLat, userLng, focusLat, focusLng]);
+
+    // 1b. Fly to and focus on custom search parameters coordinate on mount/update
+    useEffect(() => {
+        if (focusLat && focusLng) {
             setViewport(prev => ({
                 ...prev,
-                center: loc
+                center: [focusLng, focusLat],
+                zoom: 16, // Fly in close!
             }));
+
+            // Sync the active filter tab to the focal type
+            if (focusType === 'delivery') {
+                setActiveFilter('deliveries');
+            } else if (focusType === 'task') {
+                setActiveFilter('tasks');
+            }
         }
-    }, [userLat, userLng]);
+    }, [focusLat, focusLng, focusType]);
 
     // 2. Fetch queries via decoupled service layer
     const { data: routeData } = useQuery({
@@ -102,6 +128,57 @@ export const useDriverMapState = () => {
         queryKey: ['driver', 'road-alerts'],
         queryFn: () => driverMapService.fetchRoadAlerts(),
     });
+
+    // Helper memoized lists
+    const deliveriesList = useMemo(() => {
+        return (routeData?.stops || []).filter(
+            (stop: StopItem) => stop.delivery.status !== 'delivered' && 
+                               stop.delivery.status !== 'failed' && 
+                               stop.delivery.status !== 'rescheduled'
+        );
+    }, [routeData]);
+
+    const tasksList = useMemo(() => {
+        return tasksData?.data || [];
+    }, [tasksData]);
+
+    const roadblocksList = useMemo(() => {
+        return roadblocksData || [];
+    }, [roadblocksData]);
+
+    // Auto-select focused item from search parameters on load/update
+    useEffect(() => {
+        if (!focusId || !focusType) return;
+
+        if (focusType === 'delivery' && deliveriesList.length > 0) {
+            const item = (deliveriesList as StopItem[]).find(
+                s => String(s.id) === String(focusId) || String(s.delivery?.id) === String(focusId)
+            );
+            if (item) {
+                setSelectedItem(item);
+                setSelectedType('delivery');
+                setIsDrawerOpen(true);
+            }
+        } else if (focusType === 'task' && tasksList.length > 0) {
+            const item = (tasksList as ErrandTask[]).find(
+                t => String(t.id) === String(focusId)
+            );
+            if (item) {
+                setSelectedItem(item);
+                setSelectedType('task');
+                setIsDrawerOpen(true);
+            }
+        } else if (focusType === 'roadblock' && roadblocksList.length > 0) {
+            const item = (roadblocksList as RoadblockAlert[]).find(
+                r => String(r.id) === String(focusId)
+            );
+            if (item) {
+                setSelectedItem(item);
+                setSelectedType('roadblock');
+                setIsDrawerOpen(true);
+            }
+        }
+    }, [focusId, focusType, deliveriesList, tasksList, roadblocksList]);
 
     // 3. Proximity watcher: auto transition from pickup to dropoff
     useEffect(() => {
@@ -460,13 +537,9 @@ export const useDriverMapState = () => {
         clearNavigation,
 
         // API queries
-        deliveries: (routeData?.stops || []).filter(
-            (stop: StopItem) => stop.delivery.status !== 'delivered' && 
-                               stop.delivery.status !== 'failed' && 
-                               stop.delivery.status !== 'rescheduled'
-        ),
-        tasks: tasksData?.data || [],
-        roadblocks: roadblocksData || [],
+        deliveries: deliveriesList,
+        tasks: tasksList,
+        roadblocks: roadblocksList,
         routeData,
 
         // Actions & handlers

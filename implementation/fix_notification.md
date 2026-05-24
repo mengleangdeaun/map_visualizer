@@ -5,7 +5,6 @@ Driver Private Telegram Routing: In addition to fixing in-app alerts, we discove
 I have documented the complete architecture, draft modifications, and test coverage in the updated implementation plan: 👉 
 implementation_plan.md
 
-Please review the plan and let me know if you would like me to proceed with execution.
 
 # Implementation Plan - Route Publishing & Delivery Assignment Notifications
 
@@ -178,7 +177,7 @@ public function toTelegram($notifiable): void
 ### Automated Verification
 - Run code validation checking syntax and type constraints:
   - Verify zero PHP syntax errors.
-  - Verify React compilation using `npm run build`.
+  - Verify TypeScript compilation using `npx tsc --noEmit`.
 
 ### Manual / Integration Verification
 - **Websocket Real-Time Verification:** Publish an optimized route from the `/admin/fleet/dispatch` screen, and verify that the driver's active map and delivery stops lists immediately reload and display the `New route assigned` toast.
