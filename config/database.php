@@ -14,11 +14,17 @@ if ($databaseUrl && str_contains($databaseUrl, 'pg.laravel.cloud')) {
             parse_str($parsed['query'], $query);
         }
 
+        // Enforce SSL requirement and completely remove conflicting options key
         $query['sslmode'] = 'require';
-        $query['options'] = "endpoint={$endpointId}";
+        unset($query['options']);
+
+        // Prefix the username with endpoint-id to bypass SNI requirements
+        $user = isset($parsed['user']) ? $parsed['user'] : '';
+        if ($user && !str_contains($user, '$') && !str_contains($user, ';')) {
+            $user = $endpointId . '$' . $user;
+        }
 
         $scheme = isset($parsed['scheme']) ? $parsed['scheme'] . '://' : '';
-        $user = isset($parsed['user']) ? $parsed['user'] : '';
         $pass = isset($parsed['pass']) ? ':' . $parsed['pass'] : '';
         $auth = ($user || $pass) ? "$user$pass@" : '';
         $host = $parsed['host'];
@@ -97,14 +103,19 @@ return [
             'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '5432'),
             'database' => env('DB_DATABASE', 'forge'),
-            'username' => env('DB_USERNAME', 'forge'),
+            'username' => (
+                str_contains(env('DB_HOST', ''), 'pg.laravel.cloud') && 
+                !str_contains(env('DB_USERNAME', ''), '$') && 
+                !str_contains(env('DB_USERNAME', ''), ';')
+            ) 
+                ? explode('.', env('DB_HOST', ''))[0] . '$' . env('DB_USERNAME', 'forge')
+                : env('DB_USERNAME', 'forge'),
             'password' => env('DB_PASSWORD', ''),
             'charset' => 'utf8',
             'prefix' => '',
             'prefix_indexes' => true,
             'search_path' => 'public',
             'sslmode' => env('DB_SSLMODE', str_contains(env('DB_HOST', ''), 'pg.laravel.cloud') ? 'require' : 'prefer'),
-            'options' => env('DB_OPTIONS', str_contains(env('DB_HOST', ''), 'pg.laravel.cloud') ? 'endpoint=' . explode('.', env('DB_HOST', ''))[0] : null),
         ],
 
         'sqlsrv' => [
