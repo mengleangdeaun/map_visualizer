@@ -51,7 +51,7 @@ class AppServiceProvider extends ServiceProvider
             $username = config('database.connections.pgsql.username');
             if ($username && ! str_contains($username, '$') && ! str_contains($username, ';')) {
                 config([
-                    'database.connections.pgsql.username' => $endpointId.'$'.$username,
+                    'database.connections.pgsql.username' => $endpointId.';'.$username,
                 ]);
             }
         }
