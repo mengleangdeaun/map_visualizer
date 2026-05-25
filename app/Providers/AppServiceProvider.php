@@ -55,5 +55,15 @@ class AppServiceProvider extends ServiceProvider
                 ]);
             }
         }
+
+        // DEBUG: Inspect connection state and env at boot time
+        throw new \Exception(
+            "DEBUG_DEPLOY_BOOTSTRAP | " .
+            "DATABASE_URL_SET: " . ($databaseUrl ? 'YES' : 'NO') . " | " .
+            "DB_HOST: " . config('database.connections.pgsql.host') . " | " .
+            "DB_USERNAME: " . config('database.connections.pgsql.username') . " | " .
+            "DB_DATABASE: " . config('database.connections.pgsql.database') . " | " .
+            "DB_SSLMODE: " . config('database.connections.pgsql.sslmode')
+        );
     }
 }
