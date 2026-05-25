@@ -16,6 +16,29 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $databaseUrl = env('DATABASE_URL');
+        if ($databaseUrl) {
+            $parsed = parse_url($databaseUrl);
+            if (isset($parsed['host'])) {
+                config(['database.connections.pgsql.host' => $parsed['host']]);
+            }
+            if (isset($parsed['port'])) {
+                config(['database.connections.pgsql.port' => $parsed['port']]);
+            }
+            if (isset($parsed['user'])) {
+                config(['database.connections.pgsql.username' => urldecode($parsed['user'])]);
+            }
+            if (isset($parsed['pass'])) {
+                config(['database.connections.pgsql.password' => urldecode($parsed['pass'])]);
+            }
+            if (isset($parsed['path'])) {
+                config(['database.connections.pgsql.database' => ltrim($parsed['path'], '/')]);
+            }
+
+            // Clear url key so Laravel's DatabaseManager won't parse it and overwrite our custom settings
+            config(['database.connections.pgsql.url' => null]);
+        }
+
         $host = config('database.connections.pgsql.host');
         if ($host && str_contains($host, 'pg.laravel.cloud')) {
             $hostParts = explode('.', $host);
@@ -26,9 +49,9 @@ class AppServiceProvider extends ServiceProvider
             ]);
 
             $username = config('database.connections.pgsql.username');
-            if ($username && !str_contains($username, '$') && !str_contains($username, ';')) {
+            if ($username && ! str_contains($username, '$') && ! str_contains($username, ';')) {
                 config([
-                    'database.connections.pgsql.username' => $endpointId . ';' . $username,
+                    'database.connections.pgsql.username' => $endpointId.';'.$username,
                 ]);
             }
         }
