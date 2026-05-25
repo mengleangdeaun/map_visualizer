@@ -36,7 +36,7 @@ if (str_contains($pgsqlHost, 'pg.laravel.cloud')) {
     $endpointId = $hostParts[0];
     
     // Inject the Neon endpoint ID directly into the DSN dbname parameter to avoid options array crash
-    $pgsqlDatabase = $pgsqlDatabase . ";options='endpoint=" . $endpointId . "'";
+    $pgsqlDatabase = $pgsqlDatabase . ";options='-c endpoint=" . $endpointId . "'";
     $pgsqlSslmode = 'require';
 }
 
