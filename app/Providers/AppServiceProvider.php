@@ -48,10 +48,11 @@ class AppServiceProvider extends ServiceProvider
                 'database.connections.pgsql.sslmode' => 'require',
             ]);
 
-            $username = config('database.connections.pgsql.username');
-            if ($username && ! str_contains($username, '$') && ! str_contains($username, ';')) {
+            // Append options=endpoint=<endpoint-id> directly to the host config parameter.
+            // This bypasses the single-quote wrapping of dbname and avoids all space-splitting bugs.
+            if (!str_contains($host, 'options=')) {
                 config([
-                    'database.connections.pgsql.username' => $endpointId.';'.$username,
+                    'database.connections.pgsql.host' => $host . ";options=endpoint=" . $endpointId,
                 ]);
             }
         }
