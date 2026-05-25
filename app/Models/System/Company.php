@@ -40,7 +40,7 @@ class Company extends Model
     protected function logoFullUrl(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->logo_url ? (filter_var($this->logo_url, FILTER_VALIDATE_URL) ? $this->logo_url : Storage::disk('public')->url($this->logo_url)) : null,
+            get: fn () => $this->logo_url ? (filter_var($this->logo_url, FILTER_VALIDATE_URL) ? $this->logo_url : Storage::disk(config('filesystems.default'))->url($this->logo_url)) : null,
         );
     }
 

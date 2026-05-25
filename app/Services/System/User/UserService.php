@@ -109,7 +109,7 @@ class UserService
         }
 
         if (isset($data['profile'])) {
-            $user->profile_url = $data['profile']->store('profiles', 'public');
+            $user->profile_url = $data['profile']->store('profiles', config('filesystems.default'));
         }
 
         if (isset($data['permissions']) && is_string($data['permissions'])) {
@@ -134,7 +134,7 @@ class UserService
 
         if (isset($data['profile'])) {
             $this->deleteProfileImage($user);
-            $user->profile_url = $data['profile']->store('profiles', 'public');
+            $user->profile_url = $data['profile']->store('profiles', config('filesystems.default'));
             unset($data['profile_url']);
         } elseif (array_key_exists('profile_url', $data) && empty($data['profile_url'])) {
             $user->profile_url = null;
@@ -165,8 +165,8 @@ class UserService
     protected function deleteProfileImage(User $user): void
     {
         $oldPath = $user->getAttributes()['profile_url'] ?? null;
-        if ($oldPath && Storage::disk('public')->exists($oldPath)) {
-            Storage::disk('public')->delete($oldPath);
+        if ($oldPath && Storage::disk(config('filesystems.default'))->exists($oldPath)) {
+            Storage::disk(config('filesystems.default'))->delete($oldPath);
         }
     }
 }

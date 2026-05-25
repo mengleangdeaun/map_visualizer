@@ -73,7 +73,7 @@ class User extends Authenticatable
     protected function profileFullUrl(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->profile_url ? (filter_var($this->profile_url, FILTER_VALIDATE_URL) ? $this->profile_url : Storage::disk('public')->url($this->profile_url)) : null,
+            get: fn () => $this->profile_url ? (filter_var($this->profile_url, FILTER_VALIDATE_URL) ? $this->profile_url : Storage::disk(config('filesystems.default'))->url($this->profile_url)) : null,
         );
     }
 

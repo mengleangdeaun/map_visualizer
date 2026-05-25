@@ -89,7 +89,7 @@ class CompanyController extends Controller
         $company->fill($data);
         
         if ($request->hasFile('logo')) {
-            $company->logo_url = $request->file('logo')->store('logos', 'public');
+            $company->logo_url = $request->file('logo')->store('logos', config('filesystems.default'));
         }
 
         $company->save();
@@ -154,15 +154,15 @@ class CompanyController extends Controller
 
         if ($request->hasFile('logo')) {
             $oldPath = $company->getAttributes()['logo_url'] ?? null;
-            if ($oldPath && Storage::disk('public')->exists($oldPath)) {
-                Storage::disk('public')->delete($oldPath);
+            if ($oldPath && Storage::disk(config('filesystems.default'))->exists($oldPath)) {
+                Storage::disk(config('filesystems.default'))->delete($oldPath);
             }
-            $company->logo_url = $request->file('logo')->store('logos', 'public');
+            $company->logo_url = $request->file('logo')->store('logos', config('filesystems.default'));
             unset($data['logo_url']); // Remove from data array to avoid double-handling
         } elseif ($request->exists('logo_url') && ($request->logo_url === null || $request->logo_url === '')) {
             $oldPath = $company->getAttributes()['logo_url'] ?? null;
-            if ($oldPath && Storage::disk('public')->exists($oldPath)) {
-                Storage::disk('public')->delete($oldPath);
+            if ($oldPath && Storage::disk(config('filesystems.default'))->exists($oldPath)) {
+                Storage::disk(config('filesystems.default'))->delete($oldPath);
             }
             $company->logo_url = null;
             unset($data['logo_url']);
@@ -205,8 +205,8 @@ class CompanyController extends Controller
         // Get raw path from database to avoid accessor interference
         $oldPath = $company->getAttributes()['logo_url'] ?? null;
         
-        if ($oldPath && Storage::disk('public')->exists($oldPath)) {
-            Storage::disk('public')->delete($oldPath);
+        if ($oldPath && Storage::disk(config('filesystems.default'))->exists($oldPath)) {
+            Storage::disk(config('filesystems.default'))->delete($oldPath);
         }
         
         $company->delete();
