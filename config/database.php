@@ -3,37 +3,41 @@
 use Illuminate\Support\Str;
 
 $databaseUrl = env('DATABASE_URL');
-if ($databaseUrl && str_contains($databaseUrl, 'pg.laravel.cloud')) {
+$pgsqlDatabase = env('DB_DATABASE', 'forge');
+$pgsqlHost = env('DB_HOST', '127.0.0.1');
+$pgsqlUsername = env('DB_USERNAME', 'forge');
+$pgsqlPassword = env('DB_PASSWORD', '');
+$pgsqlPort = env('DB_PORT', '5432');
+$pgsqlSslmode = env('DB_SSLMODE', 'prefer');
+
+if ($databaseUrl) {
     $parsed = parse_url($databaseUrl);
     if (isset($parsed['host'])) {
-        $hostParts = explode('.', $parsed['host']);
-        $endpointId = $hostParts[0];
-
-        $query = [];
-        if (isset($parsed['query'])) {
-            parse_str($parsed['query'], $query);
-        }
-
-        // Enforce SSL requirement and completely remove conflicting options key
-        $query['sslmode'] = 'require';
-        unset($query['options']);
-
-        // Prefix the username with endpoint-id to bypass SNI requirements
-        $user = isset($parsed['user']) ? $parsed['user'] : '';
-        if ($user && !str_contains($user, '$') && !str_contains($user, ';')) {
-            $user = $endpointId . '$' . $user;
-        }
-
-        $scheme = isset($parsed['scheme']) ? $parsed['scheme'] . '://' : '';
-        $pass = isset($parsed['pass']) ? ':' . $parsed['pass'] : '';
-        $auth = ($user || $pass) ? "$user$pass@" : '';
-        $host = $parsed['host'];
-        $port = isset($parsed['port']) ? ':' . $parsed['port'] : '';
-        $path = isset($parsed['path']) ? $parsed['path'] : '';
-        $queryString = '?' . http_build_query($query);
-
-        $databaseUrl = $scheme . $auth . $host . $port . $path . $queryString;
+        $pgsqlHost = $parsed['host'];
     }
+    if (isset($parsed['port'])) {
+        $pgsqlPort = $parsed['port'];
+    }
+    if (isset($parsed['user'])) {
+        $pgsqlUsername = urldecode($parsed['user']);
+    }
+    if (isset($parsed['pass'])) {
+        $pgsqlPassword = urldecode($parsed['pass']);
+    }
+    if (isset($parsed['path'])) {
+        $pgsqlDatabase = ltrim($parsed['path'], '/');
+    }
+    // Prevent Laravel from parsing the URL itself, so it respects our parsed values
+    $databaseUrl = null;
+}
+
+if (str_contains($pgsqlHost, 'pg.laravel.cloud')) {
+    $hostParts = explode('.', $pgsqlHost);
+    $endpointId = $hostParts[0];
+    
+    // Inject the Neon endpoint ID directly into the DSN dbname parameter to avoid options array crash
+    $pgsqlDatabase = $pgsqlDatabase . ";options='endpoint=" . $endpointId . "'";
+    $pgsqlSslmode = 'require';
 }
 
 return [
@@ -100,22 +104,16 @@ return [
         'pgsql' => [
             'driver' => 'pgsql',
             'url' => $databaseUrl,
-            'host' => env('DB_HOST', '127.0.0.1'),
-            'port' => env('DB_PORT', '5432'),
-            'database' => env('DB_DATABASE', 'forge'),
-            'username' => (
-                str_contains(env('DB_HOST', ''), 'pg.laravel.cloud') && 
-                !str_contains(env('DB_USERNAME', ''), '$') && 
-                !str_contains(env('DB_USERNAME', ''), ';')
-            ) 
-                ? explode('.', env('DB_HOST', ''))[0] . '$' . env('DB_USERNAME', 'forge')
-                : env('DB_USERNAME', 'forge'),
-            'password' => env('DB_PASSWORD', ''),
+            'host' => $pgsqlHost,
+            'port' => $pgsqlPort,
+            'database' => $pgsqlDatabase,
+            'username' => $pgsqlUsername,
+            'password' => $pgsqlPassword,
             'charset' => 'utf8',
             'prefix' => '',
             'prefix_indexes' => true,
             'search_path' => 'public',
-            'sslmode' => env('DB_SSLMODE', str_contains(env('DB_HOST', ''), 'pg.laravel.cloud') ? 'require' : 'prefer'),
+            'sslmode' => $pgsqlSslmode,
         ],
 
         'sqlsrv' => [
