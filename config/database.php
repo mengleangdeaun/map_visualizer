@@ -2,46 +2,6 @@
 
 use Illuminate\Support\Str;
 
-$databaseUrl = env('DATABASE_URL');
-$pgsqlDatabase = env('DB_DATABASE', 'forge');
-$pgsqlHost = env('DB_HOST', '127.0.0.1');
-$pgsqlUsername = env('DB_USERNAME', 'forge');
-$pgsqlPassword = env('DB_PASSWORD', '');
-$pgsqlPort = env('DB_PORT', '5432');
-$pgsqlSslmode = env('DB_SSLMODE', 'prefer');
-
-if ($databaseUrl) {
-    $parsed = parse_url($databaseUrl);
-    if (isset($parsed['host'])) {
-        $pgsqlHost = $parsed['host'];
-    }
-    if (isset($parsed['port'])) {
-        $pgsqlPort = $parsed['port'];
-    }
-    if (isset($parsed['user'])) {
-        $pgsqlUsername = urldecode($parsed['user']);
-    }
-    if (isset($parsed['pass'])) {
-        $pgsqlPassword = urldecode($parsed['pass']);
-    }
-    if (isset($parsed['path'])) {
-        $pgsqlDatabase = ltrim($parsed['path'], '/');
-    }
-    // Prevent Laravel from parsing the URL itself, so it respects our parsed values
-    $databaseUrl = null;
-}
-
-if (str_contains($pgsqlHost, 'pg.laravel.cloud')) {
-    $hostParts = explode('.', $pgsqlHost);
-    $endpointId = $hostParts[0];
-    
-    // Prefix the username with endpoint-id to bypass SNI requirements on older libpq versions
-    if ($pgsqlUsername && !str_contains($pgsqlUsername, '$') && !str_contains($pgsqlUsername, ';')) {
-        $pgsqlUsername = $endpointId . '$' . $pgsqlUsername;
-    }
-    $pgsqlSslmode = 'require';
-}
-
 return [
 
     /*
@@ -105,17 +65,17 @@ return [
 
         'pgsql' => [
             'driver' => 'pgsql',
-            'url' => $databaseUrl,
-            'host' => $pgsqlHost,
-            'port' => $pgsqlPort,
-            'database' => $pgsqlDatabase,
-            'username' => $pgsqlUsername,
-            'password' => $pgsqlPassword,
+            'url' => env('DATABASE_URL'),
+            'host' => env('DB_HOST', '127.0.0.1'),
+            'port' => env('DB_PORT', '5432'),
+            'database' => env('DB_DATABASE', 'forge'),
+            'username' => env('DB_USERNAME', 'forge'),
+            'password' => env('DB_PASSWORD', ''),
             'charset' => 'utf8',
             'prefix' => '',
             'prefix_indexes' => true,
             'search_path' => 'public',
-            'sslmode' => $pgsqlSslmode,
+            'sslmode' => env('DB_SSLMODE', 'prefer'),
         ],
 
         'sqlsrv' => [
