@@ -2,6 +2,34 @@
 
 use Illuminate\Support\Str;
 
+$databaseUrl = env('DATABASE_URL');
+if ($databaseUrl && str_contains($databaseUrl, 'pg.laravel.cloud')) {
+    $parsed = parse_url($databaseUrl);
+    if (isset($parsed['host'])) {
+        $hostParts = explode('.', $parsed['host']);
+        $endpointId = $hostParts[0];
+
+        $query = [];
+        if (isset($parsed['query'])) {
+            parse_str($parsed['query'], $query);
+        }
+
+        $query['sslmode'] = 'require';
+        $query['options'] = "endpoint={$endpointId}";
+
+        $scheme = isset($parsed['scheme']) ? $parsed['scheme'] . '://' : '';
+        $user = isset($parsed['user']) ? $parsed['user'] : '';
+        $pass = isset($parsed['pass']) ? ':' . $parsed['pass'] : '';
+        $auth = ($user || $pass) ? "$user$pass@" : '';
+        $host = $parsed['host'];
+        $port = isset($parsed['port']) ? ':' . $parsed['port'] : '';
+        $path = isset($parsed['path']) ? $parsed['path'] : '';
+        $queryString = '?' . http_build_query($query);
+
+        $databaseUrl = $scheme . $auth . $host . $port . $path . $queryString;
+    }
+}
+
 return [
 
     /*
@@ -65,7 +93,7 @@ return [
 
         'pgsql' => [
             'driver' => 'pgsql',
-            'url' => env('DATABASE_URL'),
+            'url' => $databaseUrl,
             'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '5432'),
             'database' => env('DB_DATABASE', 'forge'),
@@ -75,8 +103,8 @@ return [
             'prefix' => '',
             'prefix_indexes' => true,
             'search_path' => 'public',
-            'sslmode' => env('DB_SSLMODE', 'prefer'),
-            'options' => env('DB_OPTIONS'),
+            'sslmode' => env('DB_SSLMODE', str_contains(env('DB_HOST', ''), 'pg.laravel.cloud') ? 'require' : 'prefer'),
+            'options' => env('DB_OPTIONS', str_contains(env('DB_HOST', ''), 'pg.laravel.cloud') ? 'endpoint=' . explode('.', env('DB_HOST', ''))[0] : null),
         ],
 
         'sqlsrv' => [
