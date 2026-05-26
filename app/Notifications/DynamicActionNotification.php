@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use App\Models\System\CompanyTelegramSettings;
 use App\Channels\TelegramChannel;
+use App\Channels\WebPushChannel;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\BroadcastMessage;
@@ -48,6 +49,7 @@ class DynamicActionNotification extends Notification implements ShouldQueue
         if ($settings->notify_pwa) {
             if (!$this->isSilent) {
                 $channels[] = 'database';
+                $channels[] = WebPushChannel::class;
             }
             $channels[] = 'broadcast';
         }

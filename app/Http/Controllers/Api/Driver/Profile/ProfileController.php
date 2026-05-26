@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Driver\Profile;
 
 use App\Http\Controllers\Controller;
 use App\Models\User\PushSubscription;
+use App\Notifications\WelcomePushNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
@@ -167,6 +168,13 @@ class ProfileController extends Controller
                 'device_type' => $request->device_type ?? 'android'
             ]
         );
+
+        // Dispatch an instant native Welcome push notification to verify connection
+        try {
+            $user->notify(new WelcomePushNotification());
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning("Failed to send welcome push: " . $e->getMessage());
+        }
 
         return response()->json([
             'message' => 'Push subscription saved successfully',

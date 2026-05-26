@@ -34,7 +34,7 @@ export const MobileLayout = () => {
 
     return (
         <TooltipProvider delayDuration={0}>
-            <div className="flex flex-col min-h-screen bg-gray-50 selection:bg-primary/20">
+            <div className="flex flex-col h-[100dvh] max-h-[100dvh] overflow-hidden bg-gray-50 selection:bg-primary/20">
                 <PwaToast />
                 <MobileHeader isOnline={isTracking} />
                 

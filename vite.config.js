@@ -16,6 +16,7 @@ export default defineConfig({
             registerType: 'autoUpdate',
             injectRegister: 'auto',
             workbox: {
+                importScripts: ['/push-worker.js'],
                 globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
                 globIgnores: [
                     '**/admin-*.js',

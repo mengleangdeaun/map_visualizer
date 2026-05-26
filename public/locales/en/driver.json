@@ -1,5 +1,8 @@
 {
     "shift_management": "Shift Management",
+    "shift_active": "Shift Active",
+    "shift_inactive": "Shift Inactive",
+    "location_braodcasting": "Location Braodcasting",
     "check_in": "Check In",
     "check_out": "Check Out",
     "select_vehicle": "Select Vehicle",

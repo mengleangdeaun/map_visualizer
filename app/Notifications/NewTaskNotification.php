@@ -5,6 +5,7 @@ namespace App\Notifications;
 use App\Models\Driver\Task;
 use App\Models\System\CompanyTelegramSettings;
 use App\Channels\TelegramChannel;
+use App\Channels\WebPushChannel;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\BroadcastMessage;
@@ -41,6 +42,7 @@ class NewTaskNotification extends Notification implements ShouldQueue
             if ($settings->notify_pwa && $this->task->driver_id) {
                 $channels[] = 'database';
                 $channels[] = 'broadcast';
+                $channels[] = WebPushChannel::class;
             }
             
             // Telegram Channel (handles both driver and company dispatches)

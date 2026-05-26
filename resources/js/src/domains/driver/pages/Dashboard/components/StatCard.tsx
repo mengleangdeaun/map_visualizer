@@ -21,7 +21,7 @@ export const StatCard = ({
     colorClassName = "text-muted-foreground"
 }: StatCardProps) => {
     return (
-        <Card className={cn("p-4 flex flex-col gap-1 shadow-sm border-none bg-card/50 backdrop-blur-sm", className)}>
+        <div className={cn("p-4 flex flex-col gap-1 border-none rounded-lg bg-white", className)}>
             <div className={cn("flex items-center justify-between", colorClassName)}>
                 <Icon size={16} />
                 <span className="text-[10px] font-black uppercase tracking-widest">{label}</span>
@@ -30,6 +30,6 @@ export const StatCard = ({
                 <span className="text-xl font-black tracking-tight">{value}</span>
                 {unit && <span className="text-[10px] font-bold text-muted-foreground uppercase">{unit}</span>}
             </div>
-        </Card>
+        </div>
     );
 };

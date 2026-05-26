@@ -84,6 +84,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('tasks', [\App\Http\Controllers\Api\Driver\Task\TaskController::class, 'index']);
         Route::patch('tasks/{task}/status', [\App\Http\Controllers\Api\Driver\Task\TaskController::class, 'updateStatus']);
         Route::patch('location', [\App\Http\Controllers\Api\Driver\Telemetry\TelemetryController::class, 'updateLocation']);
+        Route::get('telemetry/stats', [\App\Http\Controllers\Api\Driver\Telemetry\TelemetryController::class, 'getStats']);
 
         // Shift Check-in / Check-out
         Route::get('vehicle/active', [\App\Http\Controllers\Api\Driver\Vehicle\ShiftController::class, 'activeVehicle']);

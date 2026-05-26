@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Truck, Power, Bike, Car, Navigation, Shield, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
-import { Vehicle } from '../services/driverShiftService';
+import { Vehicle } from '../../../services/driverShiftService';
 
 interface ShiftControlProps {
     isOnline: boolean;
@@ -49,7 +49,7 @@ export const ShiftControl = ({
 
     return (
         <Card className={cn(
-            "p-6 flex flex-col items-center gap-6 transition-all duration-500 border-none shadow-2xl relative overflow-hidden",
+            "p-6 flex rounded-2xl flex-col items-center gap-6 transition-all duration-500 border-none relative overflow-hidden",
             isOnline ? "bg-primary text-primary-foreground" : "bg-card text-foreground"
         )}>
             {/* Pulsing effect during active tracking */}
@@ -131,7 +131,7 @@ export const ShiftControl = ({
                                 onClick={onStopTracking}
                                 disabled={isLoading}
                                 variant="secondary"
-                                className="w-full h-14 rounded-2xl text-sm font-black uppercase tracking-widest gap-2 shadow-xl active:scale-[0.98] transition-all"
+                                className="w-full h-14 rounded-2xl text-sm font-black uppercase tracking-widest gap-2 active:scale-[0.98] transition-all"
                             >
                                 <Power size={18} />
                                 {t('end_shift') || 'End Shift'}
@@ -141,7 +141,7 @@ export const ShiftControl = ({
                                 size="lg" 
                                 onClick={onStartTracking}
                                 disabled={isLoading}
-                                className="w-full h-14 rounded-2xl text-sm font-black uppercase tracking-widest gap-2 shadow-xl bg-primary text-primary-foreground hover:bg-primary/95 active:scale-[0.98] transition-all"
+                                className="w-full h-14 rounded-2xl text-sm font-black uppercase tracking-widest gap-2 bg-primary text-primary-foreground hover:bg-primary/95 active:scale-[0.98] transition-all"
                             >
                                 <Power size={18} />
                                 {t('start_shift') || 'Start Shift'}
