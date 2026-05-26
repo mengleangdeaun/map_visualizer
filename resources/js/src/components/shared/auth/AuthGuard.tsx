@@ -22,19 +22,26 @@ export const AuthGuard = ({ children, allowedRoles }: AuthGuardProps) => {
         } else if (isLocked) {
             navigate({ to: lockscreenPath });
         } else if (allowedRoles && !allowedRoles.includes(user?.role || '')) {
+            const isCurrentlyDriverApp = window.location.pathname.startsWith('/driver');
+            
             // Redirect based on role if trying to access unauthorized domain
             if (user?.role === 'driver') {
-                navigate({ to: '/driver' });
+                if (isCurrentlyDriverApp) {
+                    navigate({ to: '/driver' });
+                } else {
+                    window.location.href = '/driver';
+                }
             } else if (user?.role === 'admin' || user?.role === 'super_admin' || user?.role === 'system_staff') {
                 // Platform admins (super_admin, system_staff) go to system if they have no company
                 // Regular admins (company admins) go to admin
-                if (!user?.company_id && (user?.role === 'super_admin' || user?.role === 'system_staff')) {
-                    navigate({ to: '/system' });
+                const targetPath = (!user?.company_id && (user?.role === 'super_admin' || user?.role === 'system_staff')) ? '/system' : '/admin';
+                if (isCurrentlyDriverApp) {
+                    window.location.href = targetPath;
                 } else {
-                    navigate({ to: '/admin' });
+                    navigate({ to: targetPath });
                 }
             } else {
-                navigate({ to: '/' });
+                window.location.href = '/';
             }
         }
     }, [isAuthenticated, isLocked, user?.role, allowedRoles, navigate]);

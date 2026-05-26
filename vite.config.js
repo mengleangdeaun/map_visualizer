@@ -9,6 +9,7 @@ export default defineConfig({
         laravel([
             "resources/js/src/admin.tsx",
             "resources/js/src/driver.tsx",
+            "resources/js/src/system.tsx",
         ]), 
         react(),
         VitePWA({
@@ -29,25 +30,25 @@ export default defineConfig({
                 name: 'DLVR Driver',
                 short_name: 'Driver',
                 description: 'Driver App for SCCG Delivery Tracking System',
-                theme_color: '#000000',
-                background_color: '#ffffff',
+                theme_color: '#0a0a0a',
+                background_color: '#0a0a0a',
                 display: 'standalone',
                 orientation: 'portrait',
                 scope: '/driver',
                 start_url: '/driver',
                 icons: [
                     {
-                        src: '/icons/icon-192x192.png',
+                        src: '/icons/icon-192.png',
                         sizes: '192x192',
                         type: 'image/png'
                     },
                     {
-                        src: '/icons/icon-512x512.png',
+                        src: '/icons/icon-512.png',
                         sizes: '512x512',
                         type: 'image/png'
                     },
                     {
-                        src: '/icons/icon-512x512.png',
+                        src: '/icons/icon-512-maskable.png',
                         sizes: '512x512',
                         type: 'image/png',
                         purpose: 'maskable'

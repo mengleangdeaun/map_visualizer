@@ -22,8 +22,8 @@ import { Badge } from '@/components/ui/badge';
 
 const CompanyPage = () => {
     const { t } = useTranslation('system');
-    const search = useSearch({ from: '/layout/system/companies' });
-    const navigate = useNavigate({ from: '/layout/system/companies' });
+    const search = useSearch({ from: '/system/companies' });
+    const navigate = useNavigate({ from: '/system/companies' });
 
     const page = search.page || 1;
     const perPage = search.per_page || 10;

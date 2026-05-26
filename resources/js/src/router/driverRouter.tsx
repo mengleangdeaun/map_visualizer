@@ -33,7 +33,8 @@ const driverLayoutRoute = createRoute({
 // 3. Define Driver Auth Routes
 const loginRoute = createRoute({ getParentRoute: () => rootRoute, path: '/driver/login', component: lazyRouteComponent(() => import('../domains/auth/pages/Login/index')) });
 const lockscreenRoute = createRoute({ getParentRoute: () => rootRoute, path: '/driver/lockscreen', component: lazyRouteComponent(() => import('../domains/auth/pages/LockScreen/index')) });
-const forgotPasswordRoute = createRoute({ getParentRoute: () => rootRoute, path: '/driver/forgot-password', component: lazyRouteComponent(() => import('../domains/auth/pages/Login/index')) });
+const forgotPasswordRoute = createRoute({ getParentRoute: () => rootRoute, path: '/driver/forgot-password', component: lazyRouteComponent(() => import('../domains/auth/pages/ForgotPassword/index')) });
+const resetPasswordRoute = createRoute({ getParentRoute: () => rootRoute, path: '/driver/reset-password', component: lazyRouteComponent(() => import('../domains/auth/pages/ResetPassword/index')) });
 
 // 4. Define Domain Routes
 const driverDashboardRoute = createRoute({ getParentRoute: () => driverLayoutRoute, path: 'driver', component: lazyRouteComponent(() => import('../domains/driver/pages/Dashboard/index')) });
@@ -71,6 +72,7 @@ const routeTree = rootRoute.addChildren([
     loginRoute,
     lockscreenRoute,
     forgotPasswordRoute,
+    resetPasswordRoute,
     error404Route,
     driverLayoutRoute.addChildren([
         driverDashboardRoute,

@@ -11,8 +11,6 @@
 
     <link rel="shortcut icon" href="{{ asset('favicon.svg') }}">
 
-
-
     @viteReactRefresh
     @vite(['resources/js/src/admin.tsx'])
 </head>

@@ -21,7 +21,7 @@ import { Loader2, Truck } from 'lucide-react';
 import { useCreateDelivery, useUpdateDelivery } from '../hooks/useDeliveries';
 import { useCustomers } from '@/domains/admin/hooks/useCustomers';
 import { useLocations } from '@/domains/system/pages/Location/hooks/useLocations';
-import { useUsers } from '@/domains/admin/pages/User/hooks/useUsers';
+import { useUsers } from '@/domains/admin/pages/Member/hooks/useUsers';
 import { Delivery } from '@/domains/admin/services/deliveryService';
 
 import { useBillingCalculator } from '../hooks/useBillingCalculator';

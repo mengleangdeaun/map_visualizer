@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { User } from '../../system/services/userService';
+import { authService } from '../services/authService';
 
 interface AuthState {
     user: User | null;
@@ -25,13 +26,15 @@ export const useAuthStore = create<AuthState>()(
             clearAuth: () => set({ user: null, token: null, isAuthenticated: false, isLocked: false }),
             lock: () => set({ isLocked: true }),
             unlock: async (password) => {
-                // In a real app, you might want to verify password with backend
-                // For now, we'll just check if it's not empty (LockScreen UI handles the rest)
-                if (password) {
-                    set({ isLocked: false });
+                const user = get().user;
+                if (!user || !user.email) return false;
+                try {
+                    const data = await authService.login({ email: user.email, password });
+                    set({ user: data.user, token: data.access_token, isLocked: false, isAuthenticated: true });
                     return true;
+                } catch (error) {
+                    return false;
                 }
-                return false;
             },
             updateUser: (user) => set({ user }),
         }),

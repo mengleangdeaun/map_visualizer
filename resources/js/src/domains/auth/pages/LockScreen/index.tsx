@@ -23,7 +23,29 @@ const LockScreenPage = () => {
         const success = await unlock(password);
         if (success) {
             toast.success(t('welcome_back'));
-            navigate({ to: '/' });
+            
+            const currentUser = useAuthStore.getState().user;
+            const isCurrentlyDriverApp = window.location.pathname.startsWith('/driver');
+
+            if ((currentUser?.role === 'system_staff' || currentUser?.role === 'super_admin') && !currentUser?.company_id) {
+                if (isCurrentlyDriverApp) {
+                    window.location.href = '/system';
+                } else {
+                    navigate({ to: '/system' });
+                }
+            } else if (currentUser?.role === 'driver') {
+                if (isCurrentlyDriverApp) {
+                    navigate({ to: '/driver' });
+                } else {
+                    window.location.href = '/driver';
+                }
+            } else {
+                if (isCurrentlyDriverApp) {
+                    window.location.href = '/admin';
+                } else {
+                    navigate({ to: '/admin' });
+                }
+            }
         } else {
             toast.error(t('invalid_credentials'));
         }
@@ -32,7 +54,14 @@ const LockScreenPage = () => {
 
     const handleLogout = () => {
         clearAuth();
-        navigate({ to: '/auth/login' });
+        const isCurrentlyDriverApp = window.location.pathname.startsWith('/driver');
+        const loginPath = isCurrentlyDriverApp ? '/driver/login' : '/auth/login';
+        
+        if (isCurrentlyDriverApp) {
+            navigate({ to: loginPath });
+        } else {
+            window.location.href = loginPath;
+        }
     };
 
     return (

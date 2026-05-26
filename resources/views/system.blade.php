@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, shrink-to-fit=no">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>Driver PWA</title>
+    <title>SCCG System Administration</title>
 
     <link rel="shortcut icon" href="{{ asset('favicon.svg') }}">
 
@@ -22,12 +22,12 @@
     </style>
 
     @viteReactRefresh
-    @vite(['resources/js/src/driver.tsx'])
+    @vite(['resources/js/src/system.tsx'])
 </head>
 
 <body>
     <noscript>
-        <strong>We're sorry but Driver PWA doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
+        <strong>We're sorry but SCCG System Administration doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
     </noscript>
 
     <div id="root"></div>

@@ -15,4 +15,9 @@ class AppController extends Controller
     {
         return view('driver');
     }
+
+    public function systemIndex()
+    {
+        return view('system');
+    }
 }

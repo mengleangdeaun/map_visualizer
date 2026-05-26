@@ -30,12 +30,26 @@ const LoginPage = () => {
             setAuth(data.user, data.access_token);
             toast.success(t('welcome_back'));
             
+            const isCurrentlyDriverApp = window.location.pathname.startsWith('/driver');
+            
             if ((data.user.role === 'system_staff' || data.user.role === 'super_admin') && !data.user.company_id) {
-                navigate({ to: '/system' });
+                if (isCurrentlyDriverApp) {
+                    window.location.href = '/system';
+                } else {
+                    navigate({ to: '/system' });
+                }
             } else if (data.user.role === 'driver') {
-                navigate({ to: '/driver' });
+                if (isCurrentlyDriverApp) {
+                    navigate({ to: '/driver' });
+                } else {
+                    window.location.href = '/driver';
+                }
             } else {
-                navigate({ to: '/admin' });
+                if (isCurrentlyDriverApp) {
+                    window.location.href = '/admin';
+                } else {
+                    navigate({ to: '/admin' });
+                }
             }
         } catch (error: any) {
             toast.error(error.response?.data?.message || t('invalid_credentials'));

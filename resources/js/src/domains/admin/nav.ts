@@ -28,7 +28,7 @@ export const adminNav: MenuItem[] = [
         children: [
             { id: 'vehicles', title: 'vehicles', path: '/admin/fleet/vehicles' },
             { id: 'hubs', title: 'hubs', path: '/admin/fleet/hubs' },
-            { id: 'users', title: 'users', path: '/admin/fleet/users' },
+            { id: 'members', title: 'members', path: '/admin/fleet/members' },
             { id: 'customers', title: 'customers', path: '/admin/fleet/customers' },
            
         ]

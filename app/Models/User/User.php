@@ -116,4 +116,15 @@ class User extends Authenticatable
     {
         return $this->hasMany(\App\Models\Fleet\Vehicle::class, 'driver_id');
     }
+
+    /**
+     * Send the password reset notification.
+     *
+     * @param  string  $token
+     * @return void
+     */
+    public function sendPasswordResetNotification($token)
+    {
+        $this->notify(new \App\Notifications\ResetPasswordNotification($token));
+    }
 }

@@ -19,4 +19,5 @@ Route::get('/login', function () {
 })->name('login');
 
 Route::get('/driver/{any?}', [AppController::class, 'driverIndex'])->where('any', '.*');
+Route::get('/system/{any?}', [AppController::class, 'systemIndex'])->where('any', '.*');
 Route::get('/{any?}', [AppController::class, 'adminIndex'])->where('any', '.*');
