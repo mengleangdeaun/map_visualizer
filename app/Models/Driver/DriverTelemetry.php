@@ -18,11 +18,13 @@ class DriverTelemetry extends Model
         'driver_id',
         'vehicle_id',
         'speed_kmh',
+        'heading',
         'recorded_at',
     ];
 
     protected $casts = [
         'recorded_at' => 'datetime',
+        'heading' => 'integer',
     ];
 
     public function driver(): BelongsTo

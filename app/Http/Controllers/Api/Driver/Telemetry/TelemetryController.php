@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Api\Driver\Telemetry;
 
 use App\Http\Controllers\Controller;
-use App\Models\Driver\DriverTelemetry;
 use App\Models\Fleet\Vehicle;
 use App\Events\VehicleLocationUpdated;
+use App\Jobs\ProcessDriverTelemetry;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 
 class TelemetryController extends Controller
 {
@@ -29,33 +29,30 @@ class TelemetryController extends Controller
         // Find the vehicle assigned to this driver
         $vehicle = Vehicle::where('driver_id', $user->id)->first();
 
-        // Create telemetry record
-        $telemetry = new DriverTelemetry();
-        $telemetry->driver_id = $user->id;
-        $telemetry->vehicle_id = $vehicle?->id;
-        $telemetry->speed_kmh = $validated['speed'] ? round($validated['speed'] * 3.6) : 0;
-        $telemetry->recorded_at = now();
-        $telemetry->save();
+        // Prepare telemetry data payload
+        $telemetryData = [
+            'latitude' => (float) $validated['latitude'],
+            'longitude' => (float) $validated['longitude'],
+            'speed' => $validated['speed'] !== null ? (float) $validated['speed'] : 0.0,
+            'heading' => $validated['heading'] !== null ? (float) $validated['heading'] : 0.0,
+            'vehicle_id' => $vehicle?->id,
+            'recorded_at' => now()->toIso8601String(),
+        ];
 
-        // Update spatial location using raw SQL for SRID 4326
-        DB::statement("UPDATE driver_telemetry SET location = ST_SetSRID(ST_MakePoint(?, ?), 4326) WHERE id = ?", [
-            $validated['longitude'],
-            $validated['latitude'],
-            $telemetry->id
-        ]);
+        // 1. Store the hot telemetry in Valkey (Redis-compatible) cache
+        // Cache the driver's latest position
+        Cache::put("driver:telemetry:{$user->id}", $telemetryData, now()->addMinutes(30));
 
-        // Update the vehicle's current position if assigned
+        // Cache the vehicle's latest position for fast vehicle map list retrieval
         if ($vehicle) {
-            $lat = (float) $validated['latitude'];
-            $lng = (float) $validated['longitude'];
+            Cache::put("vehicle:telemetry:{$vehicle->id}", $telemetryData, now()->addMinutes(30));
+        }
 
-            $vehicle->update([
-                'last_location' => DB::raw("ST_GeomFromText('POINT($lng $lat)', 4326)"),
-                'is_active' => true,
-                'last_telemetry_at' => now(),
-            ]);
+        // 2. Dispatch database write operations to the background queue
+        ProcessDriverTelemetry::dispatch($user->id, $telemetryData);
 
-            // Broadcast real-time update for dispatchers
+        // 3. Broadcast real-time update for dispatchers
+        if ($vehicle) {
             broadcast(new VehicleLocationUpdated(
                 $validated['latitude'],
                 $validated['longitude'],

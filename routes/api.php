@@ -27,7 +27,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // System Domain (Super Admin)
-    Route::prefix('system')->group(function () {
+    Route::prefix('system')->name('system.')->group(function () {
         Route::apiResource('companies', \App\Http\Controllers\Api\System\Company\CompanyController::class);
         Route::apiResource('users', \App\Http\Controllers\Api\System\User\UserController::class);
         Route::apiResource('exchange-rates', \App\Http\Controllers\Api\System\ExchangeRate\ExchangeRateController::class);
@@ -43,13 +43,13 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // Fleet Domain
-    Route::prefix('fleet')->group(function () {
+    Route::prefix('fleet')->name('fleet.')->group(function () {
         Route::apiResource('locations', \App\Http\Controllers\Api\Fleet\Location\LocationController::class);
     });
 
     // Admin Domain (Company Admin / Dispatcher)
-    Route::prefix('admin')->group(function () {
-        Route::prefix('fleet')->group(function () {
+    Route::prefix('admin')->name('admin.')->group(function () {
+        Route::prefix('fleet')->name('fleet.')->group(function () {
             Route::apiResource('users', \App\Http\Controllers\Api\Admin\Fleet\UserController::class);
             Route::apiResource('vehicles', \App\Http\Controllers\Api\Admin\Fleet\VehicleController::class);
             Route::apiResource('tasks', \App\Http\Controllers\Api\Admin\Fleet\TaskController::class);
@@ -80,7 +80,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // Driver Domain
-    Route::prefix('driver')->group(function () {
+    Route::prefix('driver')->name('driver.')->group(function () {
         Route::get('tasks', [\App\Http\Controllers\Api\Driver\Task\TaskController::class, 'index']);
         Route::patch('tasks/{task}/status', [\App\Http\Controllers\Api\Driver\Task\TaskController::class, 'updateStatus']);
         Route::patch('location', [\App\Http\Controllers\Api\Driver\Telemetry\TelemetryController::class, 'updateLocation']);

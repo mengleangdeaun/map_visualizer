@@ -13,7 +13,7 @@ class VehicleService
      */
     public function findById(string $id): Vehicle
     {
-        return Vehicle::query()
+        $vehicle = Vehicle::query()
             ->select([
                 'id',
                 'company_id',
@@ -40,6 +40,19 @@ class VehicleService
                 }
             ])
             ->findOrFail($id);
+
+        // Inject hot telemetry from Valkey cache if available
+        $cached = \Illuminate\Support\Facades\Cache::get("vehicle:telemetry:{$id}");
+        if ($cached) {
+            $vehicle->last_location = 'cached';
+            $vehicle->setAttribute('latitude', $cached['latitude']);
+            $vehicle->setAttribute('longitude', $cached['longitude']);
+            $vehicle->heading = $cached['heading'] ?? 0;
+        } else {
+            $vehicle->heading = 0;
+        }
+
+        return $vehicle;
     }
 
     /**
@@ -91,7 +104,23 @@ class VehicleService
             $query->where('plate_number', 'LIKE', "%{$search}%");
         }
 
-        return $query->latest()->paginate($perPage);
+        $vehicles = $query->latest()->paginate($perPage);
+
+        // Inject hot telemetry from Valkey cache into listed vehicles
+        $vehicles->getCollection()->transform(function ($vehicle) {
+            $cached = \Illuminate\Support\Facades\Cache::get("vehicle:telemetry:{$vehicle->id}");
+            if ($cached) {
+                $vehicle->last_location = 'cached';
+                $vehicle->setAttribute('latitude', $cached['latitude']);
+                $vehicle->setAttribute('longitude', $cached['longitude']);
+                $vehicle->heading = $cached['heading'] ?? 0;
+            } else {
+                $vehicle->heading = 0;
+            }
+            return $vehicle;
+        });
+
+        return $vehicles;
     }
 
     /**
