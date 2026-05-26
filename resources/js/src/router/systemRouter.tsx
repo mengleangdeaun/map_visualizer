@@ -43,7 +43,12 @@ const companySearchSchema = z.object({ page: z.number().catch(1), per_page: z.nu
 
 // 4. Define SaaS Platform routes
 const systemDashboardRoute = createRoute({ getParentRoute: () => systemLayoutRoute, path: 'system', component: lazyRouteComponent(() => import('../domains/system/pages/Dashboard/index')) });
-const systemCompaniesRoute = createRoute({ getParentRoute: () => systemLayoutRoute, path: 'system/companies', component: lazyRouteComponent(() => import('../domains/system/pages/Company/index')) });
+const systemCompaniesRoute = createRoute({
+    getParentRoute: () => systemLayoutRoute,
+    path: 'system/companies',
+    validateSearch: (search) => companySearchSchema.parse(search),
+    component: lazyRouteComponent(() => import('../domains/system/pages/Company/index'))
+});
 const systemUsersRoute = createRoute({ getParentRoute: () => systemLayoutRoute, path: 'system/users', component: lazyRouteComponent(() => import('../domains/system/pages/User/index')) });
 const systemSettingsRoute = createRoute({ getParentRoute: () => systemLayoutRoute, path: 'system/settings', component: lazyRouteComponent(() => import('../domains/system/pages/Settings/index')) });
 const systemExchangeRatesRoute = createRoute({ getParentRoute: () => systemLayoutRoute, path: 'system/exchange-rates', component: lazyRouteComponent(() => import('../domains/system/pages/Settings/index')) });

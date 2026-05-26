@@ -33,11 +33,7 @@ const LoginPage = () => {
             const isCurrentlyDriverApp = window.location.pathname.startsWith('/driver');
             
             if ((data.user.role === 'system_staff' || data.user.role === 'super_admin') && !data.user.company_id) {
-                if (isCurrentlyDriverApp) {
-                    window.location.href = '/system';
-                } else {
-                    navigate({ to: '/system' });
-                }
+                window.location.href = '/system';
             } else if (data.user.role === 'driver') {
                 if (isCurrentlyDriverApp) {
                     navigate({ to: '/driver' });

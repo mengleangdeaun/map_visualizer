@@ -10,20 +10,18 @@ import { HighlightSearch } from '@/components/shared/system/HighlightSearch';
 import { SearchInput } from '@/components/shared/system/SearchInput';
 import { TableActionButtons, TableActionButton } from '@/components/shared/system/TableActionButtons';
 import { Button } from '@/components/ui/button';
-import { Plus, ArrowUpDown, RotateCw } from 'lucide-react';
+import {  ArrowUpDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Company } from '@/domains/system/services/companyService';
 import { ColumnDef } from '@tanstack/react-table';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 
 const CompanyPage = () => {
     const { t } = useTranslation('system');
-    const search = useSearch({ from: '/system/companies' });
-    const navigate = useNavigate({ from: '/system/companies' });
+    const search = useSearch({ from: '/system-layout/system/companies' });
+    const navigate = useNavigate({ from: '/system-layout/system/companies' });
 
     const page = search.page || 1;
     const perPage = search.per_page || 10;

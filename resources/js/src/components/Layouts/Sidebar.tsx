@@ -139,22 +139,24 @@ const Sidebar = () => {
                     
                     <ScrollArea className="h-[calc(100vh-80px)]">
                         <ul className="relative font-semibold space-y-0.5 p-4 py-0 pr-4">
-                            {isAdmin && (
-                                <>
-                                    <h2 className="px-4 py-2 text-[11px] font-bold text-muted-foreground/60 tracking-wider border-b border-border/50">
-                                        <span>{t('admin_domain')}</span>
-                                    </h2>
-                                    {renderNavItems(adminNav)}
-                                </>
-                            )}
-
-                            {isSuperAdmin && (
-                                <>
-                                    <h2 className="px-4 py-2 mt-6 text-[11px] font-bold text-muted-foreground/60 tracking-wider border-b border-border/50">
-                                        <span>{t('system_domain')}</span>
-                                    </h2>
-                                    {renderNavItems(systemNav)}
-                                </>
+                            {location.pathname.startsWith('/system') ? (
+                                isSuperAdmin && (
+                                    <>
+                                        <h2 className="px-4 py-2 text-[11px] font-bold text-muted-foreground/60 tracking-wider border-b border-border/50">
+                                            <span>{t('system_domain')}</span>
+                                        </h2>
+                                        {renderNavItems(systemNav)}
+                                    </>
+                                )
+                            ) : (
+                                isAdmin && (
+                                    <>
+                                        <h2 className="px-4 py-2 text-[11px] font-bold text-muted-foreground/60 tracking-wider border-b border-border/50">
+                                            <span>{t('admin_domain')}</span>
+                                        </h2>
+                                        {renderNavItems(adminNav)}
+                                    </>
+                                )
                             )}
                         </ul>
                     </ScrollArea>

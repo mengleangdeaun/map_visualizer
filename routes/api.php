@@ -27,7 +27,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // System Domain (Super Admin)
-    Route::prefix('system')->name('system.')->group(function () {
+    Route::prefix('system')->name('system.')->middleware('role:super_admin,system_staff')->group(function () {
         Route::apiResource('companies', \App\Http\Controllers\Api\System\Company\CompanyController::class);
         Route::apiResource('users', \App\Http\Controllers\Api\System\User\UserController::class);
         Route::apiResource('exchange-rates', \App\Http\Controllers\Api\System\ExchangeRate\ExchangeRateController::class);
