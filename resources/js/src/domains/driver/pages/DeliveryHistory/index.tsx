@@ -1,6 +1,6 @@
 import React, { useEffect, useCallback } from 'react';
 import { PullToRefresh } from '@/domains/driver/components/PullToRefresh';
-import { SlidersHorizontal, Calendar, ChevronLeft, ChevronRight, Loader2, RotateCcw } from 'lucide-react';
+import { SlidersHorizontal, Calendar, ChevronLeft, ChevronRight, Loader2, RotateCcw, Route } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useDeliveryHistory } from './hooks/useDeliveryHistory';
 import { HistoryCard } from './components/HistoryCard';
@@ -92,14 +92,14 @@ const DeliveryHistoryPage = React.memo(() => {
         {isLoading ? (
           <DeliveryHistorySkeleton />
         ) : routes.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-center p-8 bg-white shadow-sm rounded-2xl">
-            <div className="size-14 rounded-2xl bg-gray-100 flex items-center justify-center mb-3.5 text-gray-400">
-              <Calendar size={28} />
+          <div className="flex-1 flex flex-col items-center justify-center text-center p-8 bg-card/20 border border-dashed border-border/80 rounded-2xl my-4 shadow-none animate-in fade-in duration-300">
+            <div className="size-12 rounded-full bg-muted/60 flex items-center justify-center mb-4 text-muted-foreground/60">
+              <Route size={22} />
             </div>
-            <h3 className="text-sm font-bold text-gray-800 tracking-tight mb-1">
+            <h3 className="text-sm font-bold text-foreground tracking-tight mb-1">
               {t('driver:no_history_found') || 'No History Found'}
             </h3>
-            <p className="text-[11px] text-gray-400 max-w-[220px] leading-relaxed font-semibold">
+            <p className="text-xs text-muted-foreground max-w-[210px] leading-relaxed">
               {hasActiveFilters
                 ? t('driver:try_adjusting_filters') || 'No records match your filters.'
                 : t('driver:no_history_desc') || 'Your completed route runs will appear here.'}
@@ -108,7 +108,7 @@ const DeliveryHistoryPage = React.memo(() => {
               <Button
                 variant="outline"
                 size="sm"
-                className="mt-4 rounded-xl font-bold text-[10px] h-9 px-4 uppercase tracking-wider"
+                className="mt-4 rounded-xl font-black text-[10px] h-9 px-4 uppercase tracking-wider text-muted-foreground border-border/60 hover:text-foreground hover:bg-muted/40 transition-colors active:scale-[0.98]"
                 onClick={handleResetFilters}
               >
                 {t('driver:reset_filters') || 'Reset Filters'}

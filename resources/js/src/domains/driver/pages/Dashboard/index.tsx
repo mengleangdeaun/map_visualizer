@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocationService } from '../../hooks/useLocationService';
-import { useTelemetry } from '../../hooks/useTelemetry';
+import { useTelemetry, formatDuration } from '../../hooks/useTelemetry';
 import { StatCard } from './components/StatCard';
 import { ShiftControl } from './components/ShiftControl';
 import { TelemetryBar } from './components/TelemetryBar';
-import { TasksSection } from './components/TasksSection';
-import { Navigation, AlertCircle, Activity, BarChart2 } from 'lucide-react';
-import { useDriverTasks } from '../../hooks/useDriverTasks';
+import { Button } from '@/components/ui/button';
+import { Navigation, AlertCircle, Route, Clock } from 'lucide-react';
 import {
     useActiveShift,
     useCompanyVehicles,
@@ -21,7 +20,7 @@ const DriverDashboard = () => {
     const { t } = useTranslation();
 
     // Location + tracking control
-    const { isTracking, startTracking, stopTracking, error } = useLocationService();
+    const { isTracking, startTracking, stopTracking, error, requestCompassPermission } = useLocationService();
 
     // Rich telemetry: live GPS + server shift stats
     const { live, compass, accuracy, stats } = useTelemetry();
@@ -36,19 +35,12 @@ const DriverDashboard = () => {
 
     const activeVehicle = activeShiftData?.vehicle || null;
 
-    // Task query
-    const { data: tasksData, isLoading: isTasksLoading, refetch: refetchTasks } = useDriverTasks();
-    const tasks = tasksData?.data || [];
-    const activeTask = tasks.find(t => t.status === 'in_progress');
-
     const handleRefresh = async () => {
-        await Promise.all([
-            refetchActiveShift(),
-            refetchTasks(),
-        ]);
+        await refetchActiveShift();
     };
 
-    const handleStartShift = () => {
+    const handleStartShift = async () => {
+        await requestCompassPermission();
         if (activeVehicle) {
             startTracking();
         } else {
@@ -57,10 +49,15 @@ const DriverDashboard = () => {
     };
 
     const handleStopShift = () => {
-        stopTracking();
+        checkOutMutation.mutate(undefined, {
+            onSuccess: () => {
+                stopTracking();
+            }
+        });
     };
 
-    const handleSelectVehicle = (vehicleId: string) => {
+    const handleSelectVehicle = async (vehicleId: string) => {
+        await requestCompassPermission();
         checkInMutation.mutate(vehicleId, {
             onSuccess: () => {
                 setIsVehicleDialogOpen(false);
@@ -100,54 +97,62 @@ const DriverDashboard = () => {
                     speedKmh={live?.speedKmh ?? 0}
                     compass={compass}
                     accuracy={accuracy}
-                    stats={stats}
                 />
 
                 {/* Stats Grid */}
-                <div className="grid grid-cols-2 gap-4">
-                    <StatCard
-                        label={t('active_task') || "Active Task"}
-                        value={activeTask ? '1' : 'None'}
-                        icon={Activity}
-                        colorClassName={activeTask ? "text-primary" : "text-muted-foreground"}
-                    />
-                    <StatCard
-                        label={t('speed') || "Speed"}
-                        value={live?.speedKmh ?? 0}
-                        unit="km/h"
-                        icon={Navigation}
-                        colorClassName="text-blue-500"
-                    />
+                <div>
+                    {!isTracking ? (
+                        <div className="flex flex-col gap-4">
+                            <StatCard
+                                label={t('speed') || "Speed"}
+                                value={0}
+                                unit="km/h"
+                                icon={Navigation}
+                                colorClassName="text-muted-foreground"
+                            />
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-2 gap-4">
+                            <StatCard
+                                label={t('est_distance') || "Distance"}
+                                value={(stats?.distanceKm ?? 0).toFixed(1)}
+                                unit="km"
+                                icon={Route}
+                                colorClassName="text-violet-500"
+                            />
+                            <StatCard
+                                label={t('top_speed') || "Top Speed"}
+                                value={stats?.maxSpeedKmh ?? 0}
+                                unit="km/h"
+                                icon={Navigation}
+                                colorClassName="text-rose-500"
+                            />
+                            <StatCard
+                                label={t('shift_duration') || "Shift Duration"}
+                                value={stats ? formatDuration(stats.durationSeconds) : '0s'}
+                                icon={Clock}
+                                className="col-span-2"
+                                colorClassName="text-amber-500"
+                            />
+                        </div>
+                    )}
                 </div>
-
-                {/* Shift Stats Cards — shown when server data is available */}
-                {stats && (
-                    <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                        <StatCard
-                            label="Distance"
-                            value={(stats.distanceKm ?? 0).toFixed(1)}
-                            unit="km"
-                            icon={BarChart2}
-                            colorClassName="text-violet-500"
-                        />
-                        <StatCard
-                            label="Top Speed"
-                            value={stats.maxSpeedKmh}
-                            unit="km/h"
-                            icon={Navigation}
-                            colorClassName="text-rose-500"
-                        />
-                    </div>
-                )}
-
-                {/* Tasks Section */}
-                <TasksSection tasks={tasks} isLoading={isTasksLoading} />
 
                 {/* Tracking Error */}
                 {error && (
-                    <div className="bg-destructive/10 border border-destructive/20 text-destructive p-3 rounded-xl flex items-center gap-3 text-xs font-medium animate-in fade-in slide-in-from-top-2">
-                        <AlertCircle size={16} />
-                        {error}
+                    <div className="bg-destructive/10 border border-destructive/20 text-destructive p-3 rounded-xl flex items-center justify-between gap-3 text-xs font-medium animate-in fade-in slide-in-from-top-2">
+                        <div className="flex items-center gap-3">
+                            <AlertCircle size={16} className="shrink-0" />
+                            <span>{error}</span>
+                        </div>
+                        <Button
+                            size="sm"
+                            variant="link"
+                            className="h-auto p-0 text-xs font-black uppercase tracking-wider text-destructive hover:text-destructive/80 active:scale-[0.97] transition-transform duration-100"
+                            onClick={() => startTracking()}
+                        >
+                            {t('retry') || 'Retry'}
+                        </Button>
                     </div>
                 )}
 

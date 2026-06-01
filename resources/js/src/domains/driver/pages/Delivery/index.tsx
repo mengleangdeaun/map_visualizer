@@ -1,5 +1,5 @@
 import React from 'react';
-import { Map, Truck } from 'lucide-react';
+import { Map, Truck, Route } from 'lucide-react';
 import { PullToRefresh } from '@/domains/driver/components/PullToRefresh';
 import { Button } from '@/components/ui/button';
 import { useDelivery } from './hooks/useDelivery';
@@ -26,24 +26,43 @@ const DeliveryPage: React.FC = React.memo(() => {
 
     if (!route) {
         return (
-            <div className="p-6 flex flex-col items-center justify-center text-muted-foreground gap-4 h-[70vh] max-w-md mx-auto select-none">
-                <div className="size-16 rounded-full bg-muted flex items-center justify-center border-2 border-dashed border-border mb-2">
-                    <Truck size={32} className="opacity-30" />
+            <PullToRefresh onRefresh={async () => { await refetch(); }}>
+                <div className="px-4 py-3 flex flex-col gap-4 max-w-md mx-auto animate-in fade-in duration-500 pb-24 h-[calc(100vh-140px)] select-none">
+                    {/* Header Count Badge */}
+                    <div className="flex items-center justify-between px-1 shrink-0">
+                        <h1 className="text-lg font-black tracking-tight text-gray-800">
+                            {t('driver:active_route') || 'Active Route'}
+                        </h1>
+                        <span className="text-[10px] font-bold bg-primary/10 text-primary px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                            0 {t('driver:stops') || 'Stops'}
+                        </span>
+                    </div>
+
+                    {/* Centered Empty State */}
+                    <div className="flex-1 flex flex-col items-center justify-center">
+                        <div className="w-full flex flex-col items-center justify-center p-8 bg-card/20 border border-dashed border-border/80 rounded-2xl shadow-none animate-in fade-in duration-300">
+                            <div className="size-12 rounded-full bg-muted/60 flex items-center justify-center mb-4 text-muted-foreground/60">
+                                <Route size={22} />
+                            </div>
+                            <h3 className="text-sm font-bold text-foreground tracking-tight mb-1 text-center">
+                                {t('no_active_route') || 'No Active Route'}
+                            </h3>
+                            <p className="text-xs text-muted-foreground max-w-[210px] leading-relaxed text-center mb-6">
+                                {t('no_active_route_desc') || 'No active deliveries or route assigned for you today.'}
+                            </p>
+                            <Button 
+                                variant="outline"
+                                size="sm"
+                                className="rounded-xl font-black text-[10px] h-9 px-4 uppercase tracking-wider text-muted-foreground border-border/60 hover:text-foreground hover:bg-muted/40 transition-colors active:scale-[0.98]"
+                                onClick={() => navigate({ to: '/driver/map' })}
+                            >
+                                <Map size={14} className="mr-1.5" />
+                                {t('open_map') || 'Open Live Map'}
+                            </Button>
+                        </div>
+                    </div>
                 </div>
-                <h3 className="font-black text-base text-gray-800 dark:text-foreground tracking-tight text-center">
-                    {t('no_active_route') || 'No Active Route'}
-                </h3>
-                <p className="text-xs font-semibold text-muted-foreground text-center leading-normal max-w-[240px]">
-                    No active deliveries or route assigned for you today.
-                </p>
-                <Button 
-                    onClick={() => navigate({ to: '/driver/map' })}
-                    className="h-11 rounded-2xl px-6 font-bold shadow-lg shadow-primary/20 transition-all active:scale-95"
-                >
-                    <Map size={18} className="mr-2" />
-                    {t('open_map') || 'Open Live Map'}
-                </Button>
-            </div>
+            </PullToRefresh>
         );
     }
 

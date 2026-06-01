@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Calendar, SlidersHorizontal } from 'lucide-react';
+import { Calendar, SlidersHorizontal, ClipboardList } from 'lucide-react';
 import { PullToRefresh } from '../../components/PullToRefresh';
 import { Button } from '@/components/ui/button';
 import { useTaskHistory } from './hooks/useTaskHistory';
@@ -67,14 +67,14 @@ const TaskHistoryPage = React.memo(() => {
           <TaskHistorySkeleton />
         ) : tasks.length === 0 ? (
           /* Zero State Empty View */
-          <div className="flex-1 flex flex-col items-center justify-center text-center p-8 bg-card/40 border border-dashed rounded-2xl my-6">
-            <div className="size-14 rounded-full bg-muted flex items-center justify-center mb-3.5 text-muted-foreground/60">
-              <Calendar size={28} />
+          <div className="flex-1 flex flex-col items-center justify-center text-center p-8 bg-card/20 border border-dashed border-border/80 rounded-2xl my-6 shadow-none animate-in fade-in duration-300">
+            <div className="size-12 rounded-full bg-muted/60 flex items-center justify-center mb-4 text-muted-foreground/60">
+              <ClipboardList size={22} />
             </div>
-            <h3 className="text-sm font-black tracking-tight mb-1">
+            <h3 className="text-sm font-bold text-foreground tracking-tight mb-1">
               {t('driver:no_history_found') || 'No History Found'}
             </h3>
-            <p className="text-xs text-muted-foreground max-w-[200px] leading-relaxed">
+            <p className="text-xs text-muted-foreground max-w-[210px] leading-relaxed">
               {hasActiveFilters
                 ? t('driver:try_adjusting_filters') ||
                   'No records match your selected filter criteria.'
@@ -85,7 +85,7 @@ const TaskHistoryPage = React.memo(() => {
               <Button
                 variant="outline"
                 size="sm"
-                className="mt-4 rounded-xl font-bold text-[10px] h-9 px-4"
+                className="mt-4 rounded-xl font-black text-[10px] h-9 px-4 uppercase tracking-wider text-muted-foreground border-border/60 hover:text-foreground hover:bg-muted/40 transition-colors active:scale-[0.98]"
                 onClick={handleResetFilters}
               >
                 {t('driver:reset_filters') || 'Reset Filters'}

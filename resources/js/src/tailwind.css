@@ -156,6 +156,16 @@
     }
 }
 
+/* Hide scrollbars globally for a native app feel */
+::-webkit-scrollbar {
+  display: none !important;
+}
+
+* {
+  -ms-overflow-style: none !important;  /* IE and Edge */
+  scrollbar-width: none !important;  /* Firefox */
+}
+
 /* Hide scrollbar utility */
 @layer utilities {
   .no-scrollbar::-webkit-scrollbar {

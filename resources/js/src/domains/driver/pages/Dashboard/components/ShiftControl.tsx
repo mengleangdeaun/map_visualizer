@@ -99,8 +99,8 @@ export const ShiftControl = ({
                     {isOnline 
                         ? t('location_broadcasting') || 'Your location and telemetry are being broadcasted to dispatch in real-time.'
                         : activeVehicle 
-                            ? t('check_in_to_start') || 'Please check in to a vehicle to start tracking location and receiving tasks.'
-                            : t('select_vehicle_desc') || 'Select a vehicle from your company fleet to start your operational shift.'}
+                            ? t('start_shift_desc') || 'Start your shift to begin broadcasting your location and telemetry.'
+                            : t('check_in_to_start') || 'Please check in to a vehicle to start tracking location and receiving tasks.'}
                 </p>
 
                 {/* Assigned Vehicle Details Plate */}

@@ -1,15 +1,13 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Gauge, Navigation, Route, Clock, Wifi, WifiOff } from 'lucide-react';
-import type { GpsAccuracy, CompassDirection, ShiftStats } from '../../../types/telemetry.types';
-import { formatDuration } from '../../../hooks/useTelemetry';
+import { Gauge, Navigation, Wifi, WifiOff } from 'lucide-react';
+import type { GpsAccuracy, CompassDirection } from '../../../types/telemetry.types';
 
 interface TelemetryBarProps {
     isTracking: boolean;
     speedKmh: number;
     compass: CompassDirection;
     accuracy: GpsAccuracy;
-    stats: ShiftStats | null;
     className?: string;
 }
 
@@ -26,7 +24,6 @@ export const TelemetryBar = ({
     speedKmh,
     compass,
     accuracy,
-    stats,
     className,
 }: TelemetryBarProps) => {
     const accConfig = ACCURACY_CONFIG[accuracy];
@@ -35,7 +32,7 @@ export const TelemetryBar = ({
 
     return (
         <div className={cn(
-            "rounded-xl  bg-primary/5 px-4 py-3",
+            "border-none rounded-lg bg-white px-4 py-3",
             "flex items-center justify-between gap-2 overflow-x-auto",
             "animate-in fade-in slide-in-from-top-2 duration-500",
             className
@@ -53,22 +50,6 @@ export const TelemetryBar = ({
                 icon={<Navigation size={13} className="text-indigo-500" />}
                 label="Heading"
                 value={<span className="text-base font-black">{compass}</span>}
-            />
-
-            {/* Distance */}
-            <Divider />
-            <Tile
-                icon={<Route size={13} className="text-violet-500" />}
-                label="Distance"
-                value={<><span className="text-base font-black">{stats?.distanceKm.toFixed(1) ?? '—'}</span><span className="text-[10px] font-bold text-muted-foreground ml-0.5">km</span></>}
-            />
-
-            {/* Shift duration */}
-            <Divider />
-            <Tile
-                icon={<Clock size={13} className="text-amber-500" />}
-                label="Shift"
-                value={<span className="text-base font-black">{stats ? formatDuration(stats.durationSeconds) : '—'}</span>}
             />
 
             {/* GPS quality */}

@@ -73,6 +73,7 @@ export const useTelemetry = (): UseTelemetryReturn => {
         longitude,
         heading,
         speed,
+        accuracy: gpsAccuracy,
         isTracking,
         error: trackingError,
     } = useLocationStore();
@@ -86,10 +87,10 @@ export const useTelemetry = (): UseTelemetryReturn => {
             heading,
             speedMs: speed,
             speedKmh: speed != null ? Math.round(speed * 3.6) : 0,
-            accuracy: null, // accuracy is not stored in LocationStore yet
+            accuracy: gpsAccuracy,
             timestamp: Date.now(),
         };
-    }, [latitude, longitude, heading, speed]);
+    }, [latitude, longitude, heading, speed, gpsAccuracy]);
 
     const accuracy = useMemo(() => classifyAccuracy(live?.accuracy), [live]);
     const compass = useMemo(() => headingToCompass(live?.heading ?? null), [live]);
