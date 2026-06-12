@@ -29,7 +29,7 @@ const LoginPage = () => {
             const data = await authService.login({ email, password, remember });
             setAuth(data.user, data.access_token);
             toast.success(t('welcome_back'));
-            
+
             const isCurrentlyDriverApp = window.location.pathname.startsWith('/driver');
             
             if ((data.user.role === 'system_staff' || data.user.role === 'super_admin') && !data.user.company_id) {

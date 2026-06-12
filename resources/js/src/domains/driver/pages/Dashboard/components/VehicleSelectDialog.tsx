@@ -116,7 +116,7 @@ export const VehicleSelectDialog = ({
                             placeholder={t('search_plate_or_type') || 'Search plate or vehicle type…'}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-9 h-11 rounded-2xl bg-muted/60 border-none text-sm font-medium focus-visible:ring-1 focus-visible:ring-primary/30"
+                            className="pl-9 h-11 rounded-2xl bg-muted/60 border-none text-sm font-medium focus-visible:ring-0"
                         />
                     </div>
                 </div>
@@ -222,7 +222,7 @@ export const VehicleSelectDialog = ({
                         variant="outline"
                         onClick={onClose}
                         disabled={isLoading}
-                        className="h-12 rounded-2xl text-sm font-bold uppercase tracking-wider w-full border-border/50"
+                        className="h-12 rounded-2xl bg-muted/50 text-sm font-bold uppercase tracking-wider w-full border-none"
                     >
                         {t('cancel') || 'Cancel'}
                     </Button>

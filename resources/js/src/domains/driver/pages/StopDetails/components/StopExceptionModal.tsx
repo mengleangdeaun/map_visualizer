@@ -76,7 +76,7 @@ export const StopExceptionModal: React.FC<StopExceptionModalProps> = ({
                     <Button
                         onClick={onClose}
                         variant="outline"
-                        className="flex-1 h-10 rounded-xl font-bold"
+                        className="flex-1 h-11 border-none bg-muted/70 rounded-xl font-bold"
                         disabled={isPending}
                     >
                         Cancel
@@ -84,7 +84,7 @@ export const StopExceptionModal: React.FC<StopExceptionModalProps> = ({
                     <Button
                         onClick={onSubmit}
                         variant="destructive"
-                        className="flex-1 h-10 rounded-xl font-bold"
+                        className="flex-1 h-11 rounded-xl font-bold"
                         disabled={isPending}
                     >
                         {isPending ? 'Logging...' : 'Log Exception'}

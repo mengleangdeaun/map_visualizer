@@ -82,14 +82,14 @@ export const ReportRoadblockModal: React.FC<ReportRoadblockModalProps> = ({
                     <Button
                         onClick={onClose}
                         variant="outline"
-                        className="flex-1 h-10 rounded-xl font-bold"
+                        className="flex-1 h-11 rounded-xl font-bold border-none"
                     >
                         Cancel
                     </Button>
                     <Button
                         onClick={handlePublish}
                         disabled={!reportDescription.trim() || isPending}
-                        className="flex-1 h-10 rounded-xl font-bold bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        className="flex-1 h-11 rounded-xl font-bold bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
                         {isPending ? "Submitting..." : "Publish Warning"}
                     </Button>

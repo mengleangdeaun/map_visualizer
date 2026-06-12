@@ -43,10 +43,10 @@ export const MapHeaderMenu: React.FC<MapHeaderMenuProps> = ({
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className={cn(
-                    "w-10 h-10 rounded-xl flex items-center justify-center border border-border/50 text-foreground transition-all duration-200",
+                    "w-10 h-10 rounded-xl flex items-center justify-center border-none text-foreground transition-all duration-200",
                     isOpen 
-                        ? "bg-primary text-primary-foreground shadow-inner scale-95" 
-                        : "bg-background/85 backdrop-blur-md hover:bg-muted active:scale-95 shadow-sm"
+                        ? "bg-primary text-primary-foreground scale-95" 
+                        : "bg-background/85 backdrop-blur-md hover:bg-muted active:scale-95 "
                 )}
                 style={{ minHeight: '40px', minWidth: '40px' }}
             >

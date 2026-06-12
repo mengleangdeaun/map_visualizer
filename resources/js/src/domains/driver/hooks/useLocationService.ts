@@ -3,6 +3,10 @@ import { useAuthStore } from '@/domains/auth/store/useAuthStore';
 import { pwaToast as toast } from '../store/usePwaToastStore';
 import { driverTaskService } from '../services/driverTaskService';
 import { useLocationStore } from '../store/useLocationStore';
+import { registerPlugin } from '@capacitor/core';
+
+const BackgroundLocation = registerPlugin<any>('BackgroundLocation');
+let nativeListener: any = null;
 
 const MIN_UPDATE_INTERVAL = 5000; // 5 seconds
 let lastOrientationUpdate = 0;
@@ -82,6 +86,40 @@ export const useLocationService = () => {
     }, []);
 
     const startTracking = useCallback(() => {
+        // Check if running in a native Capacitor environment
+        const isCapacitor = (window as any).Capacitor !== undefined;
+
+        if (isCapacitor) {
+            if (nativeListener !== null) {
+                setTrackingState({ isTracking: true, error: null });
+                return;
+            }
+
+            setTrackingState({ isTracking: true, error: null });
+
+            const token = useAuthStore.getState().token;
+            const baseUrl = window.location.origin;
+
+            BackgroundLocation.startTracking({ token, baseUrl }).then(() => {
+                BackgroundLocation.addListener('onLocationUpdate', (pos: any) => {
+                    setTrackingState({
+                        latitude: pos.latitude,
+                        longitude: pos.longitude,
+                        heading: pos.heading,
+                        speed: pos.speed,
+                        accuracy: pos.accuracy,
+                    });
+                }).then((handle: any) => {
+                    nativeListener = handle;
+                });
+            }).catch((err: any) => {
+                setTrackingState({ error: err.message, isTracking: false });
+                toast.error(`Native location error: ${err.message}`);
+            });
+
+            return;
+        }
+
         if (!('geolocation' in navigator)) {
             setTrackingState({ error: 'Geolocation not supported' });
             return;
@@ -148,6 +186,21 @@ export const useLocationService = () => {
     }, [updateServerLocation, setTrackingState, watchId]);
 
     const stopTracking = useCallback(() => {
+        // Check if running in a native Capacitor environment
+        const isCapacitor = (window as any).Capacitor !== undefined;
+
+        if (isCapacitor) {
+            BackgroundLocation.stopTracking().catch((err: any) => {
+                console.error('Failed to stop native tracking', err);
+            });
+            if (nativeListener) {
+                nativeListener.remove();
+                nativeListener = null;
+            }
+            resetTrackingState();
+            return;
+        }
+
         const activeWatchId = useLocationStore.getState().watchId;
         if (activeWatchId !== null) {
             navigator.geolocation.clearWatch(activeWatchId);

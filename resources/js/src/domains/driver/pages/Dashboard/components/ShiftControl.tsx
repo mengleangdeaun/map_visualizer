@@ -49,8 +49,8 @@ export const ShiftControl = ({
 
     return (
         <Card className={cn(
-            "p-6 flex rounded-2xl flex-col items-center gap-6 transition-all duration-500 border-none relative overflow-hidden",
-            isOnline ? "bg-primary text-primary-foreground" : "bg-card text-foreground"
+            "p-6 flex rounded-3xl flex-col items-center gap-6 transition-all duration-500 border-none shadow-none relative overflow-hidden",
+            isOnline ? "bg-primary text-primary-foreground" : "bg-card border-none text-foreground"
         )}>
             {/* Pulsing effect during active tracking */}
             {isOnline && (

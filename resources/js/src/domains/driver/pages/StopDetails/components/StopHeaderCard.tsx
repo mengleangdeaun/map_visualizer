@@ -54,10 +54,10 @@ export const StopHeaderCard: React.FC<StopHeaderCardProps> = ({ stop, onOpenNavi
                     <Button
                         onClick={onOpenNavigation}
                         variant="outline"
-                        className="w-full h-11 rounded-xl flex items-center justify-center gap-2 font-bold"
+                        className="w-full h-11 rounded-xl border-none bg-muted/50 flex items-center justify-center gap-2 font-bold"
                     >
                         <Navigation size={16} className="text-primary" />
-                        Open Map Navigation
+                        Open Google Map
                     </Button>
                 )}
             </div>

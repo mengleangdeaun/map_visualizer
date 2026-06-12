@@ -25,7 +25,7 @@ export const StopActionBar: React.FC<StopActionBarProps> = ({
     if (!isPendingOrTransit && !isArrived) return null;
 
     return (
-        <div className="fixed bottom-[72px] left-0 right-0 bg-background/90 backdrop-blur-md border-t border-border/50 p-4 z-40 flex gap-3 max-w-md mx-auto">
+        <div className="fixed bottom-[78px] left-0 right-0 bg-background/90 backdrop-blur-md border-t border-border/50 p-4 z-40 flex gap-3 max-w-md mx-auto">
             {isPendingOrTransit && (
                 <Button
                     onClick={onArrive}
